@@ -3,6 +3,8 @@ title: "Building a Kaggle Submission"
 subtitle: "One parameterized document, three models, leaderboard-ready CSVs"
 params:
   model: "xgboost"
+execute:
+  freeze: false   # parameterized: must re-run per -P model:, never serve a cached model
 ---
 
 > **Where we are:** The final stop on the
