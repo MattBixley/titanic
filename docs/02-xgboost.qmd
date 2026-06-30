@@ -209,6 +209,7 @@ xgb_cv_preds <- collect_predictions(xgb_tuned, parameters = best_xgb)
 xgb_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
   labs(title = "XGBoost — CV confusion matrix")
 ```
 
@@ -223,7 +224,7 @@ xgb_cv_preds |>
 xgb_fit |>
   extract_fit_parsnip() |>
   vip(num_features = 15, geom = "col",
-      aesthetics = list(fill = "steelblue")) +
+      aesthetics = list(fill = kakapo_pal[1])) +
   labs(title = "XGBoost variable importance") +
   theme_minimal()
 ```

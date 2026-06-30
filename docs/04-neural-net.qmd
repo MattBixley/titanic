@@ -235,6 +235,7 @@ nnet_cv_preds <- collect_predictions(nnet_tuned, parameters = best_nnet)
 nnet_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
   labs(title = "Neural Net — CV confusion matrix")
 ```
 
@@ -256,7 +257,7 @@ prediction wrapper needed, so it's robust in any render environment.
 # read importance straight from the network weights.
 nnet_fit |>
   extract_fit_engine() |>
-  vip(num_features = 15) +
+  vip(num_features = 15, aesthetics = list(fill = kakapo_pal[1])) +
   labs(title = "Neural Net variable importance (Garson weights)") +
   theme_minimal()
 ```

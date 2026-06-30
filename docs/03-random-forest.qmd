@@ -185,6 +185,7 @@ rf_cv_preds <- collect_predictions(rf_tuned, parameters = best_rf)
 rf_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
   labs(title = "Random Forest — CV confusion matrix")
 ```
 
@@ -199,7 +200,7 @@ rf_cv_preds |>
 rf_fit |>
   extract_fit_parsnip() |>
   vip(num_features = 15, geom = "col",
-      aesthetics = list(fill = "forestgreen")) +
+      aesthetics = list(fill = kakapo_pal[1])) +
   labs(title = "Random Forest variable importance (permutation)") +
   theme_minimal()
 ```

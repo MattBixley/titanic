@@ -75,7 +75,9 @@ titanic_stack
 #| fig-cap: "Blended stacking coefficients — the members the meta-learner kept."
 #| fig-width: 8
 #| fig-height: 5
-autoplot(titanic_stack, type = "weights")
+autoplot(titanic_stack, type = "weights") +
+  scale_colour_manual(values = grDevices::colorRampPalette(kakapo_pal)(10)) +
+  scale_fill_manual(values = grDevices::colorRampPalette(kakapo_pal)(10))
 ```
 
 The neural net typically earns the largest single weight, with several boosted
