@@ -167,8 +167,9 @@ collect_metrics(rf_tuned) |>
 ```
 
 ::: {.callout-tip}
-Copy the `accuracy` and `roc_auc` `mean` values into the results table on the
-[master document](../index.qmd).
+These CV metrics feed the results table on the
+[master document](../index.qmd) automatically — it reads `models/rf_res.rds`
+at render time, so there's nothing to copy by hand.
 :::
 
 ### Confusion matrix

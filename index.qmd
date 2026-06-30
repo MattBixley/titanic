@@ -142,22 +142,53 @@ CV results are reproducible across machines that share the `renv` lockfile.
 
 ## Results summary
 
-The table below compares the three models on **5-fold cross-validated**
+The table below compares the three base models on **5-fold cross-validated**
 `accuracy` and `roc_auc` (positive class = `"1"`, survived). These are *honest*
-estimates computed on the training data before we ever touch the test set.
+estimates computed on the training data before we ever touch the test set — and
+they are read **directly** from each model's saved tuning results
+(`models/*_res.rds`), so they update automatically on every render. No copying.
 
-| Model | CV accuracy | CV ROC-AUC | Notes |
-|-------|------------:|-----------:|-------|
-| XGBoost | _TBD_ | _TBD_ | tuned `trees`, `tree_depth`, `learn_rate`, `min_n` |
-| Random Forest | _TBD_ | _TBD_ | tuned `mtry`, `min_n`; 1000 trees |
-| Neural Net | _TBD_ | _TBD_ | tuned `hidden_units`, `penalty`, `epochs`; normalized inputs |
+```{r}
+#| label: results-summary
+#| message: false
+#| warning: false
+#| echo: true
 
-::: {.callout-important}
-This table is a **placeholder**. Fill the cells in after you render the model
-documents — each one prints its `collect_metrics()` summary that you can copy
-here. (A nice exercise: write a small chunk that reads the three `*_fit.rds`
-files and assembles this table automatically.)
-:::
+library(tidyverse)
+library(tidymodels)
+library(here)
+
+# Pull the best (roc_auc-selected) configuration's CV metrics from a saved
+# tune_grid result.
+cv_metrics <- function(path, label, notes) {
+  res  <- readRDS(path)
+  best <- select_best(res, metric = "roc_auc")
+  m    <- collect_metrics(res) |> semi_join(best, by = names(best))
+  tibble(
+    Model         = label,
+    `CV accuracy` = m$mean[m$.metric == "accuracy"],
+    `CV ROC-AUC`  = m$mean[m$.metric == "roc_auc"],
+    `Best num_comp` = best$num_comp,
+    Notes         = notes
+  )
+}
+
+bind_rows(
+  cv_metrics(here("models", "xgboost_res.rds"), "XGBoost",
+             "tuned trees / tree_depth / learn_rate / min_n + num_comp"),
+  cv_metrics(here("models", "rf_res.rds"), "Random Forest",
+             "tuned mtry / min_n + num_comp; 1000 trees"),
+  cv_metrics(here("models", "nnet_res.rds"), "Neural Net",
+             "tuned hidden_units / penalty + num_comp; PCA-normalized")
+) |>
+  arrange(desc(`CV ROC-AUC`)) |>
+  mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \(x) round(x, 4))) |>
+  knitr::kable(align = "lrrrl")
+```
+
+The [stacked ensemble](docs/05-stack.qmd) blends all three; its real test is the
+Kaggle leaderboard rather than a single CV number (the stack's weights are shown
+on its own page).
 
 ## The submission workflow at a glance
 

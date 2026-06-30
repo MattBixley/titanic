@@ -11,6 +11,21 @@ library(here)         # project-root-relative paths (no setwd())
 # Resolve tidymodels function-name conflicts in favour of tidymodels.
 tidymodels_prefer()
 
+# Plot colours: Manu "Kākāpō" palette ----------------------------------------
+# Set the Kākāpō palette as the DEFAULT for every ggplot in the project (no need
+# to add scale_*_manual() to each plot). Discrete scales ramp the 6 base colours
+# to as many levels as a plot needs; continuous scales use them as a gradient.
+library(Manu)
+kakapo_pal  <- Manu::get_pal("Kakapo")                       # 6 base colours
+kakapo_ramp <- grDevices::colorRampPalette(kakapo_pal)(12)   # enough for any plot here
+options(
+  ggplot2.discrete.fill     = function() ggplot2::scale_fill_manual(values = kakapo_ramp),
+  ggplot2.discrete.colour   = function() ggplot2::scale_colour_manual(values = kakapo_ramp),
+  ggplot2.continuous.fill   = function() ggplot2::scale_fill_gradientn(colours = kakapo_pal),
+  ggplot2.continuous.colour = function() ggplot2::scale_colour_gradientn(colours = kakapo_pal)
+)
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 12))
+
 # Reproducibility ------------------------------------------------------------
 set.seed(42)
 

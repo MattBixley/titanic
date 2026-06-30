@@ -5,10 +5,12 @@ project:
   # so every model document (and CI) has the features it needs.
   pre-render: R/03_engineer.R
   render:
-    - "*.qmd"
+    # Order matters: the model docs save *_res.rds, the stack consumes them, and
+    # index.qmd renders LAST so its results table can read every model's
+    # cross-validated metrics. titanic_claude.md (the brief) is excluded.
     - "docs/*.qmd"
     - "docs/setup-kaggle.md"
-    # everything else (e.g. titanic_claude.md project brief) is excluded
+    - "index.qmd"
 
 # Freezing is critical here. The model docs run real tidymodels tuning over
 # 5-fold CV, which is expensive. `freeze: auto` means a document is only
@@ -47,6 +49,7 @@ format:
     theme: cosmo
     toc: true
     toc-depth: 3
-    code-fold: false
+    code-fold: true
+    code-summary: "Show code"
     code-tools: true
     df-print: paged
