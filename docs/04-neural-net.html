@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Model 3 — Neural Net – Titanic — Tidymodels Tour</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -71,10 +74,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-dfb324f25d9b1687192fa8be62ac8f9c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -103,9 +106,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 <link href="../site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
-
 <script src="../site_libs/pagedtable-1.1/js/pagedtable.js"></script>
-
 
 
 </head>
@@ -234,7 +235,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Engine choice: <code>nnet</code>
+<span class="screen-reader-only">Note</span>Engine choice: <code>nnet</code>
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -245,35 +246,38 @@ Engine choice: <code>nnet</code>
 <section id="setup" class="level2">
 <h2 class="anchored" data-anchor-id="setup">Setup</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"00_setup.R"</span>))      <span class="co"># tidyverse + tidymodels, seed = 42</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"02_features.R"</span>))   <span class="co"># make_recipe(data)</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"00_setup.R"</span>))      <span class="co"># tidyverse + tidymodels, seed = 42</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"02_features.R"</span>))   <span class="co"># make_recipe(data)</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)     <span class="co"># the MLP engine (base R, no native deps)</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vip)      <span class="co"># variable importance plots</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)     <span class="co"># the MLP engine (base R, no native deps)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vip)      <span class="co"># variable importance plots</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw"</span>, <span class="st">"train.csv"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">Survived =</span> <span class="fu">factor</span>(Survived, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0"</span>, <span class="st">"1"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw"</span>, <span class="st">"train.csv"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Survived =</span> <span class="fu">factor</span>(Survived, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0"</span>, <span class="st">"1"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is tiny, so this is plenty fast and keeps results deterministic (no worker</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># package-loading surprises).</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">"cl"</span>)) <span class="fu">try</span>(parallel<span class="sc">::</span><span class="fu">stopCluster</span>(cl), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>foreach<span class="sc">::</span><span class="fu">registerDoSEQ</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoSEQ</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="the-recipe-with-normalization" class="level2">
 <h2 class="anchored" data-anchor-id="the-recipe-with-normalization">The recipe — with normalization</h2>
 <p>Tree ensembles are invariant to monotone rescaling, so the shared recipe didn’t bother normalizing. A neural net is <strong>not</strong> invariant: gradient descent behaves far better when every numeric predictor has mean 0 and unit variance, otherwise large-scale features (like <code>Fare</code>) dominate the gradient. So we take the shared recipe and append <code>step_normalize()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extend the shared recipe with normalization of all numeric predictors. This</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extend the shared recipe with normalization of all numeric predictors. This</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># are normalized too (standard practice for MLPs).</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>nnet_recipe <span class="ot">&lt;-</span> <span class="fu">make_recipe</span>(train) <span class="sc">|&gt;</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>())</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>nnet_recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>nnet_recipe</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code></code></pre>
 </div>
@@ -344,7 +348,7 @@ id:         1</code></pre>
 <section id="the-model-specification" class="level2">
 <h2 class="anchored" data-anchor-id="the-model-specification">The model specification</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-hidden-layer MLP via base R's nnet engine: one hidden layer</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-hidden-layer MLP via base R's nnet engine: one hidden layer</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (hidden_units) and L2 weight decay (penalty). nnet has no native-code</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># dependency, so it trains and renders reliably everywhere — including the</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Quarto site build and GitHub Actions CI.</span></span>
@@ -355,7 +359,7 @@ id:         1</code></pre>
 <span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"nnet"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
 <span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>nnet_spec</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>nnet_spec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Single Layer Neural Network Model Specification (classification)
 
@@ -372,18 +376,18 @@ Computational engine: nnet </code></pre>
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Optional: a torch-backed MLP with <code>brulee</code> (local only)
+<span class="screen-reader-only">Tip</span>Optional: a torch-backed MLP with <code>brulee</code> (local only)
 </div>
 </div>
 <div class="callout-body-container callout-body">
 <p>For a deeper net with a tuned epoch budget you can swap in <code>brulee</code> (a <code>torch</code> backend) <strong>when running locally</strong>. It also exposes <code>epochs</code>:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden_units =</span> <span class="fu">tune</span>(),</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty      =</span> <span class="fu">tune</span>(),</span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">epochs       =</span> <span class="fu">tune</span>()       <span class="co"># brulee only</span></span>
 <span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
 <span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"brulee"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We keep <code>nnet</code> as the published engine on purpose: <code>brulee</code>’s libtorch backend does not load inside the Quarto/knitr render session (or in CI) under this project’s <code>renv</code> setup — every fit fails with <em>“Lantern is not loaded”</em>. <code>nnet</code> sidesteps that entirely. If you switch to <code>brulee</code>, add <code>epochs</code> back to the tuning grid below and train sequentially (<code>foreach::registerDoSEQ()</code>).</p>
 </div>
 </div>
@@ -391,29 +395,29 @@ Optional: a torch-backed MLP with <code>brulee</code> (local only)
 <section id="the-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="the-workflow">The workflow</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>nnet_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>nnet_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(nnet_recipe) <span class="sc">|&gt;</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(nnet_spec)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(nnet_spec)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="tuning-with-5-fold-cross-validation" class="level2">
 <h2 class="anchored" data-anchor-id="tuning-with-5-fold-cross-validation">Tuning with 5-fold cross-validation</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Survived)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Survived)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate</span></span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co"># weight decay. (nnet has no epochs hyperparameter — it iterates to convergence.)</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>nnet_grid <span class="ot">&lt;-</span> <span class="fu">grid_space_filling</span>(</span>
 <span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hidden_units</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>L, <span class="dv">16</span>L)),</span>
 <span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">penalty</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="sc">-</span><span class="fl">0.5</span>)),     <span class="co"># log10 scale → 1e-4 to ~0.3</span></span>
 <span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">12</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>nnet_metrics <span class="ot">&lt;-</span> <span class="fu">metric_set</span>(roc_auc, accuracy)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>nnet_metrics <span class="ot">&lt;-</span> <span class="fu">metric_set</span>(roc_auc, accuracy)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>nnet_tuned <span class="ot">&lt;-</span> <span class="fu">tune_grid</span>(</span>
@@ -423,12 +427,12 @@ Optional: a torch-backed MLP with <code>brulee</code> (local only)
 <span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics   =</span> nnet_metrics,</span>
 <span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Positive class "1" is the second factor level.</span></span>
 <span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">control   =</span> <span class="fu">control_grid</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">event_level =</span> <span class="st">"second"</span>)</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="tuning-results" class="level3">
 <h3 class="anchored" data-anchor-id="tuning-results">Tuning results</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -439,7 +443,7 @@ Optional: a torch-backed MLP with <code>brulee</code> (local only)
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">show_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>, <span class="at">n =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">show_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>, <span class="at">n =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
@@ -453,8 +457,8 @@ Optional: a torch-backed MLP with <code>brulee</code> (local only)
 <section id="finalize-and-fit-on-the-full-training-set" class="level2">
 <h2 class="anchored" data-anchor-id="finalize-and-fit-on-the-full-training-set">Finalize and fit on the full training set</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>best_nnet <span class="ot">&lt;-</span> <span class="fu">select_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>best_nnet</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>best_nnet <span class="ot">&lt;-</span> <span class="fu">select_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>best_nnet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
@@ -462,21 +466,21 @@ Optional: a torch-backed MLP with <code>brulee</code> (local only)
   </script>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>final_nnet_wf <span class="ot">&lt;-</span> <span class="fu">finalize_workflow</span>(nnet_wf, best_nnet)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>final_nnet_wf <span class="ot">&lt;-</span> <span class="fu">finalize_workflow</span>(nnet_wf, best_nnet)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(final_nnet_wf, <span class="at">data =</span> train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(final_nnet_wf, <span class="at">data =</span> train)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="cross-validated-performance" class="level2">
 <h2 class="anchored" data-anchor-id="cross-validated-performance">Cross-validated performance</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="co"># engine, add "epochs" to the join keys.</span></span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">collect_metrics</span>(nnet_tuned) <span class="sc">|&gt;</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">semi_join</span>(best_nnet,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(best_nnet,</span>
 <span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"hidden_units"</span>, <span class="st">"penalty"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(.metric, mean, std_err, n)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(.metric, mean, std_err, n)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
@@ -501,12 +505,12 @@ Tip
 <section id="confusion-matrix" class="level3">
 <h3 class="anchored" data-anchor-id="confusion-matrix">Confusion matrix</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="ot">&lt;-</span> <span class="fu">collect_predictions</span>(nnet_tuned, <span class="at">parameters =</span> best_nnet)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="ot">&lt;-</span> <span class="fu">collect_predictions</span>(nnet_tuned, <span class="at">parameters =</span> best_nnet)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="sc">|&gt;</span></span>
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> Survived, <span class="at">estimate =</span> .pred_class) <span class="sc">|&gt;</span></span>
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(<span class="at">type =</span> <span class="st">"heatmap"</span>) <span class="sc">+</span></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net — CV confusion matrix"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net — CV confusion matrix"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -521,13 +525,13 @@ Tip
 <h3 class="anchored" data-anchor-id="variable-importance">Variable importance</h3>
 <p>Neural nets don’t expose importance natively. For an <code>nnet</code> model <code>vip</code> derives it from the trained connection weights (Garson’s algorithm) — no shuffling or prediction wrapper needed, so it’s robust in any render environment.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the underlying nnet engine object out of the fitted workflow and let vip</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the underlying nnet engine object out of the fitted workflow and let vip</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="co"># read importance straight from the network weights.</span></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="sc">|&gt;</span></span>
 <span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_fit_engine</span>() <span class="sc">|&gt;</span></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  vip<span class="sc">::</span><span class="fu">vip</span>(<span class="at">num_features =</span> <span class="dv">15</span>) <span class="sc">+</span></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net variable importance (Garson weights)"</span>) <span class="sc">+</span></span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vip</span>(<span class="at">num_features =</span> <span class="dv">15</span>) <span class="sc">+</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net variable importance (Garson weights)"</span>) <span class="sc">+</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -543,14 +547,14 @@ Tip
 <section id="save-the-fitted-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="save-the-fitted-workflow">Save the fitted workflow</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Project convention: the neural-net model saves to nnet_fit.rds.</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(nnet_fit, <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Project convention: the neural-net model saves to nnet_fit.rds.</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(nnet_fit, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="submission" class="level2">
 <h2 class="anchored" data-anchor-id="submission">Submission</h2>
 <p>Generate this model’s leaderboard CSV with the <a href="../docs/submission.html">parameterized submission document</a>:</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That loads <code>models/nnet_fit.rds</code>, predicts on <code>data/raw/test.csv</code>, writes <code>models/submission_nnet.csv</code>, and prints the exact <code>kaggle competitions submit</code> command. See the <a href="../docs/setup-kaggle.html">Kaggle setup guide</a> for authentication.</p>
 </section>
 <section id="next-steps" class="level2">
@@ -618,13 +622,14 @@ Tip
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
@@ -690,7 +695,7 @@ Tip
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/MattBixley\.github\.io\/titanic\/");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
@@ -1017,7 +1022,7 @@ Tip
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="sourceCode" id="cb42" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Model 3 — Neural Net"</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "A small multilayer perceptron with nnet — and why scale matters"</span></span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
@@ -1054,253 +1059,256 @@ Tip
 <span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
 <span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-39"><a href="#cb42-39" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"00_setup.R"</span>))      <span class="co"># tidyverse + tidymodels, seed = 42</span></span>
-<span id="cb42-40"><a href="#cb42-40" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"02_features.R"</span>))   <span class="co"># make_recipe(data)</span></span>
+<span id="cb42-40"><a href="#cb42-40" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"02_features.R"</span>))   <span class="co"># make_recipe(data)</span></span>
 <span id="cb42-41"><a href="#cb42-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-42"><a href="#cb42-42" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)     <span class="co"># the MLP engine (base R, no native deps)</span></span>
-<span id="cb42-43"><a href="#cb42-43" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vip)      <span class="co"># variable importance plots</span></span>
-<span id="cb42-44"><a href="#cb42-44" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-45"><a href="#cb42-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-48"><a href="#cb42-48" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-49"><a href="#cb42-49" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: load-data</span></span>
-<span id="cb42-50"><a href="#cb42-50" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb42-51"><a href="#cb42-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-52"><a href="#cb42-52" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw"</span>, <span class="st">"train.csv"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb42-53"><a href="#cb42-53" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">Survived =</span> <span class="fu">factor</span>(Survived, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0"</span>, <span class="st">"1"</span>)))</span>
-<span id="cb42-54"><a href="#cb42-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-55"><a href="#cb42-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-58"><a href="#cb42-58" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-59"><a href="#cb42-59" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: sequential-backend</span></span>
-<span id="cb42-60"><a href="#cb42-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid</span></span>
-<span id="cb42-61"><a href="#cb42-61" aria-hidden="true" tabindex="-1"></a><span class="co"># is tiny, so this is plenty fast and keeps results deterministic (no worker</span></span>
-<span id="cb42-62"><a href="#cb42-62" aria-hidden="true" tabindex="-1"></a><span class="co"># package-loading surprises).</span></span>
-<span id="cb42-63"><a href="#cb42-63" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">"cl"</span>)) <span class="fu">try</span>(parallel<span class="sc">::</span><span class="fu">stopCluster</span>(cl), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb42-64"><a href="#cb42-64" aria-hidden="true" tabindex="-1"></a>foreach<span class="sc">::</span><span class="fu">registerDoSEQ</span>()</span>
-<span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-67"><a href="#cb42-67" aria-hidden="true" tabindex="-1"></a><span class="fu">## The recipe — with normalization</span></span>
-<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-69"><a href="#cb42-69" aria-hidden="true" tabindex="-1"></a>Tree ensembles are invariant to monotone rescaling, so the shared recipe didn't</span>
-<span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a>bother normalizing. A neural net is **not** invariant: gradient descent behaves</span>
-<span id="cb42-71"><a href="#cb42-71" aria-hidden="true" tabindex="-1"></a>far better when every numeric predictor has mean 0 and unit variance, otherwise</span>
-<span id="cb42-72"><a href="#cb42-72" aria-hidden="true" tabindex="-1"></a>large-scale features (like <span class="in">`Fare`</span>) dominate the gradient. So we take the shared</span>
-<span id="cb42-73"><a href="#cb42-73" aria-hidden="true" tabindex="-1"></a>recipe and append <span class="in">`step_normalize()`</span>.</span>
-<span id="cb42-74"><a href="#cb42-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-77"><a href="#cb42-77" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-78"><a href="#cb42-78" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: recipe</span></span>
-<span id="cb42-79"><a href="#cb42-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Extend the shared recipe with normalization of all numeric predictors. This</span></span>
-<span id="cb42-80"><a href="#cb42-80" aria-hidden="true" tabindex="-1"></a><span class="co"># step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns</span></span>
-<span id="cb42-81"><a href="#cb42-81" aria-hidden="true" tabindex="-1"></a><span class="co"># are normalized too (standard practice for MLPs).</span></span>
-<span id="cb42-82"><a href="#cb42-82" aria-hidden="true" tabindex="-1"></a>nnet_recipe <span class="ot">&lt;-</span> <span class="fu">make_recipe</span>(train) <span class="sc">|&gt;</span></span>
-<span id="cb42-83"><a href="#cb42-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>())</span>
-<span id="cb42-84"><a href="#cb42-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-85"><a href="#cb42-85" aria-hidden="true" tabindex="-1"></a>nnet_recipe</span>
-<span id="cb42-86"><a href="#cb42-86" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-42"><a href="#cb42-42" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb42-43"><a href="#cb42-43" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb42-44"><a href="#cb42-44" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb42-45"><a href="#cb42-45" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)     <span class="co"># the MLP engine (base R, no native deps)</span></span>
+<span id="cb42-46"><a href="#cb42-46" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vip)      <span class="co"># variable importance plots</span></span>
+<span id="cb42-47"><a href="#cb42-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-48"><a href="#cb42-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-51"><a href="#cb42-51" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-52"><a href="#cb42-52" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: load-data</span></span>
+<span id="cb42-53"><a href="#cb42-53" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb42-54"><a href="#cb42-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-55"><a href="#cb42-55" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw"</span>, <span class="st">"train.csv"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb42-56"><a href="#cb42-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Survived =</span> <span class="fu">factor</span>(Survived, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0"</span>, <span class="st">"1"</span>)))</span>
+<span id="cb42-57"><a href="#cb42-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-58"><a href="#cb42-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-61"><a href="#cb42-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-62"><a href="#cb42-62" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: sequential-backend</span></span>
+<span id="cb42-63"><a href="#cb42-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid</span></span>
+<span id="cb42-64"><a href="#cb42-64" aria-hidden="true" tabindex="-1"></a><span class="co"># is tiny, so this is plenty fast and keeps results deterministic (no worker</span></span>
+<span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a><span class="co"># package-loading surprises).</span></span>
+<span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">"cl"</span>)) <span class="fu">try</span>(parallel<span class="sc">::</span><span class="fu">stopCluster</span>(cl), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb42-67"><a href="#cb42-67" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoSEQ</span>()</span>
+<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-69"><a href="#cb42-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## The recipe — with normalization</span></span>
+<span id="cb42-71"><a href="#cb42-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-72"><a href="#cb42-72" aria-hidden="true" tabindex="-1"></a>Tree ensembles are invariant to monotone rescaling, so the shared recipe didn't</span>
+<span id="cb42-73"><a href="#cb42-73" aria-hidden="true" tabindex="-1"></a>bother normalizing. A neural net is **not** invariant: gradient descent behaves</span>
+<span id="cb42-74"><a href="#cb42-74" aria-hidden="true" tabindex="-1"></a>far better when every numeric predictor has mean 0 and unit variance, otherwise</span>
+<span id="cb42-75"><a href="#cb42-75" aria-hidden="true" tabindex="-1"></a>large-scale features (like <span class="in">`Fare`</span>) dominate the gradient. So we take the shared</span>
+<span id="cb42-76"><a href="#cb42-76" aria-hidden="true" tabindex="-1"></a>recipe and append <span class="in">`step_normalize()`</span>.</span>
+<span id="cb42-77"><a href="#cb42-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-80"><a href="#cb42-80" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-81"><a href="#cb42-81" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: recipe</span></span>
+<span id="cb42-82"><a href="#cb42-82" aria-hidden="true" tabindex="-1"></a><span class="co"># Extend the shared recipe with normalization of all numeric predictors. This</span></span>
+<span id="cb42-83"><a href="#cb42-83" aria-hidden="true" tabindex="-1"></a><span class="co"># step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns</span></span>
+<span id="cb42-84"><a href="#cb42-84" aria-hidden="true" tabindex="-1"></a><span class="co"># are normalized too (standard practice for MLPs).</span></span>
+<span id="cb42-85"><a href="#cb42-85" aria-hidden="true" tabindex="-1"></a>nnet_recipe <span class="ot">&lt;-</span> <span class="fu">make_recipe</span>(train) <span class="sc">|&gt;</span></span>
+<span id="cb42-86"><a href="#cb42-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>())</span>
 <span id="cb42-87"><a href="#cb42-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-88"><a href="#cb42-88" aria-hidden="true" tabindex="-1"></a><span class="fu">## The model specification</span></span>
-<span id="cb42-89"><a href="#cb42-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-92"><a href="#cb42-92" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-93"><a href="#cb42-93" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: spec</span></span>
-<span id="cb42-94"><a href="#cb42-94" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-hidden-layer MLP via base R's nnet engine: one hidden layer</span></span>
-<span id="cb42-95"><a href="#cb42-95" aria-hidden="true" tabindex="-1"></a><span class="co"># (hidden_units) and L2 weight decay (penalty). nnet has no native-code</span></span>
-<span id="cb42-96"><a href="#cb42-96" aria-hidden="true" tabindex="-1"></a><span class="co"># dependency, so it trains and renders reliably everywhere — including the</span></span>
-<span id="cb42-97"><a href="#cb42-97" aria-hidden="true" tabindex="-1"></a><span class="co"># Quarto site build and GitHub Actions CI.</span></span>
-<span id="cb42-98"><a href="#cb42-98" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
-<span id="cb42-99"><a href="#cb42-99" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden_units =</span> <span class="fu">tune</span>(),</span>
-<span id="cb42-100"><a href="#cb42-100" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty      =</span> <span class="fu">tune</span>()</span>
-<span id="cb42-101"><a href="#cb42-101" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb42-102"><a href="#cb42-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"nnet"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb42-103"><a href="#cb42-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
-<span id="cb42-104"><a href="#cb42-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-105"><a href="#cb42-105" aria-hidden="true" tabindex="-1"></a>nnet_spec</span>
-<span id="cb42-106"><a href="#cb42-106" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-88"><a href="#cb42-88" aria-hidden="true" tabindex="-1"></a>nnet_recipe</span>
+<span id="cb42-89"><a href="#cb42-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-90"><a href="#cb42-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-91"><a href="#cb42-91" aria-hidden="true" tabindex="-1"></a><span class="fu">## The model specification</span></span>
+<span id="cb42-92"><a href="#cb42-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-95"><a href="#cb42-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-96"><a href="#cb42-96" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: spec</span></span>
+<span id="cb42-97"><a href="#cb42-97" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-hidden-layer MLP via base R's nnet engine: one hidden layer</span></span>
+<span id="cb42-98"><a href="#cb42-98" aria-hidden="true" tabindex="-1"></a><span class="co"># (hidden_units) and L2 weight decay (penalty). nnet has no native-code</span></span>
+<span id="cb42-99"><a href="#cb42-99" aria-hidden="true" tabindex="-1"></a><span class="co"># dependency, so it trains and renders reliably everywhere — including the</span></span>
+<span id="cb42-100"><a href="#cb42-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Quarto site build and GitHub Actions CI.</span></span>
+<span id="cb42-101"><a href="#cb42-101" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
+<span id="cb42-102"><a href="#cb42-102" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden_units =</span> <span class="fu">tune</span>(),</span>
+<span id="cb42-103"><a href="#cb42-103" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty      =</span> <span class="fu">tune</span>()</span>
+<span id="cb42-104"><a href="#cb42-104" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb42-105"><a href="#cb42-105" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"nnet"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb42-106"><a href="#cb42-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
 <span id="cb42-107"><a href="#cb42-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-108"><a href="#cb42-108" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb42-109"><a href="#cb42-109" aria-hidden="true" tabindex="-1"></a><span class="fu">## Optional: a torch-backed MLP with `brulee` (local only)</span></span>
-<span id="cb42-110"><a href="#cb42-110" aria-hidden="true" tabindex="-1"></a>For a deeper net with a tuned epoch budget you can swap in <span class="in">`brulee`</span> (a <span class="in">`torch`</span></span>
-<span id="cb42-111"><a href="#cb42-111" aria-hidden="true" tabindex="-1"></a>backend) **when running locally**. It also exposes <span class="in">`epochs`</span>:</span>
-<span id="cb42-112"><a href="#cb42-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-113"><a href="#cb42-113" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
-<span id="cb42-114"><a href="#cb42-114" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
-<span id="cb42-115"><a href="#cb42-115" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden_units =</span> <span class="fu">tune</span>(),</span>
-<span id="cb42-116"><a href="#cb42-116" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty      =</span> <span class="fu">tune</span>(),</span>
-<span id="cb42-117"><a href="#cb42-117" aria-hidden="true" tabindex="-1"></a>  <span class="at">epochs       =</span> <span class="fu">tune</span>()       <span class="co"># brulee only</span></span>
-<span id="cb42-118"><a href="#cb42-118" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb42-119"><a href="#cb42-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"brulee"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb42-120"><a href="#cb42-120" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
-<span id="cb42-121"><a href="#cb42-121" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-122"><a href="#cb42-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-123"><a href="#cb42-123" aria-hidden="true" tabindex="-1"></a>We keep <span class="in">`nnet`</span> as the published engine on purpose: <span class="in">`brulee`</span>'s libtorch backend</span>
-<span id="cb42-124"><a href="#cb42-124" aria-hidden="true" tabindex="-1"></a>does not load inside the Quarto/knitr render session (or in CI) under this</span>
-<span id="cb42-125"><a href="#cb42-125" aria-hidden="true" tabindex="-1"></a>project's <span class="in">`renv`</span> setup — every fit fails with *"Lantern is not loaded"*. <span class="in">`nnet`</span></span>
-<span id="cb42-126"><a href="#cb42-126" aria-hidden="true" tabindex="-1"></a>sidesteps that entirely. If you switch to <span class="in">`brulee`</span>, add <span class="in">`epochs`</span> back to the</span>
-<span id="cb42-127"><a href="#cb42-127" aria-hidden="true" tabindex="-1"></a>tuning grid below and train sequentially (<span class="in">`foreach::registerDoSEQ()`</span>).</span>
-<span id="cb42-128"><a href="#cb42-128" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb42-129"><a href="#cb42-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-130"><a href="#cb42-130" aria-hidden="true" tabindex="-1"></a><span class="fu">## The workflow</span></span>
-<span id="cb42-131"><a href="#cb42-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-134"><a href="#cb42-134" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-135"><a href="#cb42-135" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: workflow</span></span>
-<span id="cb42-136"><a href="#cb42-136" aria-hidden="true" tabindex="-1"></a>nnet_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
-<span id="cb42-137"><a href="#cb42-137" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(nnet_recipe) <span class="sc">|&gt;</span></span>
-<span id="cb42-138"><a href="#cb42-138" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(nnet_spec)</span>
-<span id="cb42-139"><a href="#cb42-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-140"><a href="#cb42-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-141"><a href="#cb42-141" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tuning with 5-fold cross-validation</span></span>
-<span id="cb42-142"><a href="#cb42-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-145"><a href="#cb42-145" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-146"><a href="#cb42-146" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: resamples</span></span>
-<span id="cb42-147"><a href="#cb42-147" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb42-148"><a href="#cb42-148" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Survived)</span>
-<span id="cb42-149"><a href="#cb42-149" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-150"><a href="#cb42-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-153"><a href="#cb42-153" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-154"><a href="#cb42-154" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: grid</span></span>
-<span id="cb42-155"><a href="#cb42-155" aria-hidden="true" tabindex="-1"></a><span class="co"># Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate</span></span>
-<span id="cb42-156"><a href="#cb42-156" aria-hidden="true" tabindex="-1"></a><span class="co"># weight decay. (nnet has no epochs hyperparameter — it iterates to convergence.)</span></span>
-<span id="cb42-157"><a href="#cb42-157" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb42-158"><a href="#cb42-158" aria-hidden="true" tabindex="-1"></a>nnet_grid <span class="ot">&lt;-</span> <span class="fu">grid_space_filling</span>(</span>
-<span id="cb42-159"><a href="#cb42-159" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hidden_units</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>L, <span class="dv">16</span>L)),</span>
-<span id="cb42-160"><a href="#cb42-160" aria-hidden="true" tabindex="-1"></a>  <span class="fu">penalty</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="sc">-</span><span class="fl">0.5</span>)),     <span class="co"># log10 scale → 1e-4 to ~0.3</span></span>
-<span id="cb42-161"><a href="#cb42-161" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">12</span></span>
-<span id="cb42-162"><a href="#cb42-162" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb42-163"><a href="#cb42-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-164"><a href="#cb42-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-167"><a href="#cb42-167" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-168"><a href="#cb42-168" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune</span></span>
-<span id="cb42-169"><a href="#cb42-169" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb42-170"><a href="#cb42-170" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb42-171"><a href="#cb42-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-172"><a href="#cb42-172" aria-hidden="true" tabindex="-1"></a>nnet_metrics <span class="ot">&lt;-</span> <span class="fu">metric_set</span>(roc_auc, accuracy)</span>
-<span id="cb42-173"><a href="#cb42-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-174"><a href="#cb42-174" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb42-175"><a href="#cb42-175" aria-hidden="true" tabindex="-1"></a>nnet_tuned <span class="ot">&lt;-</span> <span class="fu">tune_grid</span>(</span>
-<span id="cb42-176"><a href="#cb42-176" aria-hidden="true" tabindex="-1"></a>  nnet_wf,</span>
-<span id="cb42-177"><a href="#cb42-177" aria-hidden="true" tabindex="-1"></a>  <span class="at">resamples =</span> folds,</span>
-<span id="cb42-178"><a href="#cb42-178" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid      =</span> nnet_grid,</span>
-<span id="cb42-179"><a href="#cb42-179" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics   =</span> nnet_metrics,</span>
-<span id="cb42-180"><a href="#cb42-180" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Positive class "1" is the second factor level.</span></span>
-<span id="cb42-181"><a href="#cb42-181" aria-hidden="true" tabindex="-1"></a>  <span class="at">control   =</span> <span class="fu">control_grid</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">event_level =</span> <span class="st">"second"</span>)</span>
-<span id="cb42-182"><a href="#cb42-182" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb42-183"><a href="#cb42-183" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-184"><a href="#cb42-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-185"><a href="#cb42-185" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tuning results</span></span>
-<span id="cb42-186"><a href="#cb42-186" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-189"><a href="#cb42-189" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-190"><a href="#cb42-190" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune-plot</span></span>
-<span id="cb42-191"><a href="#cb42-191" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ROC-AUC across the MLP tuning grid (autoplot)."</span></span>
-<span id="cb42-192"><a href="#cb42-192" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
-<span id="cb42-193"><a href="#cb42-193" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb42-194"><a href="#cb42-194" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-195"><a href="#cb42-195" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
-<span id="cb42-196"><a href="#cb42-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-108"><a href="#cb42-108" aria-hidden="true" tabindex="-1"></a>nnet_spec</span>
+<span id="cb42-109"><a href="#cb42-109" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-110"><a href="#cb42-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-111"><a href="#cb42-111" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb42-112"><a href="#cb42-112" aria-hidden="true" tabindex="-1"></a><span class="fu">## Optional: a torch-backed MLP with `brulee` (local only)</span></span>
+<span id="cb42-113"><a href="#cb42-113" aria-hidden="true" tabindex="-1"></a>For a deeper net with a tuned epoch budget you can swap in <span class="in">`brulee`</span> (a <span class="in">`torch`</span></span>
+<span id="cb42-114"><a href="#cb42-114" aria-hidden="true" tabindex="-1"></a>backend) **when running locally**. It also exposes <span class="in">`epochs`</span>:</span>
+<span id="cb42-115"><a href="#cb42-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-116"><a href="#cb42-116" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb42-117"><a href="#cb42-117" aria-hidden="true" tabindex="-1"></a>nnet_spec <span class="ot">&lt;-</span> <span class="fu">mlp</span>(</span>
+<span id="cb42-118"><a href="#cb42-118" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden_units =</span> <span class="fu">tune</span>(),</span>
+<span id="cb42-119"><a href="#cb42-119" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty      =</span> <span class="fu">tune</span>(),</span>
+<span id="cb42-120"><a href="#cb42-120" aria-hidden="true" tabindex="-1"></a>  <span class="at">epochs       =</span> <span class="fu">tune</span>()       <span class="co"># brulee only</span></span>
+<span id="cb42-121"><a href="#cb42-121" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb42-122"><a href="#cb42-122" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"brulee"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb42-123"><a href="#cb42-123" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
+<span id="cb42-124"><a href="#cb42-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-125"><a href="#cb42-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-126"><a href="#cb42-126" aria-hidden="true" tabindex="-1"></a>We keep <span class="in">`nnet`</span> as the published engine on purpose: <span class="in">`brulee`</span>'s libtorch backend</span>
+<span id="cb42-127"><a href="#cb42-127" aria-hidden="true" tabindex="-1"></a>does not load inside the Quarto/knitr render session (or in CI) under this</span>
+<span id="cb42-128"><a href="#cb42-128" aria-hidden="true" tabindex="-1"></a>project's <span class="in">`renv`</span> setup — every fit fails with *"Lantern is not loaded"*. <span class="in">`nnet`</span></span>
+<span id="cb42-129"><a href="#cb42-129" aria-hidden="true" tabindex="-1"></a>sidesteps that entirely. If you switch to <span class="in">`brulee`</span>, add <span class="in">`epochs`</span> back to the</span>
+<span id="cb42-130"><a href="#cb42-130" aria-hidden="true" tabindex="-1"></a>tuning grid below and train sequentially (<span class="in">`foreach::registerDoSEQ()`</span>).</span>
+<span id="cb42-131"><a href="#cb42-131" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb42-132"><a href="#cb42-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-133"><a href="#cb42-133" aria-hidden="true" tabindex="-1"></a><span class="fu">## The workflow</span></span>
+<span id="cb42-134"><a href="#cb42-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-137"><a href="#cb42-137" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-138"><a href="#cb42-138" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: workflow</span></span>
+<span id="cb42-139"><a href="#cb42-139" aria-hidden="true" tabindex="-1"></a>nnet_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb42-140"><a href="#cb42-140" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(nnet_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb42-141"><a href="#cb42-141" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(nnet_spec)</span>
+<span id="cb42-142"><a href="#cb42-142" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-143"><a href="#cb42-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-144"><a href="#cb42-144" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tuning with 5-fold cross-validation</span></span>
+<span id="cb42-145"><a href="#cb42-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-148"><a href="#cb42-148" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-149"><a href="#cb42-149" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: resamples</span></span>
+<span id="cb42-150"><a href="#cb42-150" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb42-151"><a href="#cb42-151" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Survived)</span>
+<span id="cb42-152"><a href="#cb42-152" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-153"><a href="#cb42-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-156"><a href="#cb42-156" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-157"><a href="#cb42-157" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: grid</span></span>
+<span id="cb42-158"><a href="#cb42-158" aria-hidden="true" tabindex="-1"></a><span class="co"># Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate</span></span>
+<span id="cb42-159"><a href="#cb42-159" aria-hidden="true" tabindex="-1"></a><span class="co"># weight decay. (nnet has no epochs hyperparameter — it iterates to convergence.)</span></span>
+<span id="cb42-160"><a href="#cb42-160" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb42-161"><a href="#cb42-161" aria-hidden="true" tabindex="-1"></a>nnet_grid <span class="ot">&lt;-</span> <span class="fu">grid_space_filling</span>(</span>
+<span id="cb42-162"><a href="#cb42-162" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hidden_units</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">2</span>L, <span class="dv">16</span>L)),</span>
+<span id="cb42-163"><a href="#cb42-163" aria-hidden="true" tabindex="-1"></a>  <span class="fu">penalty</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="sc">-</span><span class="fl">0.5</span>)),     <span class="co"># log10 scale → 1e-4 to ~0.3</span></span>
+<span id="cb42-164"><a href="#cb42-164" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">12</span></span>
+<span id="cb42-165"><a href="#cb42-165" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-166"><a href="#cb42-166" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-167"><a href="#cb42-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-170"><a href="#cb42-170" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-171"><a href="#cb42-171" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune</span></span>
+<span id="cb42-172"><a href="#cb42-172" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb42-173"><a href="#cb42-173" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb42-174"><a href="#cb42-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-175"><a href="#cb42-175" aria-hidden="true" tabindex="-1"></a>nnet_metrics <span class="ot">&lt;-</span> <span class="fu">metric_set</span>(roc_auc, accuracy)</span>
+<span id="cb42-176"><a href="#cb42-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-177"><a href="#cb42-177" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb42-178"><a href="#cb42-178" aria-hidden="true" tabindex="-1"></a>nnet_tuned <span class="ot">&lt;-</span> <span class="fu">tune_grid</span>(</span>
+<span id="cb42-179"><a href="#cb42-179" aria-hidden="true" tabindex="-1"></a>  nnet_wf,</span>
+<span id="cb42-180"><a href="#cb42-180" aria-hidden="true" tabindex="-1"></a>  <span class="at">resamples =</span> folds,</span>
+<span id="cb42-181"><a href="#cb42-181" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid      =</span> nnet_grid,</span>
+<span id="cb42-182"><a href="#cb42-182" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics   =</span> nnet_metrics,</span>
+<span id="cb42-183"><a href="#cb42-183" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Positive class "1" is the second factor level.</span></span>
+<span id="cb42-184"><a href="#cb42-184" aria-hidden="true" tabindex="-1"></a>  <span class="at">control   =</span> <span class="fu">control_grid</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">event_level =</span> <span class="st">"second"</span>)</span>
+<span id="cb42-185"><a href="#cb42-185" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-186"><a href="#cb42-186" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-187"><a href="#cb42-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-188"><a href="#cb42-188" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tuning results</span></span>
+<span id="cb42-189"><a href="#cb42-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-192"><a href="#cb42-192" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-193"><a href="#cb42-193" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune-plot</span></span>
+<span id="cb42-194"><a href="#cb42-194" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ROC-AUC across the MLP tuning grid (autoplot)."</span></span>
+<span id="cb42-195"><a href="#cb42-195" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
+<span id="cb42-196"><a href="#cb42-196" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
 <span id="cb42-197"><a href="#cb42-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-200"><a href="#cb42-200" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-201"><a href="#cb42-201" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune-table</span></span>
-<span id="cb42-202"><a href="#cb42-202" aria-hidden="true" tabindex="-1"></a><span class="fu">show_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>, <span class="at">n =</span> <span class="dv">5</span>)</span>
-<span id="cb42-203"><a href="#cb42-203" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-204"><a href="#cb42-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-205"><a href="#cb42-205" aria-hidden="true" tabindex="-1"></a><span class="fu">## Finalize and fit on the full training set</span></span>
-<span id="cb42-206"><a href="#cb42-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-209"><a href="#cb42-209" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-210"><a href="#cb42-210" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: finalize</span></span>
-<span id="cb42-211"><a href="#cb42-211" aria-hidden="true" tabindex="-1"></a>best_nnet <span class="ot">&lt;-</span> <span class="fu">select_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
-<span id="cb42-212"><a href="#cb42-212" aria-hidden="true" tabindex="-1"></a>best_nnet</span>
-<span id="cb42-213"><a href="#cb42-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-214"><a href="#cb42-214" aria-hidden="true" tabindex="-1"></a>final_nnet_wf <span class="ot">&lt;-</span> <span class="fu">finalize_workflow</span>(nnet_wf, best_nnet)</span>
-<span id="cb42-215"><a href="#cb42-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-216"><a href="#cb42-216" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb42-217"><a href="#cb42-217" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(final_nnet_wf, <span class="at">data =</span> train)</span>
-<span id="cb42-218"><a href="#cb42-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-219"><a href="#cb42-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-220"><a href="#cb42-220" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cross-validated performance</span></span>
-<span id="cb42-221"><a href="#cb42-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-224"><a href="#cb42-224" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-225"><a href="#cb42-225" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: cv-metrics</span></span>
-<span id="cb42-226"><a href="#cb42-226" aria-hidden="true" tabindex="-1"></a><span class="co"># nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee</span></span>
-<span id="cb42-227"><a href="#cb42-227" aria-hidden="true" tabindex="-1"></a><span class="co"># engine, add "epochs" to the join keys.</span></span>
-<span id="cb42-228"><a href="#cb42-228" aria-hidden="true" tabindex="-1"></a><span class="fu">collect_metrics</span>(nnet_tuned) <span class="sc">|&gt;</span></span>
-<span id="cb42-229"><a href="#cb42-229" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">semi_join</span>(best_nnet,</span>
-<span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a>                   <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"hidden_units"</span>, <span class="st">"penalty"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb42-231"><a href="#cb42-231" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(.metric, mean, std_err, n)</span>
-<span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-233"><a href="#cb42-233" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-234"><a href="#cb42-234" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb42-235"><a href="#cb42-235" aria-hidden="true" tabindex="-1"></a>Copy the <span class="in">`accuracy`</span> and <span class="in">`roc_auc`</span> <span class="in">`mean`</span> values into the results table on the</span>
-<span id="cb42-236"><a href="#cb42-236" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">master document</span><span class="co">](../index.qmd)</span>.</span>
-<span id="cb42-237"><a href="#cb42-237" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb42-238"><a href="#cb42-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-239"><a href="#cb42-239" aria-hidden="true" tabindex="-1"></a><span class="fu">### Confusion matrix</span></span>
-<span id="cb42-240"><a href="#cb42-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-243"><a href="#cb42-243" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-244"><a href="#cb42-244" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: confusion</span></span>
-<span id="cb42-245"><a href="#cb42-245" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Confusion matrix from out-of-fold CV predictions."</span></span>
-<span id="cb42-246"><a href="#cb42-246" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 5</span></span>
-<span id="cb42-247"><a href="#cb42-247" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
-<span id="cb42-248"><a href="#cb42-248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-249"><a href="#cb42-249" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="ot">&lt;-</span> <span class="fu">collect_predictions</span>(nnet_tuned, <span class="at">parameters =</span> best_nnet)</span>
-<span id="cb42-250"><a href="#cb42-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-251"><a href="#cb42-251" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="sc">|&gt;</span></span>
-<span id="cb42-252"><a href="#cb42-252" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> Survived, <span class="at">estimate =</span> .pred_class) <span class="sc">|&gt;</span></span>
-<span id="cb42-253"><a href="#cb42-253" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(<span class="at">type =</span> <span class="st">"heatmap"</span>) <span class="sc">+</span></span>
-<span id="cb42-254"><a href="#cb42-254" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net — CV confusion matrix"</span>)</span>
-<span id="cb42-255"><a href="#cb42-255" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-256"><a href="#cb42-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-257"><a href="#cb42-257" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variable importance</span></span>
-<span id="cb42-258"><a href="#cb42-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-259"><a href="#cb42-259" aria-hidden="true" tabindex="-1"></a>Neural nets don't expose importance natively. For an <span class="in">`nnet`</span> model <span class="in">`vip`</span> derives</span>
-<span id="cb42-260"><a href="#cb42-260" aria-hidden="true" tabindex="-1"></a>it from the trained connection weights (Garson's algorithm) — no shuffling or</span>
-<span id="cb42-261"><a href="#cb42-261" aria-hidden="true" tabindex="-1"></a>prediction wrapper needed, so it's robust in any render environment.</span>
-<span id="cb42-262"><a href="#cb42-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-265"><a href="#cb42-265" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-266"><a href="#cb42-266" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: vip</span></span>
-<span id="cb42-267"><a href="#cb42-267" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Connection-weight (Garson) importance for the MLP."</span></span>
-<span id="cb42-268"><a href="#cb42-268" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
-<span id="cb42-269"><a href="#cb42-269" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb42-270"><a href="#cb42-270" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb42-271"><a href="#cb42-271" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb42-272"><a href="#cb42-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-273"><a href="#cb42-273" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the underlying nnet engine object out of the fitted workflow and let vip</span></span>
-<span id="cb42-274"><a href="#cb42-274" aria-hidden="true" tabindex="-1"></a><span class="co"># read importance straight from the network weights.</span></span>
-<span id="cb42-275"><a href="#cb42-275" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="sc">|&gt;</span></span>
-<span id="cb42-276"><a href="#cb42-276" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_fit_engine</span>() <span class="sc">|&gt;</span></span>
-<span id="cb42-277"><a href="#cb42-277" aria-hidden="true" tabindex="-1"></a>  vip<span class="sc">::</span><span class="fu">vip</span>(<span class="at">num_features =</span> <span class="dv">15</span>) <span class="sc">+</span></span>
-<span id="cb42-278"><a href="#cb42-278" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net variable importance (Garson weights)"</span>) <span class="sc">+</span></span>
-<span id="cb42-279"><a href="#cb42-279" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme_minimal</span>()</span>
-<span id="cb42-280"><a href="#cb42-280" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-281"><a href="#cb42-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-282"><a href="#cb42-282" aria-hidden="true" tabindex="-1"></a>Even through a different lens, the same features carry the weight — <span class="in">`Title`</span>,</span>
-<span id="cb42-283"><a href="#cb42-283" aria-hidden="true" tabindex="-1"></a><span class="in">`Sex`</span>, class, <span class="in">`Fare`</span> — consistent with <span class="co">[</span><span class="ot">XGBoost</span><span class="co">](02-xgboost.qmd)</span> and the</span>
-<span id="cb42-284"><a href="#cb42-284" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Random Forest</span><span class="co">](03-random-forest.qmd)</span>.</span>
-<span id="cb42-285"><a href="#cb42-285" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-286"><a href="#cb42-286" aria-hidden="true" tabindex="-1"></a><span class="fu">## Save the fitted workflow</span></span>
-<span id="cb42-287"><a href="#cb42-287" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-290"><a href="#cb42-290" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb42-291"><a href="#cb42-291" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: save</span></span>
-<span id="cb42-292"><a href="#cb42-292" aria-hidden="true" tabindex="-1"></a><span class="co"># Project convention: the neural-net model saves to nnet_fit.rds.</span></span>
-<span id="cb42-293"><a href="#cb42-293" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(nnet_fit, <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>))</span>
-<span id="cb42-294"><a href="#cb42-294" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-295"><a href="#cb42-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-296"><a href="#cb42-296" aria-hidden="true" tabindex="-1"></a><span class="fu">## Submission</span></span>
-<span id="cb42-297"><a href="#cb42-297" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-298"><a href="#cb42-298" aria-hidden="true" tabindex="-1"></a>Generate this model's leaderboard CSV with the</span>
-<span id="cb42-299"><a href="#cb42-299" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">parameterized submission document</span><span class="co">](submission.qmd)</span>:</span>
+<span id="cb42-198"><a href="#cb42-198" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
+<span id="cb42-199"><a href="#cb42-199" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-200"><a href="#cb42-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-203"><a href="#cb42-203" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-204"><a href="#cb42-204" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tune-table</span></span>
+<span id="cb42-205"><a href="#cb42-205" aria-hidden="true" tabindex="-1"></a><span class="fu">show_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>, <span class="at">n =</span> <span class="dv">5</span>)</span>
+<span id="cb42-206"><a href="#cb42-206" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-207"><a href="#cb42-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-208"><a href="#cb42-208" aria-hidden="true" tabindex="-1"></a><span class="fu">## Finalize and fit on the full training set</span></span>
+<span id="cb42-209"><a href="#cb42-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-212"><a href="#cb42-212" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-213"><a href="#cb42-213" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: finalize</span></span>
+<span id="cb42-214"><a href="#cb42-214" aria-hidden="true" tabindex="-1"></a>best_nnet <span class="ot">&lt;-</span> <span class="fu">select_best</span>(nnet_tuned, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
+<span id="cb42-215"><a href="#cb42-215" aria-hidden="true" tabindex="-1"></a>best_nnet</span>
+<span id="cb42-216"><a href="#cb42-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-217"><a href="#cb42-217" aria-hidden="true" tabindex="-1"></a>final_nnet_wf <span class="ot">&lt;-</span> <span class="fu">finalize_workflow</span>(nnet_wf, best_nnet)</span>
+<span id="cb42-218"><a href="#cb42-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-219"><a href="#cb42-219" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb42-220"><a href="#cb42-220" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(final_nnet_wf, <span class="at">data =</span> train)</span>
+<span id="cb42-221"><a href="#cb42-221" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-222"><a href="#cb42-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-223"><a href="#cb42-223" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cross-validated performance</span></span>
+<span id="cb42-224"><a href="#cb42-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-227"><a href="#cb42-227" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-228"><a href="#cb42-228" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: cv-metrics</span></span>
+<span id="cb42-229"><a href="#cb42-229" aria-hidden="true" tabindex="-1"></a><span class="co"># nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee</span></span>
+<span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a><span class="co"># engine, add "epochs" to the join keys.</span></span>
+<span id="cb42-231"><a href="#cb42-231" aria-hidden="true" tabindex="-1"></a><span class="fu">collect_metrics</span>(nnet_tuned) <span class="sc">|&gt;</span></span>
+<span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(best_nnet,</span>
+<span id="cb42-233"><a href="#cb42-233" aria-hidden="true" tabindex="-1"></a>                   <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"hidden_units"</span>, <span class="st">"penalty"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb42-234"><a href="#cb42-234" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(.metric, mean, std_err, n)</span>
+<span id="cb42-235"><a href="#cb42-235" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-236"><a href="#cb42-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-237"><a href="#cb42-237" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb42-238"><a href="#cb42-238" aria-hidden="true" tabindex="-1"></a>Copy the <span class="in">`accuracy`</span> and <span class="in">`roc_auc`</span> <span class="in">`mean`</span> values into the results table on the</span>
+<span id="cb42-239"><a href="#cb42-239" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">master document</span><span class="co">](../index.qmd)</span>.</span>
+<span id="cb42-240"><a href="#cb42-240" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb42-241"><a href="#cb42-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-242"><a href="#cb42-242" aria-hidden="true" tabindex="-1"></a><span class="fu">### Confusion matrix</span></span>
+<span id="cb42-243"><a href="#cb42-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-246"><a href="#cb42-246" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-247"><a href="#cb42-247" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: confusion</span></span>
+<span id="cb42-248"><a href="#cb42-248" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Confusion matrix from out-of-fold CV predictions."</span></span>
+<span id="cb42-249"><a href="#cb42-249" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 5</span></span>
+<span id="cb42-250"><a href="#cb42-250" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
+<span id="cb42-251"><a href="#cb42-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-252"><a href="#cb42-252" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="ot">&lt;-</span> <span class="fu">collect_predictions</span>(nnet_tuned, <span class="at">parameters =</span> best_nnet)</span>
+<span id="cb42-253"><a href="#cb42-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-254"><a href="#cb42-254" aria-hidden="true" tabindex="-1"></a>nnet_cv_preds <span class="sc">|&gt;</span></span>
+<span id="cb42-255"><a href="#cb42-255" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> Survived, <span class="at">estimate =</span> .pred_class) <span class="sc">|&gt;</span></span>
+<span id="cb42-256"><a href="#cb42-256" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(<span class="at">type =</span> <span class="st">"heatmap"</span>) <span class="sc">+</span></span>
+<span id="cb42-257"><a href="#cb42-257" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net — CV confusion matrix"</span>)</span>
+<span id="cb42-258"><a href="#cb42-258" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-259"><a href="#cb42-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-260"><a href="#cb42-260" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variable importance</span></span>
+<span id="cb42-261"><a href="#cb42-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-262"><a href="#cb42-262" aria-hidden="true" tabindex="-1"></a>Neural nets don't expose importance natively. For an <span class="in">`nnet`</span> model <span class="in">`vip`</span> derives</span>
+<span id="cb42-263"><a href="#cb42-263" aria-hidden="true" tabindex="-1"></a>it from the trained connection weights (Garson's algorithm) — no shuffling or</span>
+<span id="cb42-264"><a href="#cb42-264" aria-hidden="true" tabindex="-1"></a>prediction wrapper needed, so it's robust in any render environment.</span>
+<span id="cb42-265"><a href="#cb42-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-268"><a href="#cb42-268" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-269"><a href="#cb42-269" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: vip</span></span>
+<span id="cb42-270"><a href="#cb42-270" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Connection-weight (Garson) importance for the MLP."</span></span>
+<span id="cb42-271"><a href="#cb42-271" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
+<span id="cb42-272"><a href="#cb42-272" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
+<span id="cb42-273"><a href="#cb42-273" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb42-274"><a href="#cb42-274" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb42-275"><a href="#cb42-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-276"><a href="#cb42-276" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the underlying nnet engine object out of the fitted workflow and let vip</span></span>
+<span id="cb42-277"><a href="#cb42-277" aria-hidden="true" tabindex="-1"></a><span class="co"># read importance straight from the network weights.</span></span>
+<span id="cb42-278"><a href="#cb42-278" aria-hidden="true" tabindex="-1"></a>nnet_fit <span class="sc">|&gt;</span></span>
+<span id="cb42-279"><a href="#cb42-279" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_fit_engine</span>() <span class="sc">|&gt;</span></span>
+<span id="cb42-280"><a href="#cb42-280" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vip</span>(<span class="at">num_features =</span> <span class="dv">15</span>) <span class="sc">+</span></span>
+<span id="cb42-281"><a href="#cb42-281" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Neural Net variable importance (Garson weights)"</span>) <span class="sc">+</span></span>
+<span id="cb42-282"><a href="#cb42-282" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb42-283"><a href="#cb42-283" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-284"><a href="#cb42-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-285"><a href="#cb42-285" aria-hidden="true" tabindex="-1"></a>Even through a different lens, the same features carry the weight — <span class="in">`Title`</span>,</span>
+<span id="cb42-286"><a href="#cb42-286" aria-hidden="true" tabindex="-1"></a><span class="in">`Sex`</span>, class, <span class="in">`Fare`</span> — consistent with <span class="co">[</span><span class="ot">XGBoost</span><span class="co">](02-xgboost.qmd)</span> and the</span>
+<span id="cb42-287"><a href="#cb42-287" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Random Forest</span><span class="co">](03-random-forest.qmd)</span>.</span>
+<span id="cb42-288"><a href="#cb42-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-289"><a href="#cb42-289" aria-hidden="true" tabindex="-1"></a><span class="fu">## Save the fitted workflow</span></span>
+<span id="cb42-290"><a href="#cb42-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-293"><a href="#cb42-293" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb42-294"><a href="#cb42-294" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: save</span></span>
+<span id="cb42-295"><a href="#cb42-295" aria-hidden="true" tabindex="-1"></a><span class="co"># Project convention: the neural-net model saves to nnet_fit.rds.</span></span>
+<span id="cb42-296"><a href="#cb42-296" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(nnet_fit, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>))</span>
+<span id="cb42-297"><a href="#cb42-297" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-298"><a href="#cb42-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-299"><a href="#cb42-299" aria-hidden="true" tabindex="-1"></a><span class="fu">## Submission</span></span>
 <span id="cb42-300"><a href="#cb42-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-301"><a href="#cb42-301" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
-<span id="cb42-302"><a href="#cb42-302" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span>
-<span id="cb42-303"><a href="#cb42-303" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb42-304"><a href="#cb42-304" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-305"><a href="#cb42-305" aria-hidden="true" tabindex="-1"></a>That loads <span class="in">`models/nnet_fit.rds`</span>, predicts on <span class="in">`data/raw/test.csv`</span>, writes</span>
-<span id="cb42-306"><a href="#cb42-306" aria-hidden="true" tabindex="-1"></a><span class="in">`models/submission_nnet.csv`</span>, and prints the exact <span class="in">`kaggle competitions submit`</span></span>
-<span id="cb42-307"><a href="#cb42-307" aria-hidden="true" tabindex="-1"></a>command. See the <span class="co">[</span><span class="ot">Kaggle setup guide</span><span class="co">](setup-kaggle.md)</span> for authentication.</span>
-<span id="cb42-308"><a href="#cb42-308" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-309"><a href="#cb42-309" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
-<span id="cb42-310"><a href="#cb42-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-311"><a href="#cb42-311" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>You've now fit all three families — compare their CV scores side by side in</span>
-<span id="cb42-312"><a href="#cb42-312" aria-hidden="true" tabindex="-1"></a>  the **[master results table](../index.qmd)**.</span>
-<span id="cb42-313"><a href="#cb42-313" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Revisit **[XGBoost](02-xgboost.qmd)** and the **[Random Forest](03-random-forest.qmd)**.</span>
-<span id="cb42-314"><a href="#cb42-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build the CSV with the **[Submission doc](submission.qmd)** and push it to the</span>
-<span id="cb42-315"><a href="#cb42-315" aria-hidden="true" tabindex="-1"></a>  leaderboard.</span>
-</code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb42-301"><a href="#cb42-301" aria-hidden="true" tabindex="-1"></a>Generate this model's leaderboard CSV with the</span>
+<span id="cb42-302"><a href="#cb42-302" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">parameterized submission document</span><span class="co">](submission.qmd)</span>:</span>
+<span id="cb42-303"><a href="#cb42-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-304"><a href="#cb42-304" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb42-305"><a href="#cb42-305" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span>
+<span id="cb42-306"><a href="#cb42-306" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-307"><a href="#cb42-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-308"><a href="#cb42-308" aria-hidden="true" tabindex="-1"></a>That loads <span class="in">`models/nnet_fit.rds`</span>, predicts on <span class="in">`data/raw/test.csv`</span>, writes</span>
+<span id="cb42-309"><a href="#cb42-309" aria-hidden="true" tabindex="-1"></a><span class="in">`models/submission_nnet.csv`</span>, and prints the exact <span class="in">`kaggle competitions submit`</span></span>
+<span id="cb42-310"><a href="#cb42-310" aria-hidden="true" tabindex="-1"></a>command. See the <span class="co">[</span><span class="ot">Kaggle setup guide</span><span class="co">](setup-kaggle.md)</span> for authentication.</span>
+<span id="cb42-311"><a href="#cb42-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-312"><a href="#cb42-312" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
+<span id="cb42-313"><a href="#cb42-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-314"><a href="#cb42-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>You've now fit all three families — compare their CV scores side by side in</span>
+<span id="cb42-315"><a href="#cb42-315" aria-hidden="true" tabindex="-1"></a>  the **[master results table](../index.qmd)**.</span>
+<span id="cb42-316"><a href="#cb42-316" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Revisit **[XGBoost](02-xgboost.qmd)** and the **[Random Forest](03-random-forest.qmd)**.</span>
+<span id="cb42-317"><a href="#cb42-317" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build the CSV with the **[Submission doc](submission.qmd)** and push it to the</span>
+<span id="cb42-318"><a href="#cb42-318" aria-hidden="true" tabindex="-1"></a>  leaderboard.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
