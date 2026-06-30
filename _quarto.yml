@@ -1,6 +1,9 @@
 project:
   type: website
   output-dir: _site
+  # Generate the engineered data/processed/{train,test}.csv before rendering,
+  # so every model document (and CI) has the features it needs.
+  pre-render: R/03_engineer.R
   render:
     - "*.qmd"
     - "docs/*.qmd"
@@ -32,6 +35,8 @@ website:
             href: docs/03-random-forest.qmd
           - text: "Neural Net"
             href: docs/04-neural-net.qmd
+          - text: "Stacked Ensemble"
+            href: docs/05-stack.qmd
       - text: "Submission"
         href: docs/submission.qmd
       - text: "Kaggle Setup"

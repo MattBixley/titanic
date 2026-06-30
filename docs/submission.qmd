@@ -2,7 +2,7 @@
 title: "Building a Kaggle Submission"
 subtitle: "One parameterized document, three models, leaderboard-ready CSVs"
 params:
-  model: "xgboost"
+  model: "nnet"
 execute:
   freeze: false   # parameterized: must re-run per -P model:, never serve a cached model
 ---
@@ -63,7 +63,8 @@ requested_model <- params$model
 model_paths <- c(
   xgboost = here::here("models", "xgboost_fit.rds"),
   rf      = here::here("models", "rf_fit.rds"),
-  nnet    = here::here("models", "nnet_fit.rds")
+  nnet    = here::here("models", "nnet_fit.rds"),
+  stack   = here::here("models", "stack_fit.rds")
 )
 
 # Fail loudly and helpfully if someone passes an unknown model.
@@ -99,13 +100,14 @@ We are building a submission for **`r requested_model`**.
 
 ```{r}
 #| label: load
-# The saved object is a fully fitted workflow (recipe + model), so it knows how
-# to preprocess raw test data exactly as it was trained.
+# The saved object is a fully fitted workflow (or a stacks ensemble) that knows
+# how to preprocess the engineered test data exactly as it was trained.
 model_fit <- readRDS(fit_path)
 
-# The test set has the same columns as train EXCEPT Survived — that's what we
-# predict. PassengerId is what Kaggle keys submissions on.
-test <- read_csv(here("data", "raw", "test.csv"))
+# Use the PROCESSED test set (engineered features added in R/03_engineer.R), so
+# the columns match what every model/recipe expects. PassengerId keys the
+# Kaggle submission.
+test <- read_csv(here("data", "processed", "test.csv"))
 
 glimpse(test)
 ```

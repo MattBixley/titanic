@@ -48,7 +48,7 @@ library(vip)      # variable importance plots
 #| label: load-data
 #| message: false
 
-train <- read_csv(here("data", "raw", "train.csv")) |>
+train <- read_csv(here("data", "processed", "train.csv")) |>
   mutate(Survived = factor(Survived, levels = c("0", "1")))
 ```
 
@@ -74,8 +74,7 @@ recipe and append `step_normalize()`.
 # Extend the shared recipe with normalization of all numeric predictors. This
 # step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns
 # are normalized too (standard practice for MLPs).
-nnet_recipe <- make_recipe(train) |>
-  step_normalize(all_numeric_predictors())
+nnet_recipe <- make_recipe(train)
 
 nnet_recipe
 ```
@@ -134,19 +133,24 @@ nnet_wf <- workflow() |>
 ```{r}
 #| label: resamples
 set.seed(42)
-folds <- vfold_cv(train, v = 5, strata = Survived)
+folds <- vfold_cv(train, v = 10, strata = Survived)
 ```
 
 ```{r}
 #| label: grid
-# Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate
-# weight decay. (nnet has no epochs hyperparameter — it iterates to convergence.)
+# The recipe now adds PCA internally, so num_comp is a tunable parameter too.
+# Bake a small recipe to give finalize() the predictor columns it needs to set
+# sensible ranges (e.g. hidden_units).
+preds <- prep(make_recipe(train, num_comp = 2)) |>
+  bake(new_data = NULL) |>
+  select(-Survived, -PassengerId)
+
+nnet_params <- extract_parameter_set_dials(nnet_wf) |>
+  finalize(preds) |>
+  update(num_comp = num_comp(range = c(2L, 10L)))
+
 set.seed(42)
-nnet_grid <- grid_space_filling(
-  hidden_units(range = c(2L, 16L)),
-  penalty(range = c(-4, -0.5)),     # log10 scale → 1e-4 to ~0.3
-  size = 12
-)
+nnet_grid <- grid_space_filling(nnet_params, size = 18)
 ```
 
 ```{r}
@@ -163,8 +167,13 @@ nnet_tuned <- tune_grid(
   grid      = nnet_grid,
   metrics   = nnet_metrics,
   # Positive class "1" is the second factor level.
-  control   = control_grid(save_pred = TRUE, event_level = "second")
+  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = "second")
 )
+```
+
+```{r}
+#| label: save-res
+saveRDS(nnet_tuned, here("models", "nnet_res.rds"))
 ```
 
 ### Tuning results
@@ -200,11 +209,10 @@ nnet_fit <- fit(final_nnet_wf, data = train)
 
 ```{r}
 #| label: cv-metrics
-# nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee
-# engine, add "epochs" to the join keys.
+# Join on whatever parameters best_nnet carries (hidden_units, penalty, num_comp)
+# so this stays correct as the tuned parameter set changes.
 collect_metrics(nnet_tuned) |>
-  semi_join(best_nnet,
-                   by = c("hidden_units", "penalty")) |>
+  semi_join(best_nnet, by = names(best_nnet)) |>
   select(.metric, mean, std_err, n)
 ```
 

@@ -39,7 +39,7 @@ library(ranger)       # the engine
 #| label: load-data
 #| message: false
 
-train <- read_csv(here("data", "raw", "train.csv")) |>
+train <- read_csv(here("data", "processed", "train.csv")) |>
   mutate(Survived = factor(Survived, levels = c("0", "1")))
 ```
 
@@ -61,13 +61,12 @@ We set `importance = "permutation"` so we can plot variable importance later.
 
 ```{r}
 #| label: spec
-rf_spec <- rand_forest(
-  mtry  = tune(),
-  min_n = tune(),
-  trees = 1000
-) |>
-  set_engine("ranger", importance = "permutation") |>
-  set_mode("classification")
+  rf_spec <- rand_forest(mtry = tune(),
+                         min_n = tune(),
+                         trees = 1000) |>
+    set_engine("ranger", importance = "permutation") |>
+    set_mode("classification")
+
 
 rf_spec
 ```
@@ -86,21 +85,24 @@ rf_wf <- workflow() |>
 ```{r}
 #| label: resamples
 set.seed(42)
-folds <- vfold_cv(train, v = 5, strata = Survived)
+folds <- vfold_cv(train, v = 10, strata = Survived)
 ```
 
 ```{r}
 #| label: grid
 # mtry's upper bound depends on the number of predictors AFTER the recipe runs,
-# so we finalize() its range against the prepped predictor set rather than
-# guessing. min_n we give a plain range.
-rf_params <- rf_wf |>
-  extract_parameter_set_dials() |>
-  finalize(x = make_recipe(train) |> prep() |> bake(new_data = NULL) |>
-             select(-Survived))
+# so we finalize() its range against a prepped predictor set rather than
+# guessing. num_comp (PCA) is tuned over a sensible range.
+preds <- prep(make_recipe(train, num_comp = 2)) |>
+  bake(new_data = NULL) |>
+  select(-Survived, -PassengerId)
+
+rf_params <- extract_parameter_set_dials(rf_wf) |>
+  finalize(preds) |>
+  update(num_comp = num_comp(range = c(2L, 10L)))
 
 set.seed(42)
-rf_grid <- grid_latin_hypercube(rf_params, size = 20)
+rf_grid <- grid_space_filling(rf_params, size = 18)
 ```
 
 ```{r}
@@ -117,8 +119,13 @@ rf_tuned <- tune_grid(
   grid      = rf_grid,
   metrics   = rf_metrics,
   # Positive class "1" is the second factor level.
-  control   = control_grid(save_pred = TRUE, event_level = "second")
+  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = "second")
 )
+```
+
+```{r}
+#| label: save-res
+saveRDS(rf_tuned, here("models", "rf_res.rds"))
 ```
 
 ### Tuning results
@@ -155,7 +162,7 @@ rf_fit <- fit(final_rf_wf, data = train)
 ```{r}
 #| label: cv-metrics
 collect_metrics(rf_tuned) |>
-  semi_join(best_rf, by = c("mtry", "min_n")) |>
+  semi_join(best_rf, by = names(best_rf)) |>
   select(.metric, mean, std_err, n)
 ```
 

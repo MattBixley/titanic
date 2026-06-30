@@ -1,0 +1,122 @@
+---
+title: "Model 4 — Stacked Ensemble"
+subtitle: "Blending XGBoost + Random Forest + Neural Net with stacks"
+---
+
+> **Where we are:** The capstone of the
+> [Titanic — Tidymodels Tour](../index.qmd). The three model documents
+> ([XGBoost](02-xgboost.qmd), [Random Forest](03-random-forest.qmd),
+> [Neural Net](04-neural-net.qmd)) each saved their *tuning results* (every
+> candidate model and its out-of-fold predictions) to `models/<model>_res.rds`.
+> Here we feed all of those candidates to [`stacks`](https://stacks.tidymodels.org/),
+> which learns a regularised linear blend over them — usually beating any single
+> model, because the members make different mistakes.
+
+## Why stack?
+
+Each model family has a different inductive bias: gradient boosting chases
+interactions, the random forest averages decorrelated trees, the neural net
+learns a smooth function of the principal components. A stack fits a
+*meta-learner* (penalised logistic regression) on the members' out-of-fold
+predictions, keeping only the candidates that pull their weight.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))   # tidyverse + tidymodels, seed = 42
+
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(stacks)
+# The member engines must be attached so fit_members() can refit them.
+library(ranger)
+library(xgboost)
+library(nnet)
+```
+
+## Load the tuning results
+
+```{r}
+#| label: load-candidates
+# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,
+# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.
+xgb_res  <- readRDS(here("models", "xgboost_res.rds"))
+rf_res   <- readRDS(here("models", "rf_res.rds"))
+nnet_res <- readRDS(here("models", "nnet_res.rds"))
+```
+
+## Build, blend, and fit the ensemble
+
+```{r}
+#| label: build-stack
+#| message: false
+#| warning: false
+
+set.seed(42)
+titanic_stack <- stacks() |>
+  add_candidates(xgb_res) |>
+  add_candidates(rf_res) |>
+  add_candidates(nnet_res) |>
+  blend_predictions() |>     # LASSO over candidates -> keeps the useful ones
+  fit_members()              # refit the retained members on all training data
+
+titanic_stack
+```
+
+### Which members survived the blend?
+
+```{r}
+#| label: weights
+#| fig-cap: "Blended stacking coefficients — the members the meta-learner kept."
+#| fig-width: 8
+#| fig-height: 5
+autoplot(titanic_stack, type = "weights")
+```
+
+The neural net typically earns the largest single weight, with several boosted
+trees and a random forest rounding out the blend — different biases, combined.
+
+## Save the fitted ensemble
+
+```{r}
+#| label: save
+saveRDS(titanic_stack, here("models", "stack_fit.rds"))
+```
+
+## Build the Kaggle submission
+
+```{r}
+#| label: submit
+test <- read_csv(here("data", "processed", "test.csv"), show_col_types = FALSE)
+
+stack_pred <- predict(titanic_stack, new_data = test, type = "class")
+
+submission <- tibble(
+  PassengerId = test$PassengerId,
+  Survived    = as.integer(as.character(stack_pred$.pred_class))
+)
+write_csv(submission, here("models", "submission_stack.csv"))
+
+submission |> count(Survived) |> mutate(prop = n / sum(n))
+```
+
+Upload it the same way as any other model:
+
+```bash
+kaggle competitions submit -c titanic -f models/submission_stack.csv \
+  -m "stacked ensemble (xgb + rf + nnet) via stacks"
+```
+
+## Next steps
+
+- The parameterized [submission doc](submission.qmd) also accepts
+  `-P model:stack`.
+- Compare the stack's leaderboard score against the individual models on the
+  [master document](../index.qmd) — does the blend actually win on the held-out
+  Kaggle test set, or only in cross-validation?
+- See the [Kaggle setup guide](setup-kaggle.md) for authentication.
