@@ -3,8 +3,8 @@
 .RData
 .Ruserdata
 
-# Data: downloaded locally from Kaggle, not committed (keep .gitkeep tracked)
-data/raw/*.csv
+# Data: the public Titanic train/test CSVs ARE committed so CI and
+# collaborators can render without the Kaggle download step.
 
 # Model artefacts and submissions
 models/*.rds
