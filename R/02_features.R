@@ -87,7 +87,19 @@ make_recipe <- function(data) {
 
     # --- Cleanup ------------------------------------------------------------
     # Remove zero-variance predictors created by dummying.
-    step_zv(all_predictors())
+    step_zv(all_predictors()) %>%
+
+    # --- Principal components -----------------------------------------------
+    # Add the top 4 principal components of the (standardised) predictor space
+    # as EXTRA features. PCA requires comparable scales, so normalise first;
+    # keep_original_cols = TRUE means the originals stay AND PC1..PC4 are
+    # appended (the models then see both). step_normalize also benefits the
+    # neural net, which is not scale-invariant.
+    step_normalize(all_numeric_predictors()) %>%
+    step_pca(all_numeric_predictors(),
+             num_comp          = 4,
+             keep_original_cols = TRUE,
+             prefix            = "PC")
 
   rec
 }
