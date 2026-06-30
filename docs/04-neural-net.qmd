@@ -35,8 +35,11 @@ so `nnet` is the engine we publish.
 #| warning: false
 
 source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
-source(here::here("R", "02_features.R"))   # make_recipe(data)
+source(here("R", "02_features.R"))   # make_recipe(data)
 
+library(tidyverse)
+library(tidymodels)
+library(here)
 library(nnet)     # the MLP engine (base R, no native deps)
 library(vip)      # variable importance plots
 ```
@@ -45,8 +48,8 @@ library(vip)      # variable importance plots
 #| label: load-data
 #| message: false
 
-train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
-  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+train <- read_csv(here("data", "raw", "train.csv")) |>
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
 ```
 
 ```{r}
@@ -55,7 +58,7 @@ train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
 # is tiny, so this is plenty fast and keeps results deterministic (no worker
 # package-loading surprises).
 if (exists("cl")) try(parallel::stopCluster(cl), silent = TRUE)
-foreach::registerDoSEQ()
+registerDoSEQ()
 ```
 
 ## The recipe — with normalization
@@ -200,9 +203,9 @@ nnet_fit <- fit(final_nnet_wf, data = train)
 # nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee
 # engine, add "epochs" to the join keys.
 collect_metrics(nnet_tuned) |>
-  dplyr::semi_join(best_nnet,
+  semi_join(best_nnet,
                    by = c("hidden_units", "penalty")) |>
-  dplyr::select(.metric, mean, std_err, n)
+  select(.metric, mean, std_err, n)
 ```
 
 ::: {.callout-tip}
@@ -223,7 +226,7 @@ nnet_cv_preds <- collect_predictions(nnet_tuned, parameters = best_nnet)
 nnet_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
-  ggplot2::labs(title = "Neural Net — CV confusion matrix")
+  labs(title = "Neural Net — CV confusion matrix")
 ```
 
 ### Variable importance
@@ -244,9 +247,9 @@ prediction wrapper needed, so it's robust in any render environment.
 # read importance straight from the network weights.
 nnet_fit |>
   extract_fit_engine() |>
-  vip::vip(num_features = 15) +
-  ggplot2::labs(title = "Neural Net variable importance (Garson weights)") +
-  ggplot2::theme_minimal()
+  vip(num_features = 15) +
+  labs(title = "Neural Net variable importance (Garson weights)") +
+  theme_minimal()
 ```
 
 Even through a different lens, the same features carry the weight — `Title`,
@@ -258,7 +261,7 @@ Even through a different lens, the same features carry the weight — `Title`,
 ```{r}
 #| label: save
 # Project convention: the neural-net model saves to nnet_fit.rds.
-saveRDS(nnet_fit, file = here::here("models", "nnet_fit.rds"))
+saveRDS(nnet_fit, file = here("models", "nnet_fit.rds"))
 ```
 
 ## Submission

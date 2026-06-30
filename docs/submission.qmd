@@ -46,7 +46,9 @@ exists.
 # We need the tidymodels stack to load the saved workflow and call predict().
 # 00_setup.R also sets paths and the seed.
 source(here::here("R", "00_setup.R"))
-library(readr)
+library(tidyverse)
+library(tidymodels)
+library(here)
 ```
 
 ## Resolve and validate the requested model
@@ -103,9 +105,9 @@ model_fit <- readRDS(fit_path)
 
 # The test set has the same columns as train EXCEPT Survived — that's what we
 # predict. PassengerId is what Kaggle keys submissions on.
-test <- readr::read_csv(here::here("data", "raw", "test.csv"))
+test <- read_csv(here("data", "raw", "test.csv"))
 
-dplyr::glimpse(test)
+glimpse(test)
 ```
 
 ## Predict and assemble the submission
@@ -119,7 +121,7 @@ preds <- predict(model_fit, new_data = test, type = "class")
 # Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived
 # as 0/1 integers. .pred_class is a factor ("0"/"1"); convert via character so
 # we don't accidentally get factor codes (1/2).
-submission <- tibble::tibble(
+submission <- tibble(
   PassengerId = test$PassengerId,
   Survived    = as.integer(as.character(preds$.pred_class))
 )
@@ -138,9 +140,9 @@ head(submission, 10)
 
 ```{r}
 #| label: write
-out_path <- here::here("models", paste0("submission_", requested_model, ".csv"))
+out_path <- here("models", paste0("submission_", requested_model, ".csv"))
 
-readr::write_csv(submission, out_path)
+write_csv(submission, out_path)
 
 message("Wrote ", nrow(submission), " predictions to: ", out_path)
 ```
@@ -151,8 +153,8 @@ A quick summary of the predicted survival split (a sanity check against the
 ```{r}
 #| label: summary
 submission |>
-  dplyr::count(Survived) |>
-  dplyr::mutate(prop = n / sum(n))
+  count(Survived) |>
+  mutate(prop = n / sum(n))
 ```
 
 ## Submit to Kaggle

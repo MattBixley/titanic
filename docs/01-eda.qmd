@@ -21,9 +21,15 @@ subtitle: "Looking before we leap — the patterns that motivate our features"
 # defines path_* helpers, and registers the parallel backend.
 source(here::here("R", "00_setup.R"))
 
+# Attach the libraries whose functions are used bare throughout this doc.
+library(tidyverse)   # dplyr, ggplot2, readr, stringr, tidyr, purrr, forcats, etc.
+library(tidymodels)  # recipes and friends for the shared feature recipe
+library(here)        # here() for project-relative paths
+
 # A couple of EDA-only helpers.
 library(skimr)   # skim() — richer than summary()
 library(naniar)  # missingness visualisation (optional but lovely)
+library(scales)  # percent()/dollar() axis + label formatting (not attached by tidyverse)
 ```
 
 ```{r}
@@ -32,14 +38,14 @@ library(naniar)  # missingness visualisation (optional but lovely)
 
 # Read the training data. Only the training set has the Survived label, so all
 # exploratory analysis happens here.
-train <- readr::read_csv(here::here("data", "raw", "train.csv"))
+train <- read_csv(here("data", "raw", "train.csv"))
 
 # Survived is the outcome. Treat it as a factor with explicit levels.
 # Convention for the whole project: levels c("0", "1"), positive class = "1".
 train <- train |>
-  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
 
-dplyr::glimpse(train)
+glimpse(train)
 ```
 
 ## First look: structure and missingness
@@ -49,7 +55,7 @@ dplyr::glimpse(train)
 
 # skim() gives per-type summaries: completeness, mean/sd for numerics,
 # top counts for characters. The `complete_rate` column is the one to watch.
-skimr::skim(train)
+skim(train)
 ```
 
 The headline structural facts:
@@ -69,21 +75,21 @@ The headline structural facts:
 
 # A quick ggplot of missingness so we can *see* what skim told us.
 train |>
-  dplyr::summarise(dplyr::across(everything(), ~ mean(is.na(.x)))) |>
-  tidyr::pivot_longer(everything(),
+  summarise(across(everything(), ~ mean(is.na(.x)))) |>
+  pivot_longer(everything(),
                       names_to = "variable", values_to = "pct_missing") |>
-  dplyr::filter(pct_missing > 0) |>
-  ggplot2::ggplot(ggplot2::aes(x = reorder(variable, pct_missing),
+  filter(pct_missing > 0) |>
+  ggplot(aes(x = reorder(variable, pct_missing),
                                y = pct_missing)) +
-  ggplot2::geom_col(fill = "steelblue") +
-  ggplot2::geom_text(ggplot2::aes(label = scales::percent(pct_missing, accuracy = 1)),
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = percent(pct_missing, accuracy = 1)),
                      hjust = -0.1, size = 3.5) +
-  ggplot2::scale_y_continuous(labels = scales::percent,
-                              expand = ggplot2::expansion(mult = c(0, 0.15))) +
-  ggplot2::coord_flip() +
-  ggplot2::labs(title = "Missingness by column",
+  scale_y_continuous(labels = percent,
+                              expand = expansion(mult = c(0, 0.15))) +
+  coord_flip() +
+  labs(title = "Missingness by column",
                 x = NULL, y = "Missing") +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 The overall survival rate is our **base rate** — the number to beat with any
@@ -92,8 +98,8 @@ model:
 ```{r}
 #| label: base-rate
 train |>
-  dplyr::count(Survived) |>
-  dplyr::mutate(prop = n / sum(n))
+  count(Survived) |>
+  mutate(prop = n / sum(n))
 ```
 
 About **38%** survived. A "predict everyone died" baseline would therefore score
@@ -110,18 +116,18 @@ About **38%** survived. A "predict everyone died" baseline would therefore score
 #| fig-height: 4
 
 train |>
-  dplyr::group_by(Sex) |>
-  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n()) |>
-  ggplot2::ggplot(ggplot2::aes(x = Sex, y = survival_rate, fill = Sex)) +
-  ggplot2::geom_col(width = 0.6) +
-  ggplot2::geom_text(ggplot2::aes(label = scales::percent(survival_rate, accuracy = 1)),
+  group_by(Sex) |>
+  summarise(survival_rate = mean(Survived == "1"), n = n()) |>
+  ggplot(aes(x = Sex, y = survival_rate, fill = Sex)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = percent(survival_rate, accuracy = 1)),
                      vjust = -0.4) +
-  ggplot2::scale_y_continuous(labels = scales::percent,
+  scale_y_continuous(labels = percent,
                               limits = c(0, 1)) +
-  ggplot2::labs(title = "\"Women and children first\"",
+  labs(title = "\"Women and children first\"",
                 x = NULL, y = "Survival rate") +
-  ggplot2::theme_minimal() +
-  ggplot2::theme(legend.position = "none")
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 **~74% of women survived vs ~19% of men.** `Sex` is the dominant predictor —
@@ -136,18 +142,18 @@ any model that ignores it is leaving the table.
 #| fig-height: 4
 
 train |>
-  dplyr::mutate(Pclass = factor(Pclass)) |>
-  dplyr::group_by(Pclass) |>
-  dplyr::summarise(survival_rate = mean(Survived == "1")) |>
-  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = survival_rate, fill = Pclass)) +
-  ggplot2::geom_col(width = 0.6) +
-  ggplot2::geom_text(ggplot2::aes(label = scales::percent(survival_rate, accuracy = 1)),
+  mutate(Pclass = factor(Pclass)) |>
+  group_by(Pclass) |>
+  summarise(survival_rate = mean(Survived == "1")) |>
+  ggplot(aes(x = Pclass, y = survival_rate, fill = Pclass)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = percent(survival_rate, accuracy = 1)),
                      vjust = -0.4) +
-  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  ggplot2::labs(title = "Class mattered",
+  scale_y_continuous(labels = percent, limits = c(0, 1)) +
+  labs(title = "Class mattered",
                 x = "Passenger class", y = "Survival rate") +
-  ggplot2::theme_minimal() +
-  ggplot2::theme(legend.position = "none")
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 A clear gradient: **1st class ~63%, 2nd ~47%, 3rd ~24%.** Class is a proxy for
@@ -162,15 +168,15 @@ deck location, wealth, and access to lifeboats.
 #| fig-height: 4
 
 train |>
-  dplyr::mutate(Pclass = factor(Pclass)) |>
-  dplyr::group_by(Sex, Pclass) |>
-  dplyr::summarise(survival_rate = mean(Survived == "1"), .groups = "drop") |>
-  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = survival_rate, fill = Sex)) +
-  ggplot2::geom_col(position = "dodge", width = 0.7) +
-  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  ggplot2::labs(title = "Sex × class interaction",
+  mutate(Pclass = factor(Pclass)) |>
+  group_by(Sex, Pclass) |>
+  summarise(survival_rate = mean(Survived == "1"), .groups = "drop") |>
+  ggplot(aes(x = Pclass, y = survival_rate, fill = Sex)) +
+  geom_col(position = "dodge", width = 0.7) +
+  scale_y_continuous(labels = percent, limits = c(0, 1)) +
+  labs(title = "Sex × class interaction",
                 x = "Passenger class", y = "Survival rate") +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 First-class women survived almost universally; third-class men almost never.
@@ -189,13 +195,13 @@ helps to have rich, normalized features.
 #| warning: false
 
 train |>
-  ggplot2::ggplot(ggplot2::aes(x = Age, fill = Survived)) +
-  ggplot2::geom_histogram(binwidth = 5, position = "identity", alpha = 0.6) +
-  ggplot2::scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
+  ggplot(aes(x = Age, fill = Survived)) +
+  geom_histogram(binwidth = 5, position = "identity", alpha = 0.6) +
+  scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
                              labels = c("Died", "Survived")) +
-  ggplot2::labs(title = "Age distribution by outcome",
+  labs(title = "Age distribution by outcome",
                 x = "Age (years)", y = "Count", fill = NULL) +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 ```{r}
@@ -206,13 +212,13 @@ train |>
 #| warning: false
 
 train |>
-  ggplot2::ggplot(ggplot2::aes(x = Age, fill = Survived)) +
-  ggplot2::geom_density(alpha = 0.5) +
-  ggplot2::scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
+  ggplot(aes(x = Age, fill = Survived)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
                              labels = c("Died", "Survived")) +
-  ggplot2::labs(title = "Age density by outcome",
+  labs(title = "Age density by outcome",
                 x = "Age (years)", y = "Density", fill = NULL) +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 Children (roughly under 10) survived at a higher rate — the "and children"
@@ -229,14 +235,14 @@ is essential; a median or bagged-tree imputation keeps these rows in play.
 #| warning: false
 
 train |>
-  dplyr::mutate(Pclass = factor(Pclass)) |>
-  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = Fare, fill = Pclass)) +
-  ggplot2::geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +
-  ggplot2::scale_y_log10(labels = scales::dollar) +
-  ggplot2::labs(title = "Fare by passenger class (log scale)",
+  mutate(Pclass = factor(Pclass)) |>
+  ggplot(aes(x = Pclass, y = Fare, fill = Pclass)) +
+  geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +
+  scale_y_log10(labels = dollar) +
+  labs(title = "Fare by passenger class (log scale)",
                 x = "Passenger class", y = "Fare (log10)") +
-  ggplot2::theme_minimal() +
-  ggplot2::theme(legend.position = "none")
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 `Fare` is right-skewed and strongly tied to class — a candidate for a **log
@@ -261,20 +267,20 @@ survival odds.
 #| fig-height: 4
 
 train |>
-  dplyr::mutate(FamilySize = SibSp + Parch + 1) |>
-  dplyr::group_by(FamilySize) |>
-  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n(),
+  mutate(FamilySize = SibSp + Parch + 1) |>
+  group_by(FamilySize) |>
+  summarise(survival_rate = mean(Survived == "1"), n = n(),
                    .groups = "drop") |>
-  ggplot2::ggplot(ggplot2::aes(x = FamilySize, y = survival_rate)) +
-  ggplot2::geom_col(ggplot2::aes(fill = n), width = 0.7) +
-  ggplot2::geom_text(ggplot2::aes(label = n), vjust = -0.4, size = 3) +
-  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  ggplot2::scale_fill_viridis_c(name = "n passengers") +
-  ggplot2::scale_x_continuous(breaks = 1:11) +
-  ggplot2::labs(title = "Survival by family size",
+  ggplot(aes(x = FamilySize, y = survival_rate)) +
+  geom_col(aes(fill = n), width = 0.7) +
+  geom_text(aes(label = n), vjust = -0.4, size = 3) +
+  scale_y_continuous(labels = percent, limits = c(0, 1)) +
+  scale_fill_viridis_c(name = "n passengers") +
+  scale_x_continuous(breaks = 1:11) +
+  labs(title = "Survival by family size",
                 subtitle = "Solo travellers and large families did worst",
                 x = "Family size (SibSp + Parch + 1)", y = "Survival rate") +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 A clear "Goldilocks" pattern: **family size 2–4 survived best**, while solo
@@ -296,28 +302,28 @@ than adult men.
 
 train |>
   # Pull the title: the word ending in "." after the comma in the Name field.
-  dplyr::mutate(
-    Title = stringr::str_extract(Name, "(?<=, )[A-Za-z]+(?=\\.)")
+  mutate(
+    Title = str_extract(Name, "(?<=, )[A-Za-z]+(?=\\.)")
   ) |>
   # Collapse the long tail of rare titles so the plot (and later the model)
   # is not dominated by singletons.
-  dplyr::add_count(Title) |>
-  dplyr::mutate(Title = dplyr::if_else(n < 10, "Rare", Title)) |>
-  dplyr::group_by(Title) |>
-  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n(),
+  add_count(Title) |>
+  mutate(Title = if_else(n < 10, "Rare", Title)) |>
+  group_by(Title) |>
+  summarise(survival_rate = mean(Survived == "1"), n = n(),
                    .groups = "drop") |>
-  ggplot2::ggplot(ggplot2::aes(x = reorder(Title, survival_rate),
+  ggplot(aes(x = reorder(Title, survival_rate),
                                y = survival_rate)) +
-  ggplot2::geom_col(ggplot2::aes(fill = n), width = 0.7) +
-  ggplot2::geom_text(ggplot2::aes(label = n), hjust = -0.1, size = 3) +
-  ggplot2::scale_y_continuous(labels = scales::percent,
+  geom_col(aes(fill = n), width = 0.7) +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  scale_y_continuous(labels = percent,
                               limits = c(0, 1.05),
-                              expand = ggplot2::expansion(mult = c(0, 0.05))) +
-  ggplot2::scale_fill_viridis_c(name = "n passengers") +
-  ggplot2::coord_flip() +
-  ggplot2::labs(title = "Survival by title",
+                              expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_viridis_c(name = "n passengers") +
+  coord_flip() +
+  labs(title = "Survival by title",
                 x = NULL, y = "Survival rate") +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 `Mrs`/`Miss` survived at high rates, `Master` (boys) noticeably better than

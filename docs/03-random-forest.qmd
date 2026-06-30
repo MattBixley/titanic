@@ -28,16 +28,19 @@ for **permutation** importance.
 source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
 source(here::here("R", "02_features.R"))   # make_recipe(data)
 
-library(ranger)   # the engine
-library(vip)      # variable importance plots
+library(tidyverse)    # dplyr, ggplot2, readr, etc.
+library(tidymodels)   # recipes, parsnip, workflows, tune, yardstick, rsample, dials
+library(here)         # project-root-relative paths
+library(vip)          # variable importance plots
+library(ranger)       # the engine
 ```
 
 ```{r}
 #| label: load-data
 #| message: false
 
-train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
-  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+train <- read_csv(here("data", "raw", "train.csv")) |>
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
 ```
 
 ## The recipe
@@ -94,7 +97,7 @@ folds <- vfold_cv(train, v = 5, strata = Survived)
 rf_params <- rf_wf |>
   extract_parameter_set_dials() |>
   finalize(x = make_recipe(train) |> prep() |> bake(new_data = NULL) |>
-             dplyr::select(-Survived))
+             select(-Survived))
 
 set.seed(42)
 rf_grid <- grid_latin_hypercube(rf_params, size = 20)
@@ -152,8 +155,8 @@ rf_fit <- fit(final_rf_wf, data = train)
 ```{r}
 #| label: cv-metrics
 collect_metrics(rf_tuned) |>
-  dplyr::semi_join(best_rf, by = c("mtry", "min_n")) |>
-  dplyr::select(.metric, mean, std_err, n)
+  semi_join(best_rf, by = c("mtry", "min_n")) |>
+  select(.metric, mean, std_err, n)
 ```
 
 ::: {.callout-tip}
@@ -174,7 +177,7 @@ rf_cv_preds <- collect_predictions(rf_tuned, parameters = best_rf)
 rf_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
-  ggplot2::labs(title = "Random Forest — CV confusion matrix")
+  labs(title = "Random Forest — CV confusion matrix")
 ```
 
 ### Variable importance
@@ -187,10 +190,10 @@ rf_cv_preds |>
 
 rf_fit |>
   extract_fit_parsnip() |>
-  vip::vip(num_features = 15, geom = "col",
-           aesthetics = list(fill = "forestgreen")) +
-  ggplot2::labs(title = "Random Forest variable importance (permutation)") +
-  ggplot2::theme_minimal()
+  vip(num_features = 15, geom = "col",
+      aesthetics = list(fill = "forestgreen")) +
+  labs(title = "Random Forest variable importance (permutation)") +
+  theme_minimal()
 ```
 
 Reassuringly, the forest leans on the same engineered features as XGBoost —
@@ -201,7 +204,7 @@ Reassuringly, the forest leans on the same engineered features as XGBoost —
 ```{r}
 #| label: save
 # Project convention: models/<model>_fit.rds — note the file is rf_fit.rds.
-saveRDS(rf_fit, file = here::here("models", "rf_fit.rds"))
+saveRDS(rf_fit, file = here("models", "rf_fit.rds"))
 ```
 
 ## Submission

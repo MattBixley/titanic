@@ -27,20 +27,24 @@ strong accuracy with modest effort. We tune four of the most impactful knobs.
 # Project setup: tidyverse + tidymodels, seed = 42, paths, parallel backend.
 source(here::here("R", "00_setup.R"))
 # Shared feature engineering: defines make_recipe(data).
-source(here::here("R", "02_features.R"))
+source(here("R", "02_features.R"))
 
-library(xgboost)  # the engine
-library(vip)      # variable importance plots
+# Attach the libraries used throughout this document.
+library(tidyverse)   # dplyr, ggplot2, readr, stringr, tibble, tidyr, purrr
+library(tidymodels)  # recipes, parsnip, workflows, tune, yardstick, rsample, dials, broom
+library(here)        # path construction
+library(vip)         # variable importance plots
+library(xgboost)     # the engine
 ```
 
 ```{r}
 #| label: load-data
 #| message: false
 
-train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
+train <- read_csv(here("data", "raw", "train.csv")) |>
   # Project-wide convention: Survived is a factor, levels c("0","1"),
   # positive class = "1" (so metrics use event_level = "second").
-  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
 ```
 
 ## The recipe
@@ -173,9 +177,9 @@ construction).
 #| label: cv-metrics
 # Collect the CV metrics for the winning hyperparameters.
 collect_metrics(xgb_tuned) |>
-  dplyr::semi_join(best_xgb,
-                   by = c("trees", "tree_depth", "learn_rate", "min_n")) |>
-  dplyr::select(.metric, mean, std_err, n)
+  semi_join(best_xgb,
+            by = c("trees", "tree_depth", "learn_rate", "min_n")) |>
+  select(.metric, mean, std_err, n)
 ```
 
 ::: {.callout-tip}
@@ -199,7 +203,7 @@ xgb_cv_preds <- collect_predictions(xgb_tuned, parameters = best_xgb)
 xgb_cv_preds |>
   conf_mat(truth = Survived, estimate = .pred_class) |>
   autoplot(type = "heatmap") +
-  ggplot2::labs(title = "XGBoost — CV confusion matrix")
+  labs(title = "XGBoost — CV confusion matrix")
 ```
 
 ### Variable importance
@@ -212,10 +216,10 @@ xgb_cv_preds |>
 
 xgb_fit |>
   extract_fit_parsnip() |>
-  vip::vip(num_features = 15, geom = "col",
-           aesthetics = list(fill = "steelblue")) +
-  ggplot2::labs(title = "XGBoost variable importance") +
-  ggplot2::theme_minimal()
+  vip(num_features = 15, geom = "col",
+      aesthetics = list(fill = "steelblue")) +
+  labs(title = "XGBoost variable importance") +
+  theme_minimal()
 ```
 
 The engineered `Title`, plus `Sex`, `Fare`, and class, sit at the top — exactly
@@ -227,7 +231,7 @@ the signal the [EDA](01-eda.qmd) surfaced. Feature engineering earns its keep.
 #| label: save
 # Persist the full fitted workflow (recipe + model) so the submission document
 # can load it without refitting. Project convention: models/<model>_fit.rds.
-saveRDS(xgb_fit, file = here::here("models", "xgboost_fit.rds"))
+saveRDS(xgb_fit, file = here("models", "xgboost_fit.rds"))
 ```
 
 ## Submission
