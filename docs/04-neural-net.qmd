@@ -1,0 +1,284 @@
+---
+title: "Model 3 — Neural Net"
+subtitle: "A small multilayer perceptron with brulee (torch) — and why scale matters"
+---
+
+> **Where we are:** Last of three model documents in the
+> [Titanic — Tidymodels Tour](../index.qmd). Same structure as the
+> [XGBoost](02-xgboost.qmd) and [Random Forest](03-random-forest.qmd) docs —
+> recipe → spec → workflow → tune → finalize → evaluate → save. The one twist:
+> a neural net needs **normalized** inputs, so this doc extends the shared
+> `make_recipe()` with a normalization step.
+
+## Why a neural net here?
+
+On a dataset this small (891 rows) a multilayer perceptron will not beat the
+tree ensembles — and that's fine. The point is to *explore* a different model
+family and see how tidymodels makes swapping engines almost free. A small MLP
+with a single hidden layer, weight decay (`penalty`), and a tuned number of
+training `epochs` is a clean, instructive choice.
+
+::: {.callout-note}
+## brulee needs torch
+The `brulee` engine fits neural nets via [torch](https://torch.mlverse.org/) for
+R. The first time you use it, torch downloads its C++/LibTorch backend
+(`torch::install_torch()` if it didn't auto-install). If torch is unavailable in
+your environment (e.g. a locked-down CI runner), use the **nnet fallback** noted
+below — the rest of the document is unchanged.
+:::
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
+source(here::here("R", "02_features.R"))   # make_recipe(data)
+
+library(brulee)   # the engine (torch-backed). See fallback note below.
+library(vip)      # variable importance plots
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
+  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe — with normalization
+
+Tree ensembles are invariant to monotone rescaling, so the shared recipe didn't
+bother normalizing. A neural net is **not** invariant: gradient descent behaves
+far better when every numeric predictor has mean 0 and unit variance, otherwise
+large-scale features (like `Fare`) dominate the gradient. So we take the shared
+recipe and append `step_normalize()`.
+
+```{r}
+#| label: recipe
+# Extend the shared recipe with normalization of all numeric predictors. This
+# step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns
+# are normalized too (standard practice for MLPs).
+nnet_recipe <- make_recipe(train) |>
+  step_normalize(all_numeric_predictors())
+
+nnet_recipe
+```
+
+## The model specification
+
+```{r}
+#| label: spec
+# brulee MLP: one hidden layer (hidden_units), L2 weight decay (penalty), and a
+# tuned number of training epochs.
+nnet_spec <- mlp(
+  hidden_units = tune(),
+  penalty      = tune(),
+  epochs       = tune()
+) |>
+  set_engine("brulee") |>
+  set_mode("classification")
+
+nnet_spec
+```
+
+::: {.callout-important}
+## Fallback: no torch? Use nnet
+If `brulee`/`torch` cannot be installed, swap the engine to base R's `nnet`.
+`nnet::nnet` does not expose an `epochs` argument the same way, so drop it and
+tune just two parameters:
+
+```r
+nnet_spec <- mlp(
+  hidden_units = tune(),
+  penalty      = tune()
+) |>
+  set_engine("nnet") |>
+  set_mode("classification")
+```
+
+Everything downstream (workflow, tuning, evaluation, save) works unchanged — just
+remember to drop `epochs` from the tuning grid and from any `select_best()`
+join keys below.
+:::
+
+## The workflow
+
+```{r}
+#| label: workflow
+nnet_wf <- workflow() |>
+  add_recipe(nnet_recipe) |>
+  add_model(nnet_spec)
+```
+
+## Tuning with 5-fold cross-validation
+
+```{r}
+#| label: resamples
+set.seed(42)
+folds <- vfold_cv(train, v = 5, strata = Survived)
+```
+
+```{r}
+#| label: grid
+# Modest ranges suited to a tiny dataset: a handful of hidden units, light-to-
+# moderate weight decay, and enough epochs to converge without overfitting.
+set.seed(42)
+nnet_grid <- grid_latin_hypercube(
+  hidden_units(range = c(4L, 32L)),
+  penalty(range = c(-4, -0.5)),     # log10 scale → 1e-4 to ~0.3
+  epochs(range = c(50L, 300L)),
+  size = 20
+)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+nnet_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+nnet_tuned <- tune_grid(
+  nnet_wf,
+  resamples = folds,
+  grid      = nnet_grid,
+  metrics   = nnet_metrics,
+  # Positive class "1" is the second factor level.
+  control   = control_grid(save_pred = TRUE, event_level = "second")
+)
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the MLP tuning grid (autoplot)."
+#| fig-width: 9
+#| fig-height: 5
+
+autoplot(nnet_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+show_best(nnet_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+best_nnet <- select_best(nnet_tuned, metric = "roc_auc")
+best_nnet
+
+final_nnet_wf <- finalize_workflow(nnet_wf, best_nnet)
+
+set.seed(42)
+nnet_fit <- fit(final_nnet_wf, data = train)
+```
+
+## Cross-validated performance
+
+```{r}
+#| label: cv-metrics
+# Note: if using the nnet fallback, drop "epochs" from the join keys.
+collect_metrics(nnet_tuned) |>
+  dplyr::semi_join(best_nnet,
+                   by = c("hidden_units", "penalty", "epochs")) |>
+  dplyr::select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+Copy the `accuracy` and `roc_auc` `mean` values into the results table on the
+[master document](../index.qmd).
+:::
+
+### Confusion matrix
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+nnet_cv_preds <- collect_predictions(nnet_tuned, parameters = best_nnet)
+
+nnet_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  ggplot2::labs(title = "Neural Net — CV confusion matrix")
+```
+
+### Variable importance
+
+Neural nets don't expose importance natively, so we use a **permutation-based**
+importance via `vip` — shuffle each feature and measure the drop in ROC-AUC.
+
+```{r}
+#| label: vip
+#| fig-cap: "Permutation importance for the MLP (drop in ROC-AUC when shuffled)."
+#| fig-width: 7
+#| fig-height: 5
+#| message: false
+#| warning: false
+
+# A small prediction wrapper for vip's model-agnostic permutation method.
+pred_wrapper <- function(object, newdata) {
+  predict(object, new_data = newdata, type = "prob")$.pred_1
+}
+
+# Bake the (normalized) predictors for the permutation routine.
+nnet_baked <- nnet_recipe |> prep() |> bake(new_data = train)
+
+vip::vip(
+  nnet_fit,
+  method      = "permute",
+  train       = nnet_baked,
+  target      = "Survived",
+  metric      = "roc_auc",
+  event_level = "second",
+  reference_class = "1",
+  pred_wrapper = pred_wrapper,
+  num_features = 15
+) +
+  ggplot2::labs(title = "Neural Net variable importance (permutation)") +
+  ggplot2::theme_minimal()
+```
+
+Even through a different lens, the same features carry the weight — `Title`,
+`Sex`, class, `Fare` — consistent with [XGBoost](02-xgboost.qmd) and the
+[Random Forest](03-random-forest.qmd).
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+# Project convention: the neural-net model saves to nnet_fit.rds.
+saveRDS(nnet_fit, file = here::here("models", "nnet_fit.rds"))
+```
+
+## Submission
+
+Generate this model's leaderboard CSV with the
+[parameterized submission document](submission.qmd):
+
+```bash
+quarto render docs/submission.qmd -P model:nnet
+```
+
+That loads `models/nnet_fit.rds`, predicts on `data/raw/test.csv`, writes
+`models/submission_nnet.csv`, and prints the exact `kaggle competitions submit`
+command. See the [Kaggle setup guide](setup-kaggle.md) for authentication.
+
+## Next steps
+
+- You've now fit all three families — compare their CV scores side by side in
+  the **[master results table](../index.qmd)**.
+- Revisit **[XGBoost](02-xgboost.qmd)** and the **[Random Forest](03-random-forest.qmd)**.
+- Build the CSV with the **[Submission doc](submission.qmd)** and push it to the
+  leaderboard.

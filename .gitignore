@@ -1,0 +1,20 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Data: downloaded locally from Kaggle, not committed (keep .gitkeep tracked)
+data/raw/*.csv
+
+# Model artefacts and submissions
+models/*.rds
+models/*.csv
+
+# Generated figures
+figures/
+
+# Quarto / knitr / rmarkdown build outputs
+*_files/
+/.quarto/
+_site/
+/docs/_site/

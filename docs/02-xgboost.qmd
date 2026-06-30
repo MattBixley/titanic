@@ -1,0 +1,253 @@
+---
+title: "Model 1 — XGBoost"
+subtitle: "Gradient-boosted trees, the Kaggle workhorse"
+---
+
+> **Where we are:** First of three model documents in the
+> [Titanic — Tidymodels Tour](../index.qmd). All three follow the *same*
+> structure — recipe → spec → workflow → tune → finalize → evaluate → save — so
+> once you've read this one, [Random Forest](03-random-forest.qmd) and
+> [Neural Net](04-neural-net.qmd) are quick to skim for the differences. The
+> features come from the [EDA](01-eda.qmd) and the shared `make_recipe()`.
+
+## Why XGBoost first?
+
+Gradient-boosted decision trees are the default first reach on tabular Kaggle
+problems. They handle mixed numeric/categorical features, capture interactions
+(like sex × class) automatically, are robust to monotone transforms, and tune to
+strong accuracy with modest effort. We tune four of the most impactful knobs.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+# Project setup: tidyverse + tidymodels, seed = 42, paths, parallel backend.
+source(here::here("R", "00_setup.R"))
+# Shared feature engineering: defines make_recipe(data).
+source(here::here("R", "02_features.R"))
+
+library(xgboost)  # the engine
+library(vip)      # variable importance plots
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
+  # Project-wide convention: Survived is a factor, levels c("0","1"),
+  # positive class = "1" (so metrics use event_level = "second").
+  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe
+
+The shared recipe encodes everything we justified in the
+[EDA](01-eda.qmd): impute `Age`/`Embarked`, derive `FamilySize`, extract
+`Title`, log-transform `Fare`, dummy-encode factors, drop identifiers.
+
+```{r}
+#| label: recipe
+xgb_recipe <- make_recipe(train)
+xgb_recipe
+```
+
+## The model specification
+
+We mark the four tuning parameters with `tune()`. tidymodels will fill them in
+during the grid search.
+
+```{r}
+#| label: spec
+xgb_spec <- boost_tree(
+  trees      = tune(),
+  tree_depth = tune(),
+  learn_rate = tune(),
+  min_n      = tune()
+) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+xgb_spec
+```
+
+## The workflow
+
+A `workflow` bundles the recipe and the model so resampling applies the *exact*
+same preprocessing to every fold — no leakage.
+
+```{r}
+#| label: workflow
+xgb_wf <- workflow() |>
+  add_recipe(xgb_recipe) |>
+  add_model(xgb_spec)
+```
+
+## Tuning with 5-fold cross-validation
+
+```{r}
+#| label: resamples
+# Stratify on the outcome so each fold preserves the ~38% survival rate.
+set.seed(42)
+folds <- vfold_cv(train, v = 5, strata = Survived)
+```
+
+```{r}
+#| label: grid
+# A space-filling Latin-hypercube grid over the four parameters. dials supplies
+# sensible ranges; we finalize() the ones that depend on the data (none here,
+# but it's good habit). 20 candidates keeps the demo fast.
+set.seed(42)
+xgb_grid <- grid_latin_hypercube(
+  trees(range = c(200L, 1500L)),
+  tree_depth(range = c(2L, 10L)),
+  learn_rate(range = c(-3, -0.5)),   # log10 scale → 0.001 to ~0.32
+  min_n(range = c(2L, 40L)),
+  size = 20
+)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+# Score every candidate on both metrics. event_level = "second" because the
+# positive class ("survived" = "1") is the SECOND factor level.
+xgb_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+xgb_tuned <- tune_grid(
+  xgb_wf,
+  resamples = folds,
+  grid      = xgb_grid,
+  metrics   = xgb_metrics,
+  control   = control_grid(save_pred = TRUE,
+                           event_level = "second")
+)
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the tuning grid for each hyperparameter (autoplot)."
+#| fig-width: 9
+#| fig-height: 6
+
+autoplot(xgb_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+# The top candidates by ROC-AUC.
+show_best(xgb_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+# Pick the best ROC-AUC candidate and lock those hyperparameters in.
+best_xgb <- select_best(xgb_tuned, metric = "roc_auc")
+best_xgb
+
+final_xgb_wf <- finalize_workflow(xgb_wf, best_xgb)
+
+# Fit the finalized workflow on ALL the training data — this is the model we
+# will ship to Kaggle.
+set.seed(42)
+xgb_fit <- fit(final_xgb_wf, data = train)
+```
+
+## Cross-validated performance
+
+The fairest estimate of out-of-sample skill is the CV score of the chosen
+configuration — not the fit on the full training data (which overfits by
+construction).
+
+```{r}
+#| label: cv-metrics
+# Collect the CV metrics for the winning hyperparameters.
+collect_metrics(xgb_tuned) |>
+  dplyr::semi_join(best_xgb,
+                   by = c("trees", "tree_depth", "learn_rate", "min_n")) |>
+  dplyr::select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+Copy the `accuracy` and `roc_auc` `mean` values into the results table on the
+[master document](../index.qmd).
+:::
+
+### Confusion matrix
+
+Built from the held-out CV predictions for the best configuration — so it
+reflects generalization, not memorization.
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+xgb_cv_preds <- collect_predictions(xgb_tuned, parameters = best_xgb)
+
+xgb_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  ggplot2::labs(title = "XGBoost — CV confusion matrix")
+```
+
+### Variable importance
+
+```{r}
+#| label: vip
+#| fig-cap: "Top features by XGBoost gain. Title, Sex, Fare and class dominate."
+#| fig-width: 7
+#| fig-height: 5
+
+xgb_fit |>
+  extract_fit_parsnip() |>
+  vip::vip(num_features = 15, geom = "col",
+           aesthetics = list(fill = "steelblue")) +
+  ggplot2::labs(title = "XGBoost variable importance") +
+  ggplot2::theme_minimal()
+```
+
+The engineered `Title`, plus `Sex`, `Fare`, and class, sit at the top — exactly
+the signal the [EDA](01-eda.qmd) surfaced. Feature engineering earns its keep.
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+# Persist the full fitted workflow (recipe + model) so the submission document
+# can load it without refitting. Project convention: models/<model>_fit.rds.
+saveRDS(xgb_fit, file = here::here("models", "xgboost_fit.rds"))
+```
+
+## Submission
+
+Generate this model's leaderboard CSV with the **parameterized**
+[submission document](submission.qmd):
+
+```bash
+quarto render docs/submission.qmd -P model:xgboost
+```
+
+That loads `models/xgboost_fit.rds`, predicts on `data/raw/test.csv`, writes
+`models/submission_xgboost.csv` (columns `PassengerId`, `Survived` as 0/1
+integers), and prints the exact `kaggle competitions submit` command. See the
+[Kaggle setup guide](setup-kaggle.md) for authentication.
+
+## Next steps
+
+- Compare against the **[Random Forest](03-random-forest.qmd)** — a robust,
+  almost-no-tuning baseline.
+- Then the **[Neural Net](04-neural-net.qmd)**, which needs normalized inputs.
+- Build the CSV with the **[Submission doc](submission.qmd)**.
+- Record this model's CV scores in the **[master results table](../index.qmd)**.

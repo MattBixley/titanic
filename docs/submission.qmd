@@ -1,0 +1,194 @@
+---
+title: "Building a Kaggle Submission"
+subtitle: "One parameterized document, three models, leaderboard-ready CSVs"
+params:
+  model: "xgboost"
+---
+
+> **Where we are:** The final stop on the
+> [Titanic — Tidymodels Tour](../index.qmd). Each model document
+> ([XGBoost](02-xgboost.qmd), [Random Forest](03-random-forest.qmd),
+> [Neural Net](04-neural-net.qmd)) fits a workflow and saves it to
+> `models/<model>_fit.rds`. This document is **parameterized**: tell it which
+> model, and it loads that fit, predicts on the test set, and writes a
+> Kaggle-ready CSV.
+
+## How to render this document per model
+
+This `.qmd` has a `model` parameter (default `"xgboost"`). Override it on the
+command line with `-P model:<value>`:
+
+```bash
+# XGBoost (also the default if you omit -P)
+quarto render docs/submission.qmd -P model:xgboost
+
+# Random forest
+quarto render docs/submission.qmd -P model:rf
+
+# Neural net
+quarto render docs/submission.qmd -P model:nnet
+```
+
+Each render reads the matching `models/<model>_fit.rds`, writes
+`models/submission_<model>.csv`, and prints the exact upload command. You must
+have fitted (rendered) the corresponding model document first so the `.rds`
+exists.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+# We need the tidymodels stack to load the saved workflow and call predict().
+# 00_setup.R also sets paths and the seed.
+source(here::here("R", "00_setup.R"))
+library(readr)
+```
+
+## Resolve and validate the requested model
+
+```{r}
+#| label: resolve-model
+# The parameter comes in from the YAML default or the -P flag on the CLI.
+requested_model <- params$model
+
+# Map each valid model key to its saved fit. This single lookup table is the
+# source of truth for which models are submittable.
+model_paths <- c(
+  xgboost = here::here("models", "xgboost_fit.rds"),
+  rf      = here::here("models", "rf_fit.rds"),
+  nnet    = here::here("models", "nnet_fit.rds")
+)
+
+# Fail loudly and helpfully if someone passes an unknown model.
+if (!requested_model %in% names(model_paths)) {
+  stop(
+    "Unknown model '", requested_model, "'. ",
+    "Choose one of: ", paste(names(model_paths), collapse = ", "), ". ",
+    "Example: quarto render docs/submission.qmd -P model:rf",
+    call. = FALSE
+  )
+}
+
+fit_path <- model_paths[[requested_model]]
+
+# Make sure the fitted workflow actually exists — i.e. the model doc was
+# rendered first.
+if (!file.exists(fit_path)) {
+  stop(
+    "Fitted model not found at '", fit_path, "'. ",
+    "Render the matching model document first (e.g. quarto render ",
+    "docs/02-xgboost.qmd) so the .rds is saved.",
+    call. = FALSE
+  )
+}
+
+message("Building submission for model: ", requested_model)
+message("Loading fitted workflow from: ", fit_path)
+```
+
+We are building a submission for **`r requested_model`**.
+
+## Load the model and the test data
+
+```{r}
+#| label: load
+# The saved object is a fully fitted workflow (recipe + model), so it knows how
+# to preprocess raw test data exactly as it was trained.
+model_fit <- readRDS(fit_path)
+
+# The test set has the same columns as train EXCEPT Survived — that's what we
+# predict. PassengerId is what Kaggle keys submissions on.
+test <- readr::read_csv(here::here("data", "raw", "test.csv"))
+
+dplyr::glimpse(test)
+```
+
+## Predict and assemble the submission
+
+```{r}
+#| label: predict
+# predict() runs the workflow's recipe on the raw test data, then the model.
+# type = "class" returns the hard 0/1 label Kaggle wants.
+preds <- predict(model_fit, new_data = test, type = "class")
+
+# Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived
+# as 0/1 integers. .pred_class is a factor ("0"/"1"); convert via character so
+# we don't accidentally get factor codes (1/2).
+submission <- tibble::tibble(
+  PassengerId = test$PassengerId,
+  Survived    = as.integer(as.character(preds$.pred_class))
+)
+
+# Sanity checks: right number of rows, right value set, no missing predictions.
+stopifnot(
+  nrow(submission) == nrow(test),
+  all(submission$Survived %in% c(0L, 1L)),
+  !anyNA(submission$Survived)
+)
+
+head(submission, 10)
+```
+
+## Write the CSV
+
+```{r}
+#| label: write
+out_path <- here::here("models", paste0("submission_", requested_model, ".csv"))
+
+readr::write_csv(submission, out_path)
+
+message("Wrote ", nrow(submission), " predictions to: ", out_path)
+```
+
+A quick summary of the predicted survival split (a sanity check against the
+~38% base rate seen in the [EDA](01-eda.qmd)):
+
+```{r}
+#| label: summary
+submission |>
+  dplyr::count(Survived) |>
+  dplyr::mutate(prop = n / sum(n))
+```
+
+## Submit to Kaggle
+
+Push the CSV to the leaderboard with the Kaggle CLI. The command below is built
+for the model you rendered:
+
+```{r}
+#| label: kaggle-cmd
+#| echo: false
+#| results: asis
+
+cmd <- sprintf(
+  'kaggle competitions submit -c titanic -f models/submission_%s.csv -m "%s via tidymodels"',
+  requested_model, requested_model
+)
+cat("```bash\n", cmd, "\n```\n", sep = "")
+```
+
+::: {.callout-note}
+## First time? Authenticate first
+The `kaggle` CLI needs your API token (`~/.kaggle/kaggle.json`) before any
+`submit` or `download` will work. The
+[Kaggle setup guide](setup-kaggle.md) walks through creating and installing it.
+:::
+
+::: {.callout-tip}
+## Daily submission limit
+Kaggle caps Titanic submissions per day (commonly ~10). Submit your *best*
+candidate by CV score rather than spraying every experiment at the leaderboard.
+:::
+
+## Next steps
+
+- Compare each model's leaderboard score against its **CV score** recorded in
+  the [master results table](../index.qmd) — divergence is a lesson in
+  generalization.
+- Re-render for the other models:
+  `-P model:xgboost`, `-P model:rf`, `-P model:nnet`.
+- Need auth help? See the **[Kaggle setup guide](setup-kaggle.md)**.
+- Back to the **[master document](../index.qmd)** for the whole-project picture.

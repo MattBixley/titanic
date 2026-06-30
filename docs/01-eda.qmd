@@ -1,0 +1,359 @@
+---
+title: "Exploratory Data Analysis"
+subtitle: "Looking before we leap — the patterns that motivate our features"
+---
+
+> **Where we are:** This is step one of the
+> [Titanic — Tidymodels Tour](../index.qmd). Before fitting any model we look at
+> the data, find the signal, and let what we see *motivate* the shared feature
+> recipe in `R/02_features.R` (`make_recipe()`). Every model document downstream
+> trains on those features, so the decisions we justify here ripple through the
+> whole project.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+# Source the project setup: loads tidyverse + tidymodels, sets seed = 42,
+# defines path_* helpers, and registers the parallel backend.
+source(here::here("R", "00_setup.R"))
+
+# A couple of EDA-only helpers.
+library(skimr)   # skim() — richer than summary()
+library(naniar)  # missingness visualisation (optional but lovely)
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+# Read the training data. Only the training set has the Survived label, so all
+# exploratory analysis happens here.
+train <- readr::read_csv(here::here("data", "raw", "train.csv"))
+
+# Survived is the outcome. Treat it as a factor with explicit levels.
+# Convention for the whole project: levels c("0", "1"), positive class = "1".
+train <- train |>
+  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+
+dplyr::glimpse(train)
+```
+
+## First look: structure and missingness
+
+```{r}
+#| label: skim
+
+# skim() gives per-type summaries: completeness, mean/sd for numerics,
+# top counts for characters. The `complete_rate` column is the one to watch.
+skimr::skim(train)
+```
+
+The headline structural facts:
+
+- **891 passengers**, the outcome `Survived` is binary.
+- **`Age` is missing for ~20%** of passengers — too much to drop, so we will
+  *impute* it in the recipe.
+- **`Cabin` is missing for ~77%** — mostly unusable as-is, though its
+  *presence/absence* may carry signal (a recorded cabin ≈ higher class).
+- **`Embarked` has 2 missing values** — trivially imputable with the mode.
+
+```{r}
+#| label: missingness
+#| fig-cap: "Proportion of missing values per column. Age and Cabin dominate."
+#| fig-width: 7
+#| fig-height: 4
+
+# A quick ggplot of missingness so we can *see* what skim told us.
+train |>
+  dplyr::summarise(dplyr::across(everything(), ~ mean(is.na(.x)))) |>
+  tidyr::pivot_longer(everything(),
+                      names_to = "variable", values_to = "pct_missing") |>
+  dplyr::filter(pct_missing > 0) |>
+  ggplot2::ggplot(ggplot2::aes(x = reorder(variable, pct_missing),
+                               y = pct_missing)) +
+  ggplot2::geom_col(fill = "steelblue") +
+  ggplot2::geom_text(ggplot2::aes(label = scales::percent(pct_missing, accuracy = 1)),
+                     hjust = -0.1, size = 3.5) +
+  ggplot2::scale_y_continuous(labels = scales::percent,
+                              expand = ggplot2::expansion(mult = c(0, 0.15))) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(title = "Missingness by column",
+                x = NULL, y = "Missing") +
+  ggplot2::theme_minimal()
+```
+
+The overall survival rate is our **base rate** — the number to beat with any
+model:
+
+```{r}
+#| label: base-rate
+train |>
+  dplyr::count(Survived) |>
+  dplyr::mutate(prop = n / sum(n))
+```
+
+About **38%** survived. A "predict everyone died" baseline would therefore score
+~62% accuracy — keep that in mind when judging model scores.
+
+## Who survived? The classic patterns
+
+### Survival by sex
+
+```{r}
+#| label: survival-sex
+#| fig-cap: "Survival rate by sex. The single strongest predictor in the data."
+#| fig-width: 6
+#| fig-height: 4
+
+train |>
+  dplyr::group_by(Sex) |>
+  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n()) |>
+  ggplot2::ggplot(ggplot2::aes(x = Sex, y = survival_rate, fill = Sex)) +
+  ggplot2::geom_col(width = 0.6) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::percent(survival_rate, accuracy = 1)),
+                     vjust = -0.4) +
+  ggplot2::scale_y_continuous(labels = scales::percent,
+                              limits = c(0, 1)) +
+  ggplot2::labs(title = "\"Women and children first\"",
+                x = NULL, y = "Survival rate") +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "none")
+```
+
+**~74% of women survived vs ~19% of men.** `Sex` is the dominant predictor —
+any model that ignores it is leaving the table.
+
+### Survival by passenger class
+
+```{r}
+#| label: survival-pclass
+#| fig-cap: "Survival rate by passenger class (1 = first class)."
+#| fig-width: 6
+#| fig-height: 4
+
+train |>
+  dplyr::mutate(Pclass = factor(Pclass)) |>
+  dplyr::group_by(Pclass) |>
+  dplyr::summarise(survival_rate = mean(Survived == "1")) |>
+  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = survival_rate, fill = Pclass)) +
+  ggplot2::geom_col(width = 0.6) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::percent(survival_rate, accuracy = 1)),
+                     vjust = -0.4) +
+  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  ggplot2::labs(title = "Class mattered",
+                x = "Passenger class", y = "Survival rate") +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "none")
+```
+
+A clear gradient: **1st class ~63%, 2nd ~47%, 3rd ~24%.** Class is a proxy for
+deck location, wealth, and access to lifeboats.
+
+### Sex and class together
+
+```{r}
+#| label: survival-sex-pclass
+#| fig-cap: "Survival by sex within each class — the interaction is striking."
+#| fig-width: 7
+#| fig-height: 4
+
+train |>
+  dplyr::mutate(Pclass = factor(Pclass)) |>
+  dplyr::group_by(Sex, Pclass) |>
+  dplyr::summarise(survival_rate = mean(Survived == "1"), .groups = "drop") |>
+  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = survival_rate, fill = Sex)) +
+  ggplot2::geom_col(position = "dodge", width = 0.7) +
+  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  ggplot2::labs(title = "Sex × class interaction",
+                x = "Passenger class", y = "Survival rate") +
+  ggplot2::theme_minimal()
+```
+
+First-class women survived almost universally; third-class men almost never.
+Tree-based models capture this interaction automatically; for the neural net it
+helps to have rich, normalized features.
+
+## Age, fare, and continuous structure
+
+### Age distribution by survival
+
+```{r}
+#| label: age-density
+#| fig-cap: "Age distribution split by survival. Note the spike of saved children."
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+
+train |>
+  ggplot2::ggplot(ggplot2::aes(x = Age, fill = Survived)) +
+  ggplot2::geom_histogram(binwidth = 5, position = "identity", alpha = 0.6) +
+  ggplot2::scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
+                             labels = c("Died", "Survived")) +
+  ggplot2::labs(title = "Age distribution by outcome",
+                x = "Age (years)", y = "Count", fill = NULL) +
+  ggplot2::theme_minimal()
+```
+
+```{r}
+#| label: age-density-2
+#| fig-cap: "Same story as a density — young children survived disproportionately."
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+
+train |>
+  ggplot2::ggplot(ggplot2::aes(x = Age, fill = Survived)) +
+  ggplot2::geom_density(alpha = 0.5) +
+  ggplot2::scale_fill_manual(values = c("0" = "grey50", "1" = "seagreen"),
+                             labels = c("Died", "Survived")) +
+  ggplot2::labs(title = "Age density by outcome",
+                x = "Age (years)", y = "Density", fill = NULL) +
+  ggplot2::theme_minimal()
+```
+
+Children (roughly under 10) survived at a higher rate — the "and children"
+half of the rule. Because `Age` is ~20% missing, **imputation** in the recipe
+is essential; a median or bagged-tree imputation keeps these rows in play.
+
+### Fare by class
+
+```{r}
+#| label: fare-class
+#| fig-cap: "Fare by class (log scale). Fare is largely a continuous echo of class."
+#| fig-width: 7
+#| fig-height: 4
+#| warning: false
+
+train |>
+  dplyr::mutate(Pclass = factor(Pclass)) |>
+  ggplot2::ggplot(ggplot2::aes(x = Pclass, y = Fare, fill = Pclass)) +
+  ggplot2::geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +
+  ggplot2::scale_y_log10(labels = scales::dollar) +
+  ggplot2::labs(title = "Fare by passenger class (log scale)",
+                x = "Passenger class", y = "Fare (log10)") +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "none")
+```
+
+`Fare` is right-skewed and strongly tied to class — a candidate for a **log
+transform** so models (especially the neural net) see a better-behaved
+distribution.
+
+## Engineered signal: family and title
+
+These two features are not columns in the raw data — we *derive* them. This is
+the heart of feature engineering and exactly what `make_recipe()` will encode.
+
+### Family size
+
+`SibSp` (siblings/spouses aboard) + `Parch` (parents/children aboard) + 1 (self)
+gives a **family size**. Travelling alone vs. in a small vs. large group changes
+survival odds.
+
+```{r}
+#| label: family-size
+#| fig-cap: "Survival rate by family size. Small families fared best."
+#| fig-width: 7
+#| fig-height: 4
+
+train |>
+  dplyr::mutate(FamilySize = SibSp + Parch + 1) |>
+  dplyr::group_by(FamilySize) |>
+  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n(),
+                   .groups = "drop") |>
+  ggplot2::ggplot(ggplot2::aes(x = FamilySize, y = survival_rate)) +
+  ggplot2::geom_col(ggplot2::aes(fill = n), width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = n), vjust = -0.4, size = 3) +
+  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  ggplot2::scale_fill_viridis_c(name = "n passengers") +
+  ggplot2::scale_x_continuous(breaks = 1:11) +
+  ggplot2::labs(title = "Survival by family size",
+                subtitle = "Solo travellers and large families did worst",
+                x = "Family size (SibSp + Parch + 1)", y = "Survival rate") +
+  ggplot2::theme_minimal()
+```
+
+A clear "Goldilocks" pattern: **family size 2–4 survived best**, while solo
+travellers and very large families fared worst. This motivates both a continuous
+`FamilySize` feature and possibly a binned `IsAlone` flag.
+
+### Title extracted from name
+
+The `Name` column embeds a **title** (Mr, Mrs, Miss, Master, and rarer ones like
+Dr, Rev, Col). Title bundles sex, age band, and social status into one categorical
+feature — and `Master` in particular flags young boys, who survived more often
+than adult men.
+
+```{r}
+#| label: title
+#| fig-cap: "Survival rate by extracted title (titles with < 10 passengers grouped as 'Rare')."
+#| fig-width: 8
+#| fig-height: 4
+
+train |>
+  # Pull the title: the word ending in "." after the comma in the Name field.
+  dplyr::mutate(
+    Title = stringr::str_extract(Name, "(?<=, )[A-Za-z]+(?=\\.)")
+  ) |>
+  # Collapse the long tail of rare titles so the plot (and later the model)
+  # is not dominated by singletons.
+  dplyr::add_count(Title) |>
+  dplyr::mutate(Title = dplyr::if_else(n < 10, "Rare", Title)) |>
+  dplyr::group_by(Title) |>
+  dplyr::summarise(survival_rate = mean(Survived == "1"), n = dplyr::n(),
+                   .groups = "drop") |>
+  ggplot2::ggplot(ggplot2::aes(x = reorder(Title, survival_rate),
+                               y = survival_rate)) +
+  ggplot2::geom_col(ggplot2::aes(fill = n), width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = n), hjust = -0.1, size = 3) +
+  ggplot2::scale_y_continuous(labels = scales::percent,
+                              limits = c(0, 1.05),
+                              expand = ggplot2::expansion(mult = c(0, 0.05))) +
+  ggplot2::scale_fill_viridis_c(name = "n passengers") +
+  ggplot2::coord_flip() +
+  ggplot2::labs(title = "Survival by title",
+                x = NULL, y = "Survival rate") +
+  ggplot2::theme_minimal()
+```
+
+`Mrs`/`Miss` survived at high rates, `Master` (boys) noticeably better than
+`Mr`. Title is one of the most valuable engineered features in this dataset.
+
+## What this means for `make_recipe()`
+
+Everything above is the *justification* for the shared recipe in
+`R/02_features.R`. In words, `make_recipe(data)` should:
+
+1. **Impute `Age`** (missing ~20%) — median or bagged imputation.
+2. **Impute `Embarked`** with the mode (only 2 missing).
+3. **Derive `FamilySize`** = `SibSp + Parch + 1`, and optionally an `IsAlone`
+   flag.
+4. **Extract `Title`** from `Name` and lump rare titles together.
+5. **Log-transform `Fare`** (right-skewed) and consider a `HasCabin` flag from
+   `Cabin` presence.
+6. **Encode factors** (`Sex`, `Embarked`, `Pclass`, `Title`) as dummies for
+   models that need numeric input.
+7. **Drop identifiers** (`PassengerId`, `Ticket`, raw `Name`, raw `Cabin`).
+
+::: {.callout-note}
+The neural-net document adds one more step on top of the shared recipe —
+`step_normalize(all_numeric_predictors())` — because MLPs are sensitive to input
+scale in a way that tree ensembles are not. See
+[the Neural Net doc](04-neural-net.qmd) for why.
+:::
+
+## Next steps
+
+You now know *why* the features look the way they do. Time to model:
+
+- **[XGBoost](02-xgboost.qmd)** — start here; it's the Kaggle workhorse and
+  establishes the modelling template the other docs reuse.
+- **[Random Forest](03-random-forest.qmd)** — a robust, low-tuning comparison.
+- **[Neural Net](04-neural-net.qmd)** — a small MLP that leans on the normalized
+  recipe.
+- Back to the **[master document](../index.qmd)** for the big picture and the
+  results table.

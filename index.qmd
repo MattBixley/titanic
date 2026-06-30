@@ -1,0 +1,198 @@
+---
+title: "Titanic — Tidymodels Tour"
+subtitle: "A pedagogical walk through the Kaggle Titanic competition with R and tidymodels"
+---
+
+## Welcome aboard
+
+This site is a guided tour of the [Kaggle **Titanic — Machine Learning from
+Disaster**](https://www.kaggle.com/competitions/titanic) competition, worked
+end to end in R with the [tidymodels](https://www.tidymodels.org/) framework.
+It is written for an R user who is comfortable with the language and with
+statistics, but is **new to Kaggle** — so we narrate the *competition workflow*
+as well as the modelling reasoning, and we lean on `ggplot2` for every chart.
+
+If you have taught or sat through an intro-to-ML workshop, this will feel
+familiar: split, engineer features, resample, tune, evaluate, predict. Kaggle
+just adds a public leaderboard and a strict submission format on top.
+
+### What is the Kaggle Titanic competition?
+
+Titanic is the canonical "first Kaggle competition" — the *Hello, World* of
+predictive modelling. The setup:
+
+- You are given a **training set** (`data/raw/train.csv`, 891 passengers) where
+  the outcome is known: did each passenger **survive** (`Survived` = 1) or not
+  (`Survived` = 0)?
+- You are given a **test set** (`data/raw/test.csv`, 418 passengers) with the
+  *same features but no `Survived` column*.
+- Your job: **predict `Survived` for every passenger in the test set**, write
+  those predictions to a CSV in the required format, and upload it. Kaggle
+  scores your CSV on accuracy against the hidden true labels and places you on
+  the leaderboard.
+
+There is no prize money here — it's a sandbox. That is exactly why it's a great
+place to *have fun and explore*: try a model, submit, see your score, iterate.
+
+::: {.callout-tip}
+## The Kaggle mental model for a newcomer
+Think of it as a take-home exam where you can resubmit as often as you like and
+see your grade each time (with a daily submission cap). Your **cross-validation
+score** on the training data is your *private estimate*; the **leaderboard
+score** is the *graded result*. When the two diverge, you are learning
+something about generalization — which is the whole point.
+:::
+
+## The goal
+
+Predict the binary outcome `Survived` for the 418 test passengers as accurately
+as possible, and document the reasoning so the whole thing is reproducible and
+teachable.
+
+We fit **three** different model families on identical features so they can be
+compared apples-to-apples:
+
+| Model | Engine | Why it's interesting |
+|-------|--------|----------------------|
+| [XGBoost](docs/02-xgboost.qmd) | `xgboost` | Gradient-boosted trees — the Kaggle workhorse |
+| [Random Forest](docs/03-random-forest.qmd) | `ranger` | Bagged trees — robust, low-tuning baseline |
+| [Neural Net](docs/04-neural-net.qmd) | `brulee` / `nnet` | A small MLP — needs normalized inputs |
+
+## How the documents link together
+
+This is a small Quarto **website**. `index.qmd` (this page) is the master
+document; everything else lives in `docs/` and the navbar ties them into a
+narrative:
+
+```
+Home (index)  →  EDA  →  Models {XGBoost, Random Forest, Neural Net}  →  Submission  →  Kaggle Setup
+```
+
+- **[Exploratory Data Analysis](docs/01-eda.qmd)** — look at the data, find the
+  patterns (sex, class, age, family, title), and *motivate* the feature
+  engineering.
+- **Model docs** — each one follows the *same* structure (recipe → spec →
+  workflow → tune → finalize → evaluate → save), so once you've read one, the
+  others are easy to skim for the differences.
+- **[Submission](docs/submission.qmd)** — a single *parameterized* document that
+  turns any of the three saved models into a leaderboard-ready CSV.
+- **[Kaggle Setup](docs/setup-kaggle.md)** — how to authenticate the Kaggle CLI
+  so you can download the data and push submissions.
+
+## Project structure
+
+```
+titantic/
+├── _quarto.yml              # website config (theme, navbar, freeze)
+├── index.qmd                # ← you are here (master document)
+├── renv.lock                # pinned package versions (reproducibility)
+├── R/
+│   ├── 00_setup.R           # libraries, seed=42, paths, parallel backend
+│   ├── 01_eda.R             # standalone EDA script
+│   └── 02_features.R        # make_recipe(data) — the SHARED feature recipe
+├── data/
+│   └── raw/
+│       ├── train.csv        # 891 rows, has Survived
+│       └── test.csv         # 418 rows, no Survived
+├── docs/
+│   ├── 01-eda.qmd           # exploratory analysis
+│   ├── 02-xgboost.qmd       # boosted trees
+│   ├── 03-random-forest.qmd # ranger random forest
+│   ├── 04-neural-net.qmd    # brulee/nnet MLP
+│   ├── submission.qmd       # parameterized: build a submission CSV
+│   └── setup-kaggle.md      # Kaggle CLI auth guide
+├── models/                  # fitted workflows (*_fit.rds) + submission_*.csv
+└── figures/                 # exported plots
+```
+
+The single most important shared piece is **`R/02_features.R`**, which defines
+`make_recipe(data)`. Every model sources it so they all train on the *same*
+engineered features — that is what makes the comparison fair.
+
+## How to reproduce
+
+Everything is pinned with [`renv`](https://rstudio.github.io/renv/) and uses
+`here::here()` for paths, so there is no `setwd()` fragility.
+
+1. **Restore the environment** (installs the exact package versions):
+
+   ```r
+   renv::restore()
+   ```
+
+2. **Get the data** — follow [the Kaggle setup guide](docs/setup-kaggle.md) to
+   authenticate, then download `train.csv` and `test.csv` into `data/raw/`.
+
+3. **Render the site.** Because of `freeze: auto`, the heavy model fits only run
+   the first time (or when a model doc changes):
+
+   ```bash
+   quarto render
+   ```
+
+   Logical run order if you prefer to step through it: EDA → each model doc
+   (which saves its fitted workflow to `models/`) → submission.
+
+4. **Generate submissions** for each model (see below).
+
+::: {.callout-note}
+`set.seed(42)` is set in `R/00_setup.R` and the resampling folds are seeded, so
+CV results are reproducible across machines that share the `renv` lockfile.
+:::
+
+## Results summary
+
+The table below compares the three models on **5-fold cross-validated**
+`accuracy` and `roc_auc` (positive class = `"1"`, survived). These are *honest*
+estimates computed on the training data before we ever touch the test set.
+
+| Model | CV accuracy | CV ROC-AUC | Notes |
+|-------|------------:|-----------:|-------|
+| XGBoost | _TBD_ | _TBD_ | tuned `trees`, `tree_depth`, `learn_rate`, `min_n` |
+| Random Forest | _TBD_ | _TBD_ | tuned `mtry`, `min_n`; 1000 trees |
+| Neural Net | _TBD_ | _TBD_ | tuned `hidden_units`, `penalty`, `epochs`; normalized inputs |
+
+::: {.callout-important}
+This table is a **placeholder**. Fill the cells in after you render the model
+documents — each one prints its `collect_metrics()` summary that you can copy
+here. (A nice exercise: write a small chunk that reads the three `*_fit.rds`
+files and assembles this table automatically.)
+:::
+
+## The submission workflow at a glance
+
+Once a model is fitted and saved (each model doc does this), turning it into a
+leaderboard entry is mechanical:
+
+1. Load the fitted workflow from `models/<model>_fit.rds`.
+2. Read `data/raw/test.csv`.
+3. `predict()` the class for each test passenger.
+4. Write `models/submission_<model>.csv` with exactly two columns,
+   `PassengerId` and `Survived` (0/1 integers).
+5. Push it to Kaggle:
+
+   ```bash
+   kaggle competitions submit -c titanic \
+     -f models/submission_xgboost.csv \
+     -m "xgboost via tidymodels"
+   ```
+
+All of that is wrapped in the **[parameterized submission document](docs/submission.qmd)**,
+so you generate any model's CSV with one command:
+
+```bash
+quarto render docs/submission.qmd -P model:xgboost
+quarto render docs/submission.qmd -P model:rf
+quarto render docs/submission.qmd -P model:nnet
+```
+
+## Next steps
+
+- Start with the **[Exploratory Data Analysis](docs/01-eda.qmd)** to see the
+  patterns that drive the features.
+- Then read the model docs in order:
+  **[XGBoost](docs/02-xgboost.qmd)** →
+  **[Random Forest](docs/03-random-forest.qmd)** →
+  **[Neural Net](docs/04-neural-net.qmd)**.
+- Build a leaderboard CSV with the **[Submission](docs/submission.qmd)** doc.
+- Stuck on authentication? See the **[Kaggle Setup guide](docs/setup-kaggle.md)**.

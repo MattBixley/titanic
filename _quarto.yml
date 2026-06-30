@@ -1,0 +1,42 @@
+project:
+  type: website
+  output-dir: _site
+
+# Freezing is critical here. The model docs run real tidymodels tuning over
+# 5-fold CV, which is expensive. `freeze: auto` means a document is only
+# re-executed when its own source changes — CI builds and casual re-renders of
+# OTHER pages will reuse the cached results in `_freeze/` instead of refitting
+# every model from scratch. Commit the `_freeze/` directory so collaborators
+# (and GitHub Actions) get the same cached outputs.
+execute:
+  freeze: auto
+
+website:
+  title: "Titanic — Tidymodels Tour"
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "EDA"
+        href: docs/01-eda.qmd
+      - text: "Models"
+        menu:
+          - text: "XGBoost"
+            href: docs/02-xgboost.qmd
+          - text: "Random Forest"
+            href: docs/03-random-forest.qmd
+          - text: "Neural Net"
+            href: docs/04-neural-net.qmd
+      - text: "Submission"
+        href: docs/submission.qmd
+      - text: "Kaggle Setup"
+        href: docs/setup-kaggle.md
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    code-tools: true
+    df-print: paged

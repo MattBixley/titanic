@@ -1,0 +1,226 @@
+---
+title: "Model 2 — Random Forest"
+subtitle: "Bagged trees with ranger — a robust, low-tuning baseline"
+---
+
+> **Where we are:** Second of three model documents in the
+> [Titanic — Tidymodels Tour](../index.qmd). It follows the *same* structure as
+> the [XGBoost doc](02-xgboost.qmd) — recipe → spec → workflow → tune →
+> finalize → evaluate → save — so skim for the differences. Features come from
+> the [EDA](01-eda.qmd) via the shared `make_recipe()`.
+
+## Why a random forest?
+
+Where XGBoost grows trees *sequentially* to correct residuals, a random forest
+grows many *independent* deep trees on bootstrap samples and averages them. It
+is famously forgiving: with `trees = 1000` fixed, there are really only two
+knobs worth tuning (`mtry`, `min_n`), it rarely overfits badly, and it gives a
+strong baseline with almost no fuss. We use the fast `ranger` engine and ask it
+for **permutation** importance.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
+source(here::here("R", "02_features.R"))   # make_recipe(data)
+
+library(ranger)   # the engine
+library(vip)      # variable importance plots
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
+  dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe
+
+Identical shared recipe — that is the whole point: a fair comparison across
+models on the same features.
+
+```{r}
+#| label: recipe
+rf_recipe <- make_recipe(train)
+rf_recipe
+```
+
+## The model specification
+
+`trees` is fixed at 1000 (more is rarely worth it); we tune `mtry` and `min_n`.
+We set `importance = "permutation"` so we can plot variable importance later.
+
+```{r}
+#| label: spec
+rf_spec <- rand_forest(
+  mtry  = tune(),
+  min_n = tune(),
+  trees = 1000
+) |>
+  set_engine("ranger", importance = "permutation") |>
+  set_mode("classification")
+
+rf_spec
+```
+
+## The workflow
+
+```{r}
+#| label: workflow
+rf_wf <- workflow() |>
+  add_recipe(rf_recipe) |>
+  add_model(rf_spec)
+```
+
+## Tuning with 5-fold cross-validation
+
+```{r}
+#| label: resamples
+set.seed(42)
+folds <- vfold_cv(train, v = 5, strata = Survived)
+```
+
+```{r}
+#| label: grid
+# mtry's upper bound depends on the number of predictors AFTER the recipe runs,
+# so we finalize() its range against the prepped predictor set rather than
+# guessing. min_n we give a plain range.
+rf_params <- rf_wf |>
+  extract_parameter_set_dials() |>
+  finalize(x = make_recipe(train) |> prep() |> bake(new_data = NULL) |>
+             dplyr::select(-Survived))
+
+set.seed(42)
+rf_grid <- grid_latin_hypercube(rf_params, size = 20)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+rf_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+rf_tuned <- tune_grid(
+  rf_wf,
+  resamples = folds,
+  grid      = rf_grid,
+  metrics   = rf_metrics,
+  # Positive class "1" is the second factor level.
+  control   = control_grid(save_pred = TRUE, event_level = "second")
+)
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the mtry / min_n grid (autoplot)."
+#| fig-width: 8
+#| fig-height: 5
+
+autoplot(rf_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+show_best(rf_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+best_rf <- select_best(rf_tuned, metric = "roc_auc")
+best_rf
+
+final_rf_wf <- finalize_workflow(rf_wf, best_rf)
+
+set.seed(42)
+rf_fit <- fit(final_rf_wf, data = train)
+```
+
+## Cross-validated performance
+
+```{r}
+#| label: cv-metrics
+collect_metrics(rf_tuned) |>
+  dplyr::semi_join(best_rf, by = c("mtry", "min_n")) |>
+  dplyr::select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+Copy the `accuracy` and `roc_auc` `mean` values into the results table on the
+[master document](../index.qmd).
+:::
+
+### Confusion matrix
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+rf_cv_preds <- collect_predictions(rf_tuned, parameters = best_rf)
+
+rf_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  ggplot2::labs(title = "Random Forest — CV confusion matrix")
+```
+
+### Variable importance
+
+```{r}
+#| label: vip
+#| fig-cap: "Permutation importance — drop in accuracy when each feature is shuffled."
+#| fig-width: 7
+#| fig-height: 5
+
+rf_fit |>
+  extract_fit_parsnip() |>
+  vip::vip(num_features = 15, geom = "col",
+           aesthetics = list(fill = "forestgreen")) +
+  ggplot2::labs(title = "Random Forest variable importance (permutation)") +
+  ggplot2::theme_minimal()
+```
+
+Reassuringly, the forest leans on the same engineered features as XGBoost —
+`Title`, `Sex`, `Fare`, class. Different algorithm, same story from the data.
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+# Project convention: models/<model>_fit.rds — note the file is rf_fit.rds.
+saveRDS(rf_fit, file = here::here("models", "rf_fit.rds"))
+```
+
+## Submission
+
+Generate this model's leaderboard CSV with the
+[parameterized submission document](submission.qmd):
+
+```bash
+quarto render docs/submission.qmd -P model:rf
+```
+
+That loads `models/rf_fit.rds`, predicts on `data/raw/test.csv`, writes
+`models/submission_rf.csv`, and prints the exact `kaggle competitions submit`
+command. See the [Kaggle setup guide](setup-kaggle.md) for authentication.
+
+## Next steps
+
+- Finish the tour with the **[Neural Net](04-neural-net.qmd)** (needs normalized
+  inputs).
+- Revisit **[XGBoost](02-xgboost.qmd)** to compare importance and CV scores.
+- Build the CSV with the **[Submission doc](submission.qmd)**.
+- Record this model's CV scores in the **[master results table](../index.qmd)**.
