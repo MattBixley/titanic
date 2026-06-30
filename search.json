@@ -1,5 +1,495 @@
 [
   {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "",
+    "text": "This site is a guided tour of the Kaggle Titanic — Machine Learning from Disaster competition, worked end to end in R with the tidymodels framework. It is written for an R user who is comfortable with the language and with statistics, but is new to Kaggle — so we narrate the competition workflow as well as the modelling reasoning, and we lean on ggplot2 for every chart.\nIf you have taught or sat through an intro-to-ML workshop, this will feel familiar: split, engineer features, resample, tune, evaluate, predict. Kaggle just adds a public leaderboard and a strict submission format on top.\n\n\nTitanic is the canonical “first Kaggle competition” — the Hello, World of predictive modelling. The setup:\n\nYou are given a training set (data/raw/train.csv, 891 passengers) where the outcome is known: did each passenger survive (Survived = 1) or not (Survived = 0)?\nYou are given a test set (data/raw/test.csv, 418 passengers) with the same features but no Survived column.\nYour job: predict Survived for every passenger in the test set, write those predictions to a CSV in the required format, and upload it. Kaggle scores your CSV on accuracy against the hidden true labels and places you on the leaderboard.\n\nThere is no prize money here — it’s a sandbox. That is exactly why it’s a great place to have fun and explore: try a model, submit, see your score, iterate.\n\n\n\n\n\n\nTipThe Kaggle mental model for a newcomer\n\n\n\nThink of it as a take-home exam where you can resubmit as often as you like and see your grade each time (with a daily submission cap). Your cross-validation score on the training data is your private estimate; the leaderboard score is the graded result. When the two diverge, you are learning something about generalization — which is the whole point."
+  },
+  {
+    "objectID": "index.html#welcome-aboard",
+    "href": "index.html#welcome-aboard",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "",
+    "text": "This site is a guided tour of the Kaggle Titanic — Machine Learning from Disaster competition, worked end to end in R with the tidymodels framework. It is written for an R user who is comfortable with the language and with statistics, but is new to Kaggle — so we narrate the competition workflow as well as the modelling reasoning, and we lean on ggplot2 for every chart.\nIf you have taught or sat through an intro-to-ML workshop, this will feel familiar: split, engineer features, resample, tune, evaluate, predict. Kaggle just adds a public leaderboard and a strict submission format on top.\n\n\nTitanic is the canonical “first Kaggle competition” — the Hello, World of predictive modelling. The setup:\n\nYou are given a training set (data/raw/train.csv, 891 passengers) where the outcome is known: did each passenger survive (Survived = 1) or not (Survived = 0)?\nYou are given a test set (data/raw/test.csv, 418 passengers) with the same features but no Survived column.\nYour job: predict Survived for every passenger in the test set, write those predictions to a CSV in the required format, and upload it. Kaggle scores your CSV on accuracy against the hidden true labels and places you on the leaderboard.\n\nThere is no prize money here — it’s a sandbox. That is exactly why it’s a great place to have fun and explore: try a model, submit, see your score, iterate.\n\n\n\n\n\n\nTipThe Kaggle mental model for a newcomer\n\n\n\nThink of it as a take-home exam where you can resubmit as often as you like and see your grade each time (with a daily submission cap). Your cross-validation score on the training data is your private estimate; the leaderboard score is the graded result. When the two diverge, you are learning something about generalization — which is the whole point."
+  },
+  {
+    "objectID": "index.html#the-goal",
+    "href": "index.html#the-goal",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "The goal",
+    "text": "The goal\nPredict the binary outcome Survived for the 418 test passengers as accurately as possible, and document the reasoning so the whole thing is reproducible and teachable.\nWe fit three different model families on identical features so they can be compared apples-to-apples:\n\n\n\nModel\nEngine\nWhy it’s interesting\n\n\n\n\nXGBoost\nxgboost\nGradient-boosted trees — the Kaggle workhorse\n\n\nRandom Forest\nranger\nBagged trees — robust, low-tuning baseline\n\n\nNeural Net\nbrulee / nnet\nA small MLP — needs normalized inputs"
+  },
+  {
+    "objectID": "index.html#how-the-documents-link-together",
+    "href": "index.html#how-the-documents-link-together",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "How the documents link together",
+    "text": "How the documents link together\nThis is a small Quarto website. index.qmd (this page) is the master document; everything else lives in docs/ and the navbar ties them into a narrative:\nHome (index)  →  EDA  →  Models {XGBoost, Random Forest, Neural Net}  →  Submission  →  Kaggle Setup\n\nExploratory Data Analysis — look at the data, find the patterns (sex, class, age, family, title), and motivate the feature engineering.\nModel docs — each one follows the same structure (recipe → spec → workflow → tune → finalize → evaluate → save), so once you’ve read one, the others are easy to skim for the differences.\nSubmission — a single parameterized document that turns any of the three saved models into a leaderboard-ready CSV.\nKaggle Setup — how to authenticate the Kaggle CLI so you can download the data and push submissions."
+  },
+  {
+    "objectID": "index.html#project-structure",
+    "href": "index.html#project-structure",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "Project structure",
+    "text": "Project structure\ntitantic/\n├── _quarto.yml              # website config (theme, navbar, freeze)\n├── index.qmd                # ← you are here (master document)\n├── renv.lock                # pinned package versions (reproducibility)\n├── R/\n│   ├── 00_setup.R           # libraries, seed=42, paths, parallel backend\n│   ├── 01_eda.R             # standalone EDA script\n│   └── 02_features.R        # make_recipe(data) — the SHARED feature recipe\n├── data/\n│   └── raw/\n│       ├── train.csv        # 891 rows, has Survived\n│       └── test.csv         # 418 rows, no Survived\n├── docs/\n│   ├── 01-eda.qmd           # exploratory analysis\n│   ├── 02-xgboost.qmd       # boosted trees\n│   ├── 03-random-forest.qmd # ranger random forest\n│   ├── 04-neural-net.qmd    # brulee/nnet MLP\n│   ├── submission.qmd       # parameterized: build a submission CSV\n│   └── setup-kaggle.md      # Kaggle CLI auth guide\n├── models/                  # fitted workflows (*_fit.rds) + submission_*.csv\n└── figures/                 # exported plots\nThe single most important shared piece is R/02_features.R, which defines make_recipe(data). Every model sources it so they all train on the same engineered features — that is what makes the comparison fair."
+  },
+  {
+    "objectID": "index.html#how-to-reproduce",
+    "href": "index.html#how-to-reproduce",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "How to reproduce",
+    "text": "How to reproduce\nEverything is pinned with renv and uses here::here() for paths, so there is no setwd() fragility.\n\nRestore the environment (installs the exact package versions):\nrenv::restore()\nGet the data — follow the Kaggle setup guide to authenticate, then download train.csv and test.csv into data/raw/.\nRender the site. Because of freeze: auto, the heavy model fits only run the first time (or when a model doc changes):\nquarto render\nLogical run order if you prefer to step through it: EDA → each model doc (which saves its fitted workflow to models/) → submission.\nGenerate submissions for each model (see below).\n\n\n\n\n\n\n\nNote\n\n\n\nset.seed(42) is set in R/00_setup.R and the resampling folds are seeded, so CV results are reproducible across machines that share the renv lockfile."
+  },
+  {
+    "objectID": "index.html#results-summary",
+    "href": "index.html#results-summary",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "Results summary",
+    "text": "Results summary\nThe table below compares the three base models on 5-fold cross-validated accuracy and roc_auc (positive class = \"1\", survived). These are honest estimates computed on the training data before we ever touch the test set — and they are read directly from each model’s saved tuning results (models/*_res.rds), so they update automatically on every render. No copying.\n\n\nShow code\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\n\n# Pull the best (roc_auc-selected) configuration's CV metrics from a saved\n# tune_grid result.\ncv_metrics &lt;- function(path, label, notes) {\n  res  &lt;- readRDS(path)\n  best &lt;- select_best(res, metric = \"roc_auc\")\n  m    &lt;- collect_metrics(res) |&gt; semi_join(best, by = names(best))\n  tibble(\n    Model         = label,\n    `CV accuracy` = m$mean[m$.metric == \"accuracy\"],\n    `CV ROC-AUC`  = m$mean[m$.metric == \"roc_auc\"],\n    `Best num_comp` = best$num_comp,\n    Notes         = notes\n  )\n}\n\nbind_rows(\n  cv_metrics(here(\"models\", \"xgboost_res.rds\"), \"XGBoost\",\n             \"tuned trees / tree_depth / learn_rate / min_n + num_comp\"),\n  cv_metrics(here(\"models\", \"rf_res.rds\"), \"Random Forest\",\n             \"tuned mtry / min_n + num_comp; 1000 trees\"),\n  cv_metrics(here(\"models\", \"nnet_res.rds\"), \"Neural Net\",\n             \"tuned hidden_units / penalty + num_comp; PCA-normalized\")\n) |&gt;\n  arrange(desc(`CV ROC-AUC`)) |&gt;\n  mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \\(x) round(x, 4))) |&gt;\n  knitr::kable(align = \"lrrrl\")\n\n\n\n\n\n\n\n\n\n\n\n\nModel\nCV accuracy\nCV ROC-AUC\nBest num_comp\nNotes\n\n\n\n\nRandom Forest\n0.8463\n0.8953\n2\ntuned mtry / min_n + num_comp; 1000 trees\n\n\nXGBoost\n0.8429\n0.8929\n3\ntuned trees / tree_depth / learn_rate / min_n + num_comp\n\n\nNeural Net\n0.8351\n0.8916\n6\ntuned hidden_units / penalty + num_comp; PCA-normalized\n\n\n\n\n\nThe stacked ensemble blends all three; its real test is the Kaggle leaderboard rather than a single CV number (the stack’s weights are shown on its own page)."
+  },
+  {
+    "objectID": "index.html#the-submission-workflow-at-a-glance",
+    "href": "index.html#the-submission-workflow-at-a-glance",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "The submission workflow at a glance",
+    "text": "The submission workflow at a glance\nOnce a model is fitted and saved (each model doc does this), turning it into a leaderboard entry is mechanical:\n\nLoad the fitted workflow from models/&lt;model&gt;_fit.rds.\nRead data/raw/test.csv.\npredict() the class for each test passenger.\nWrite models/submission_&lt;model&gt;.csv with exactly two columns, PassengerId and Survived (0/1 integers).\nPush it to Kaggle:\nkaggle competitions submit -c titanic \\\n  -f models/submission_xgboost.csv \\\n  -m \"xgboost via tidymodels\"\n\nAll of that is wrapped in the parameterized submission document, so you generate any model’s CSV with one command:\nquarto render docs/submission.qmd -P model:xgboost\nquarto render docs/submission.qmd -P model:rf\nquarto render docs/submission.qmd -P model:nnet"
+  },
+  {
+    "objectID": "index.html#next-steps",
+    "href": "index.html#next-steps",
+    "title": "Titanic — Tidymodels Tour",
+    "section": "Next steps",
+    "text": "Next steps\n\nStart with the Exploratory Data Analysis to see the patterns that drive the features.\nThen read the model docs in order: XGBoost → Random Forest → Neural Net.\nBuild a leaderboard CSV with the Submission doc.\nStuck on authentication? See the Kaggle Setup guide."
+  },
+  {
+    "objectID": "docs/submission.html",
+    "href": "docs/submission.html",
+    "title": "Building a Kaggle Submission",
+    "section": "",
+    "text": "Where we are: The final stop on the Titanic — Tidymodels Tour. Each model document (XGBoost, Random Forest, Neural Net) fits a workflow and saves it to models/&lt;model&gt;_fit.rds. This document is parameterized: tell it which model, and it loads that fit, predicts on the test set, and writes a Kaggle-ready CSV."
+  },
+  {
+    "objectID": "docs/submission.html#how-to-render-this-document-per-model",
+    "href": "docs/submission.html#how-to-render-this-document-per-model",
+    "title": "Building a Kaggle Submission",
+    "section": "How to render this document per model",
+    "text": "How to render this document per model\nThis .qmd has a model parameter (default \"xgboost\"). Override it on the command line with -P model:&lt;value&gt;:\n# XGBoost (also the default if you omit -P)\nquarto render docs/submission.qmd -P model:xgboost\n\n# Random forest\nquarto render docs/submission.qmd -P model:rf\n\n# Neural net\nquarto render docs/submission.qmd -P model:nnet\nEach render reads the matching models/&lt;model&gt;_fit.rds, writes models/submission_&lt;model&gt;.csv, and prints the exact upload command. You must have fitted (rendered) the corresponding model document first so the .rds exists."
+  },
+  {
+    "objectID": "docs/submission.html#setup",
+    "href": "docs/submission.html#setup",
+    "title": "Building a Kaggle Submission",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\n# We need the tidymodels stack to load the saved workflow and call predict().\n# 00_setup.R also sets paths and the seed.\nsource(here::here(\"R\", \"00_setup.R\"))\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)"
+  },
+  {
+    "objectID": "docs/submission.html#resolve-and-validate-the-requested-model",
+    "href": "docs/submission.html#resolve-and-validate-the-requested-model",
+    "title": "Building a Kaggle Submission",
+    "section": "Resolve and validate the requested model",
+    "text": "Resolve and validate the requested model\n\n\nShow code\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf      = here::here(\"models\", \"rf_fit.rds\"),\n  nnet    = here::here(\"models\", \"nnet_fit.rds\"),\n  stack   = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\n\nBuilding submission for model: nnet\n\n\nShow code\nmessage(\"Loading fitted workflow from: \", fit_path)\n\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/nnet_fit.rds\n\n\nWe are building a submission for nnet."
+  },
+  {
+    "objectID": "docs/submission.html#load-the-model-and-the-test-data",
+    "href": "docs/submission.html#load-the-model-and-the-test-data",
+    "title": "Building a Kaggle Submission",
+    "section": "Load the model and the test data",
+    "text": "Load the model and the test data\n\n\nShow code\n# The saved object is a fully fitted workflow (or a stacks ensemble) that knows\n# how to preprocess the engineered test data exactly as it was trained.\nmodel_fit &lt;- readRDS(fit_path)\n\n# Use the PROCESSED test set (engineered features added in R/03_engineer.R), so\n# the columns match what every model/recipe expects. PassengerId keys the\n# Kaggle submission.\ntest &lt;- read_csv(here(\"data\", \"processed\", \"test.csv\"))\n\n\nRows: 418 Columns: 23\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (13): Name, Sex, Ticket, Cabin, Embarked, Title, Surname, IsAlone, Deck,...\ndbl (10): PassengerId, Pclass, Age, SibSp, Parch, Fare, FamilySize, TicketGr...\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\nShow code\nglimpse(test)\n\n\nRows: 418\nColumns: 23\n$ PassengerId     &lt;dbl&gt; 892, 893, 894, 895, 896, 897, 898, 899, 900, 901, 902,…\n$ Pclass          &lt;dbl&gt; 3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 3, 1, 1, 2, 1, 2, 2, 3, …\n$ Name            &lt;chr&gt; \"Kelly, Mr. James\", \"Wilkes, Mrs. James (Ellen Needs)\"…\n$ Sex             &lt;chr&gt; \"male\", \"female\", \"male\", \"male\", \"female\", \"male\", \"f…\n$ Age             &lt;dbl&gt; 34.5, 47.0, 62.0, 27.0, 22.0, 14.0, 30.0, 26.0, 18.0, …\n$ SibSp           &lt;dbl&gt; 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 0, 0, …\n$ Parch           &lt;dbl&gt; 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …\n$ Ticket          &lt;chr&gt; \"330911\", \"363272\", \"240276\", \"315154\", \"3101298\", \"75…\n$ Fare            &lt;dbl&gt; 7.8292, 7.0000, 9.6875, 8.6625, 12.2875, 9.2250, 7.629…\n$ Cabin           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, \"B45\",…\n$ Embarked        &lt;chr&gt; \"Q\", \"S\", \"Q\", \"S\", \"S\", \"S\", \"Q\", \"S\", \"C\", \"S\", \"S\",…\n$ Title           &lt;chr&gt; \"Mr\", \"Mrs\", \"Mr\", \"Mr\", \"Mrs\", \"Mr\", \"Miss\", \"Mr\", \"M…\n$ Surname         &lt;chr&gt; \"Kelly\", \"Wilkes\", \"Myles\", \"Wirz\", \"Hirvonen\", \"Svens…\n$ FamilySize      &lt;dbl&gt; 1, 2, 1, 1, 3, 1, 1, 3, 1, 3, 1, 1, 2, 2, 2, 2, 1, 1, …\n$ IsAlone         &lt;chr&gt; \"yes\", \"no\", \"yes\", \"yes\", \"no\", \"yes\", \"yes\", \"no\", \"…\n$ Deck            &lt;chr&gt; \"Unknown\", \"Unknown\", \"Unknown\", \"Unknown\", \"Unknown\",…\n$ HasCabin        &lt;chr&gt; \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", …\n$ HasAge          &lt;chr&gt; \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\"…\n$ IsChild         &lt;chr&gt; \"no\", \"no\", \"no\", \"no\", \"no\", \"yes\", \"no\", \"no\", \"no\",…\n$ TicketGroupSize &lt;dbl&gt; 1, 1, 1, 1, 2, 1, 1, 3, 1, 3, 1, 1, 2, 2, 2, 2, 1, 1, …\n$ FarePerPerson   &lt;dbl&gt; 7.829200, 7.000000, 9.687500, 8.662500, 6.143750, 9.22…\n$ GroupSurvival   &lt;dbl&gt; 0.7500000, 0.3838384, 0.3838384, 0.3838384, 1.0000000,…\n$ GroupKnown      &lt;chr&gt; \"yes\", \"no\", \"no\", \"no\", \"yes\", \"yes\", \"yes\", \"yes\", \"…"
+  },
+  {
+    "objectID": "docs/submission.html#predict-and-assemble-the-submission",
+    "href": "docs/submission.html#predict-and-assemble-the-submission",
+    "title": "Building a Kaggle Submission",
+    "section": "Predict and assemble the submission",
+    "text": "Predict and assemble the submission\n\n\nShow code\n# predict() runs the workflow's recipe on the raw test data, then the model.\n# type = \"class\" returns the hard 0/1 label Kaggle wants.\npreds &lt;- predict(model_fit, new_data = test, type = \"class\")\n\n# Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived\n# as 0/1 integers. .pred_class is a factor (\"0\"/\"1\"); convert via character so\n# we don't accidentally get factor codes (1/2).\nsubmission &lt;- tibble(\n  PassengerId = test$PassengerId,\n  Survived    = as.integer(as.character(preds$.pred_class))\n)\n\n# Sanity checks: right number of rows, right value set, no missing predictions.\nstopifnot(\n  nrow(submission) == nrow(test),\n  all(submission$Survived %in% c(0L, 1L)),\n  !anyNA(submission$Survived)\n)\n\nhead(submission, 10)"
+  },
+  {
+    "objectID": "docs/submission.html#write-the-csv",
+    "href": "docs/submission.html#write-the-csv",
+    "title": "Building a Kaggle Submission",
+    "section": "Write the CSV",
+    "text": "Write the CSV\n\n\nShow code\nout_path &lt;- here(\"models\", paste0(\"submission_\", requested_model, \".csv\"))\n\nwrite_csv(submission, out_path)\n\nmessage(\"Wrote \", nrow(submission), \" predictions to: \", out_path)\n\n\nWrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_nnet.csv\n\n\nA quick summary of the predicted survival split (a sanity check against the ~38% base rate seen in the EDA):\n\n\nShow code\nsubmission |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))"
+  },
+  {
+    "objectID": "docs/submission.html#submit-to-kaggle",
+    "href": "docs/submission.html#submit-to-kaggle",
+    "title": "Building a Kaggle Submission",
+    "section": "Submit to Kaggle",
+    "text": "Submit to Kaggle\nPush the CSV to the leaderboard with the Kaggle CLI. The command below is built for the model you rendered:\nkaggle competitions submit -c titanic -f models/submission_nnet.csv -m \"nnet via tidymodels\"\n\n\n\n\n\n\nNoteFirst time? Authenticate first\n\n\n\nThe kaggle CLI needs your API token (~/.kaggle/kaggle.json) before any submit or download will work. The Kaggle setup guide walks through creating and installing it.\n\n\n\n\n\n\n\n\nTipDaily submission limit\n\n\n\nKaggle caps Titanic submissions per day (commonly ~10). Submit your best candidate by CV score rather than spraying every experiment at the leaderboard."
+  },
+  {
+    "objectID": "docs/submission.html#next-steps",
+    "href": "docs/submission.html#next-steps",
+    "title": "Building a Kaggle Submission",
+    "section": "Next steps",
+    "text": "Next steps\n\nCompare each model’s leaderboard score against its CV score recorded in the master results table — divergence is a lesson in generalization.\nRe-render for the other models: -P model:xgboost, -P model:rf, -P model:nnet.\nNeed auth help? See the Kaggle setup guide.\nBack to the master document for the whole-project picture."
+  },
+  {
+    "objectID": "docs/04-neural-net.html",
+    "href": "docs/04-neural-net.html",
+    "title": "Model 3 — Neural Net",
+    "section": "",
+    "text": "Where we are: Last of three model documents in the Titanic — Tidymodels Tour. Same structure as the XGBoost and Random Forest docs — recipe → spec → workflow → tune → finalize → evaluate → save. The one twist: a neural net needs normalized inputs, so this doc extends the shared make_recipe() with a normalization step."
+  },
+  {
+    "objectID": "docs/04-neural-net.html#why-a-neural-net-here",
+    "href": "docs/04-neural-net.html#why-a-neural-net-here",
+    "title": "Model 3 — Neural Net",
+    "section": "Why a neural net here?",
+    "text": "Why a neural net here?\nOn a dataset this small (891 rows) a multilayer perceptron will not beat the tree ensembles — and that’s fine. The point is to explore a different model family and see how tidymodels makes swapping engines almost free. A small MLP with a single hidden layer and weight decay (penalty) is a clean, instructive choice.\n\n\n\n\n\n\nNoteEngine choice: nnet\n\n\n\nWe fit the MLP with base R’s nnet engine. It has no native-code dependency, so it trains identically on your laptop, in the Quarto site build, and in GitHub Actions CI. A torch-backed alternative (brulee) is shown later as an optional local upgrade — but it does not load inside this project’s render/CI session, so nnet is the engine we publish."
+  },
+  {
+    "objectID": "docs/04-neural-net.html#setup",
+    "href": "docs/04-neural-net.html#setup",
+    "title": "Model 3 — Neural Net",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))      # tidyverse + tidymodels, seed = 42\nsource(here(\"R\", \"02_features.R\"))   # make_recipe(data)\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(nnet)     # the MLP engine (base R, no native deps)\nlibrary(vip)      # variable importance plots\n\n\n\n\nShow code\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))\n\n\n\n\nShow code\n# Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid\n# is tiny, so this is plenty fast and keeps results deterministic (no worker\n# package-loading surprises).\nif (exists(\"cl\")) try(parallel::stopCluster(cl), silent = TRUE)\nregisterDoSEQ()"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#the-recipe-with-normalization",
+    "href": "docs/04-neural-net.html#the-recipe-with-normalization",
+    "title": "Model 3 — Neural Net",
+    "section": "The recipe — with normalization",
+    "text": "The recipe — with normalization\nTree ensembles are invariant to monotone rescaling, so the shared recipe didn’t bother normalizing. A neural net is not invariant: gradient descent behaves far better when every numeric predictor has mean 0 and unit variance, otherwise large-scale features (like Fare) dominate the gradient. So we take the shared recipe and append step_normalize().\n\n\nShow code\n# Extend the shared recipe with normalization of all numeric predictors. This\n# step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns\n# are normalized too (standard practice for MLPs).\nnnet_recipe &lt;- make_recipe(train)\n\nnnet_recipe\n\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#the-model-specification",
+    "href": "docs/04-neural-net.html#the-model-specification",
+    "title": "Model 3 — Neural Net",
+    "section": "The model specification",
+    "text": "The model specification\n\n\nShow code\n# Single-hidden-layer MLP via base R's nnet engine: one hidden layer\n# (hidden_units) and L2 weight decay (penalty). nnet has no native-code\n# dependency, so it trains and renders reliably everywhere — including the\n# Quarto site build and GitHub Actions CI.\nnnet_spec &lt;- mlp(\n  hidden_units = tune(),\n  penalty      = tune()\n) |&gt;\n  set_engine(\"nnet\") |&gt;\n  set_mode(\"classification\")\n\nnnet_spec\n\n\nSingle Layer Neural Network Model Specification (classification)\n\nMain Arguments:\n  hidden_units = tune()\n  penalty = tune()\n\nComputational engine: nnet \n\n\n\n\n\n\n\n\nTipOptional: a torch-backed MLP with brulee (local only)\n\n\n\nFor a deeper net with a tuned epoch budget you can swap in brulee (a torch backend) when running locally. It also exposes epochs:\nnnet_spec &lt;- mlp(\n  hidden_units = tune(),\n  penalty      = tune(),\n  epochs       = tune()       # brulee only\n) |&gt;\n  set_engine(\"brulee\") |&gt;\n  set_mode(\"classification\")\nWe keep nnet as the published engine on purpose: brulee’s libtorch backend does not load inside the Quarto/knitr render session (or in CI) under this project’s renv setup — every fit fails with “Lantern is not loaded”. nnet sidesteps that entirely. If you switch to brulee, add epochs back to the tuning grid below and train sequentially (foreach::registerDoSEQ())."
+  },
+  {
+    "objectID": "docs/04-neural-net.html#the-workflow",
+    "href": "docs/04-neural-net.html#the-workflow",
+    "title": "Model 3 — Neural Net",
+    "section": "The workflow",
+    "text": "The workflow\n\n\nShow code\nnnet_wf &lt;- workflow() |&gt;\n  add_recipe(nnet_recipe) |&gt;\n  add_model(nnet_spec)"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#tuning-with-5-fold-cross-validation",
+    "href": "docs/04-neural-net.html#tuning-with-5-fold-cross-validation",
+    "title": "Model 3 — Neural Net",
+    "section": "Tuning with 5-fold cross-validation",
+    "text": "Tuning with 5-fold cross-validation\n\n\nShow code\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n\n\nShow code\n# The recipe now adds PCA internally, so num_comp is a tunable parameter too.\n# Bake a small recipe to give finalize() the predictor columns it needs to set\n# sensible ranges (e.g. hidden_units).\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nnnet_params &lt;- extract_parameter_set_dials(nnet_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nnnet_grid &lt;- grid_space_filling(nnet_params, size = 18)\n\n\n\n\nShow code\nnnet_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nnnet_tuned &lt;- tune_grid(\n  nnet_wf,\n  resamples = folds,\n  grid      = nnet_grid,\n  metrics   = nnet_metrics,\n  # Positive class \"1\" is the second factor level.\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\n\n\nShow code\nsaveRDS(nnet_tuned, here(\"models\", \"nnet_res.rds\"))\n\n\n\nTuning results\n\n\nShow code\nautoplot(nnet_tuned, metric = \"roc_auc\")\n\n\n\n\n\nROC-AUC across the MLP tuning grid (autoplot).\n\n\n\n\n\n\nShow code\nshow_best(nnet_tuned, metric = \"roc_auc\", n = 5)"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#finalize-and-fit-on-the-full-training-set",
+    "href": "docs/04-neural-net.html#finalize-and-fit-on-the-full-training-set",
+    "title": "Model 3 — Neural Net",
+    "section": "Finalize and fit on the full training set",
+    "text": "Finalize and fit on the full training set\n\n\nShow code\nbest_nnet &lt;- select_best(nnet_tuned, metric = \"roc_auc\")\nbest_nnet\n\n\n\n  \n\n\n\nShow code\nfinal_nnet_wf &lt;- finalize_workflow(nnet_wf, best_nnet)\n\nset.seed(42)\nnnet_fit &lt;- fit(final_nnet_wf, data = train)"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#cross-validated-performance",
+    "href": "docs/04-neural-net.html#cross-validated-performance",
+    "title": "Model 3 — Neural Net",
+    "section": "Cross-validated performance",
+    "text": "Cross-validated performance\n\n\nShow code\n# Join on whatever parameters best_nnet carries (hidden_units, penalty, num_comp)\n# so this stays correct as the tuned parameter set changes.\ncollect_metrics(nnet_tuned) |&gt;\n  semi_join(best_nnet, by = names(best_nnet)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nThese CV metrics feed the results table on the master document automatically — it reads models/nnet_res.rds at render time, so there’s nothing to copy by hand.\n\n\n\nConfusion matrix\n\n\nShow code\nnnet_cv_preds &lt;- collect_predictions(nnet_tuned, parameters = best_nnet)\n\nnnet_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"Neural Net — CV confusion matrix\")\n\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\nNeural nets don’t expose importance natively. For an nnet model vip derives it from the trained connection weights (Garson’s algorithm) — no shuffling or prediction wrapper needed, so it’s robust in any render environment.\n\n\nShow code\n# Pull the underlying nnet engine object out of the fitted workflow and let vip\n# read importance straight from the network weights.\nnnet_fit |&gt;\n  extract_fit_engine() |&gt;\n  vip(num_features = 15) +\n  labs(title = \"Neural Net variable importance (Garson weights)\") +\n  theme_minimal()\n\n\n\n\n\nConnection-weight (Garson) importance for the MLP.\n\n\n\n\nEven through a different lens, the same features carry the weight — Title, Sex, class, Fare — consistent with XGBoost and the Random Forest."
+  },
+  {
+    "objectID": "docs/04-neural-net.html#save-the-fitted-workflow",
+    "href": "docs/04-neural-net.html#save-the-fitted-workflow",
+    "title": "Model 3 — Neural Net",
+    "section": "Save the fitted workflow",
+    "text": "Save the fitted workflow\n\n\nShow code\n# Project convention: the neural-net model saves to nnet_fit.rds.\nsaveRDS(nnet_fit, file = here(\"models\", \"nnet_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/04-neural-net.html#submission",
+    "href": "docs/04-neural-net.html#submission",
+    "title": "Model 3 — Neural Net",
+    "section": "Submission",
+    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:nnet\nThat loads models/nnet_fit.rds, predicts on data/raw/test.csv, writes models/submission_nnet.csv, and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
+  },
+  {
+    "objectID": "docs/04-neural-net.html#next-steps",
+    "href": "docs/04-neural-net.html#next-steps",
+    "title": "Model 3 — Neural Net",
+    "section": "Next steps",
+    "text": "Next steps\n\nYou’ve now fit all three families — compare their CV scores side by side in the master results table.\nRevisit XGBoost and the Random Forest.\nBuild the CSV with the Submission doc and push it to the leaderboard."
+  },
+  {
+    "objectID": "docs/02-xgboost.html",
+    "href": "docs/02-xgboost.html",
+    "title": "Model 1 — XGBoost",
+    "section": "",
+    "text": "Where we are: First of three model documents in the Titanic — Tidymodels Tour. All three follow the same structure — recipe → spec → workflow → tune → finalize → evaluate → save — so once you’ve read this one, Random Forest and Neural Net are quick to skim for the differences. The features come from the EDA and the shared make_recipe()."
+  },
+  {
+    "objectID": "docs/02-xgboost.html#why-xgboost-first",
+    "href": "docs/02-xgboost.html#why-xgboost-first",
+    "title": "Model 1 — XGBoost",
+    "section": "Why XGBoost first?",
+    "text": "Why XGBoost first?\nGradient-boosted decision trees are the default first reach on tabular Kaggle problems. They handle mixed numeric/categorical features, capture interactions (like sex × class) automatically, are robust to monotone transforms, and tune to strong accuracy with modest effort. We tune four of the most impactful knobs."
+  },
+  {
+    "objectID": "docs/02-xgboost.html#setup",
+    "href": "docs/02-xgboost.html#setup",
+    "title": "Model 1 — XGBoost",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\n# Project setup: tidyverse + tidymodels, seed = 42, paths, parallel backend.\nsource(here::here(\"R\", \"00_setup.R\"))\n# Shared feature engineering: defines make_recipe(data).\nsource(here(\"R\", \"02_features.R\"))\n\n# Attach the libraries used throughout this document.\nlibrary(tidyverse)   # dplyr, ggplot2, readr, stringr, tibble, tidyr, purrr\nlibrary(tidymodels)  # recipes, parsnip, workflows, tune, yardstick, rsample, dials, broom\nlibrary(here)        # path construction\nlibrary(vip)         # variable importance plots\nlibrary(xgboost)     # the engine\n\n\n\n\nShow code\ntrain &lt;- readr::read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  # Project-wide convention: Survived is a factor, levels c(\"0\",\"1\"),\n  # positive class = \"1\" (so metrics use event_level = \"second\").\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#the-recipe",
+    "href": "docs/02-xgboost.html#the-recipe",
+    "title": "Model 1 — XGBoost",
+    "section": "The recipe",
+    "text": "The recipe\nThe shared recipe encodes everything we justified in the EDA: impute Age/Embarked, derive FamilySize, extract Title, log-transform Fare, dummy-encode factors, drop identifiers.\n\n\nShow code\nxgb_recipe &lt;- make_recipe(train)\nxgb_recipe\n\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#the-model-specification",
+    "href": "docs/02-xgboost.html#the-model-specification",
+    "title": "Model 1 — XGBoost",
+    "section": "The model specification",
+    "text": "The model specification\nWe mark the four tuning parameters with tune(). tidymodels will fill them in during the grid search.\n\n\nShow code\nxgb_spec &lt;- boost_tree(\n  trees      = tune(),\n  tree_depth = tune(),\n  learn_rate = tune(),\n  min_n      = tune()\n) |&gt;\n  set_engine(\"xgboost\") |&gt;\n  set_mode(\"classification\")\n\nxgb_spec\n\n\nBoosted Tree Model Specification (classification)\n\nMain Arguments:\n  trees = tune()\n  min_n = tune()\n  tree_depth = tune()\n  learn_rate = tune()\n\nComputational engine: xgboost"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#the-workflow",
+    "href": "docs/02-xgboost.html#the-workflow",
+    "title": "Model 1 — XGBoost",
+    "section": "The workflow",
+    "text": "The workflow\nA workflow bundles the recipe and the model so resampling applies the exact same preprocessing to every fold — no leakage.\n\n\nShow code\nxgb_wf &lt;- workflow() |&gt;\n  add_recipe(xgb_recipe) |&gt;\n  add_model(xgb_spec)"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#tuning-with-5-fold-cross-validation",
+    "href": "docs/02-xgboost.html#tuning-with-5-fold-cross-validation",
+    "title": "Model 1 — XGBoost",
+    "section": "Tuning with 5-fold cross-validation",
+    "text": "Tuning with 5-fold cross-validation\n\n\nShow code\n# Stratify on the outcome so each fold preserves the ~38% survival rate.\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n\n\nShow code\n# Predictors used to finalize data-dependent params (mtry, num_comp upper bound).\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nxgb_params &lt;- extract_parameter_set_dials(xgb_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nxgb_grid &lt;- grid_space_filling(xgb_params, size = 18)\n\n\n\n\nShow code\n# Score every candidate on both metrics. event_level = \"second\" because the\n# positive class (\"survived\" = \"1\") is the SECOND factor level.\nxgb_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nxgb_tuned &lt;- tune_grid(\n  xgb_wf,\n  resamples = folds,\n  grid      = xgb_grid,\n  metrics   = xgb_metrics,\n  control   = control_grid(save_pred = TRUE,\n                           save_workflow = TRUE,\n                           event_level = \"second\")\n)\n\n\n\n\nShow code\nsaveRDS(xgb_tuned, here(\"models\", \"xgboost_res.rds\"))\n\n\n\nTuning results\n\n\nShow code\nautoplot(xgb_tuned, metric = \"roc_auc\")\n\n\n\n\n\nROC-AUC across the tuning grid for each hyperparameter (autoplot).\n\n\n\n\n\n\nShow code\n# The top candidates by ROC-AUC.\nshow_best(xgb_tuned, metric = \"roc_auc\", n = 5)"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#finalize-and-fit-on-the-full-training-set",
+    "href": "docs/02-xgboost.html#finalize-and-fit-on-the-full-training-set",
+    "title": "Model 1 — XGBoost",
+    "section": "Finalize and fit on the full training set",
+    "text": "Finalize and fit on the full training set\n\n\nShow code\n# Pick the best ROC-AUC candidate and lock those hyperparameters in.\nbest_xgb &lt;- select_best(xgb_tuned, metric = \"roc_auc\")\nbest_xgb\n\n\n\n  \n\n\n\nShow code\nfinal_xgb_wf &lt;- finalize_workflow(xgb_wf, best_xgb)\n\n# Fit the finalized workflow on ALL the training data — this is the model we\n# will ship to Kaggle.\nset.seed(42)\nxgb_fit &lt;- fit(final_xgb_wf, data = train)"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#cross-validated-performance",
+    "href": "docs/02-xgboost.html#cross-validated-performance",
+    "title": "Model 1 — XGBoost",
+    "section": "Cross-validated performance",
+    "text": "Cross-validated performance\nThe fairest estimate of out-of-sample skill is the CV score of the chosen configuration — not the fit on the full training data (which overfits by construction).\n\n\nShow code\n# Collect the CV metrics for the winning hyperparameters.\ncollect_metrics(xgb_tuned) |&gt;\n  semi_join(best_xgb, by = names(best_xgb)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nThese CV metrics feed the results table on the master document automatically — it reads models/xgboost_res.rds at render time, so there’s nothing to copy by hand.\n\n\n\nConfusion matrix\nBuilt from the held-out CV predictions for the best configuration — so it reflects generalization, not memorization.\n\n\nShow code\nxgb_cv_preds &lt;- collect_predictions(xgb_tuned, parameters = best_xgb)\n\nxgb_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"XGBoost — CV confusion matrix\")\n\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\n\n\nShow code\nxgb_fit |&gt;\n  extract_fit_parsnip() |&gt;\n  vip(num_features = 15, geom = \"col\",\n      aesthetics = list(fill = \"steelblue\")) +\n  labs(title = \"XGBoost variable importance\") +\n  theme_minimal()\n\n\n\n\n\nTop features by XGBoost gain. Title, Sex, Fare and class dominate.\n\n\n\n\nThe engineered Title, plus Sex, Fare, and class, sit at the top — exactly the signal the EDA surfaced. Feature engineering earns its keep."
+  },
+  {
+    "objectID": "docs/02-xgboost.html#save-the-fitted-workflow",
+    "href": "docs/02-xgboost.html#save-the-fitted-workflow",
+    "title": "Model 1 — XGBoost",
+    "section": "Save the fitted workflow",
+    "text": "Save the fitted workflow\n\n\nShow code\n# Persist the full fitted workflow (recipe + model) so the submission document\n# can load it without refitting. Project convention: models/&lt;model&gt;_fit.rds.\nsaveRDS(xgb_fit, file = here(\"models\", \"xgboost_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/02-xgboost.html#submission",
+    "href": "docs/02-xgboost.html#submission",
+    "title": "Model 1 — XGBoost",
+    "section": "Submission",
+    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:xgboost\nThat loads models/xgboost_fit.rds, predicts on data/raw/test.csv, writes models/submission_xgboost.csv (columns PassengerId, Survived as 0/1 integers), and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
+  },
+  {
+    "objectID": "docs/02-xgboost.html#next-steps",
+    "href": "docs/02-xgboost.html#next-steps",
+    "title": "Model 1 — XGBoost",
+    "section": "Next steps",
+    "text": "Next steps\n\nCompare against the Random Forest — a robust, almost-no-tuning baseline.\nThen the Neural Net, which needs normalized inputs.\nBuild the CSV with the Submission doc.\nRecord this model’s CV scores in the master results table."
+  },
+  {
+    "objectID": "docs/01-eda.html",
+    "href": "docs/01-eda.html",
+    "title": "Exploratory Data Analysis",
+    "section": "",
+    "text": "Where we are: This is step one of the Titanic — Tidymodels Tour. Before fitting any model we look at the data, find the signal, and let what we see motivate the shared feature recipe in R/02_features.R (make_recipe()). Every model document downstream trains on those features, so the decisions we justify here ripple through the whole project."
+  },
+  {
+    "objectID": "docs/01-eda.html#setup",
+    "href": "docs/01-eda.html#setup",
+    "title": "Exploratory Data Analysis",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\n# Source the project setup: loads tidyverse + tidymodels, sets seed = 42,\n# defines path_* helpers, and registers the parallel backend.\nsource(here::here(\"R\", \"00_setup.R\"))\n\n# Attach the libraries whose functions are used bare throughout this doc.\nlibrary(tidyverse)   # dplyr, ggplot2, readr, stringr, tidyr, purrr, forcats, etc.\nlibrary(tidymodels)  # recipes and friends for the shared feature recipe\nlibrary(here)        # here() for project-relative paths\n\n# A couple of EDA-only helpers.\nlibrary(skimr)   # skim() — richer than summary()\nlibrary(naniar)  # missingness visualisation (optional but lovely)\nlibrary(scales)  # percent()/dollar() axis + label formatting (not attached by tidyverse)\n\n\n\n\nShow code\n# Read the training data. Only the training set has the Survived label, so all\n# exploratory analysis happens here.\ntrain &lt;- read_csv(here(\"data\", \"raw\", \"train.csv\"))\n\n# Survived is the outcome. Treat it as a factor with explicit levels.\n# Convention for the whole project: levels c(\"0\", \"1\"), positive class = \"1\".\ntrain &lt;- train |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))\n\nglimpse(train)\n\n\nRows: 891\nColumns: 12\n$ PassengerId &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,…\n$ Survived    &lt;fct&gt; 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1…\n$ Pclass      &lt;dbl&gt; 3, 1, 3, 1, 3, 3, 1, 3, 3, 2, 3, 1, 3, 3, 3, 2, 3, 2, 3, 3…\n$ Name        &lt;chr&gt; \"Braund, Mr. Owen Harris\", \"Cumings, Mrs. John Bradley (Fl…\n$ Sex         &lt;chr&gt; \"male\", \"female\", \"female\", \"female\", \"male\", \"male\", \"mal…\n$ Age         &lt;dbl&gt; 22, 38, 26, 35, 35, NA, 54, 2, 27, 14, 4, 58, 20, 39, 14, …\n$ SibSp       &lt;dbl&gt; 1, 1, 0, 1, 0, 0, 0, 3, 0, 1, 1, 0, 0, 1, 0, 0, 4, 0, 1, 0…\n$ Parch       &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 0, 0, 5, 0, 0, 1, 0, 0, 0…\n$ Ticket      &lt;chr&gt; \"A/5 21171\", \"PC 17599\", \"STON/O2. 3101282\", \"113803\", \"37…\n$ Fare        &lt;dbl&gt; 7.2500, 71.2833, 7.9250, 53.1000, 8.0500, 8.4583, 51.8625,…\n$ Cabin       &lt;chr&gt; NA, \"C85\", NA, \"C123\", NA, NA, \"E46\", NA, NA, NA, \"G6\", \"C…\n$ Embarked    &lt;chr&gt; \"S\", \"C\", \"S\", \"S\", \"S\", \"Q\", \"S\", \"S\", \"S\", \"C\", \"S\", \"S\"…"
+  },
+  {
+    "objectID": "docs/01-eda.html#first-look-structure-and-missingness",
+    "href": "docs/01-eda.html#first-look-structure-and-missingness",
+    "title": "Exploratory Data Analysis",
+    "section": "First look: structure and missingness",
+    "text": "First look: structure and missingness\n\n\nShow code\n# skim() gives per-type summaries: completeness, mean/sd for numerics,\n# top counts for characters. The `complete_rate` column is the one to watch.\nskim(train)\n\n\n\nData summary\n\n\nName\ntrain\n\n\nNumber of rows\n891\n\n\nNumber of columns\n12\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n5\n\n\nfactor\n1\n\n\nnumeric\n6\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nName\n0\n1.00\n12\n82\n0\n891\n0\n\n\nSex\n0\n1.00\n4\n6\n0\n2\n0\n\n\nTicket\n0\n1.00\n3\n18\n0\n681\n0\n\n\nCabin\n687\n0.23\n1\n15\n0\n147\n0\n\n\nEmbarked\n2\n1.00\n1\n1\n0\n3\n0\n\n\n\nVariable type: factor\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nordered\nn_unique\ntop_counts\n\n\n\n\nSurvived\n0\n1\nFALSE\n2\n0: 549, 1: 342\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\nPassengerId\n0\n1.0\n446.00\n257.35\n1.00\n223.50\n446.00\n668.5\n891.00\n▇▇▇▇▇\n\n\nPclass\n0\n1.0\n2.31\n0.84\n1.00\n2.00\n3.00\n3.0\n3.00\n▃▁▃▁▇\n\n\nAge\n177\n0.8\n29.70\n14.53\n0.42\n20.12\n28.00\n38.0\n80.00\n▂▇▅▂▁\n\n\nSibSp\n0\n1.0\n0.52\n1.10\n0.00\n0.00\n0.00\n1.0\n8.00\n▇▁▁▁▁\n\n\nParch\n0\n1.0\n0.38\n0.81\n0.00\n0.00\n0.00\n0.0\n6.00\n▇▁▁▁▁\n\n\nFare\n0\n1.0\n32.20\n49.69\n0.00\n7.91\n14.45\n31.0\n512.33\n▇▁▁▁▁\n\n\n\n\n\nThe headline structural facts:\n\n891 passengers, the outcome Survived is binary.\nAge is missing for ~20% of passengers — too much to drop, so we will impute it in the recipe.\nCabin is missing for ~77% — mostly unusable as-is, though its presence/absence may carry signal (a recorded cabin ≈ higher class).\nEmbarked has 2 missing values — trivially imputable with the mode.\n\n\n\nShow code\n# A quick ggplot of missingness so we can *see* what skim told us.\ntrain |&gt;\n  summarise(across(everything(), ~ mean(is.na(.x)))) |&gt;\n  pivot_longer(everything(),\n                      names_to = \"variable\", values_to = \"pct_missing\") |&gt;\n  filter(pct_missing &gt; 0) |&gt;\n  ggplot(aes(x = reorder(variable, pct_missing),\n                               y = pct_missing)) +\n  geom_col(fill = \"steelblue\") +\n  geom_text(aes(label = percent(pct_missing, accuracy = 1)),\n                     hjust = -0.1, size = 3.5) +\n  scale_y_continuous(labels = percent,\n                              expand = expansion(mult = c(0, 0.15))) +\n  coord_flip() +\n  labs(title = \"Missingness by column\",\n                x = NULL, y = \"Missing\") +\n  theme_minimal()\n\n\n\n\n\nProportion of missing values per column. Age and Cabin dominate.\n\n\n\n\nThe overall survival rate is our base rate — the number to beat with any model:\n\n\nShow code\ntrain |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))\n\n\n\n  \n\n\n\nAbout 38% survived. A “predict everyone died” baseline would therefore score ~62% accuracy — keep that in mind when judging model scores."
+  },
+  {
+    "objectID": "docs/01-eda.html#who-survived-the-classic-patterns",
+    "href": "docs/01-eda.html#who-survived-the-classic-patterns",
+    "title": "Exploratory Data Analysis",
+    "section": "Who survived? The classic patterns",
+    "text": "Who survived? The classic patterns\n\nSurvival by sex\n\n\nShow code\ntrain |&gt;\n  group_by(Sex) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n()) |&gt;\n  ggplot(aes(x = Sex, y = survival_rate, fill = Sex)) +\n  geom_col(width = 0.6) +\n  geom_text(aes(label = percent(survival_rate, accuracy = 1)),\n                     vjust = -0.4) +\n  scale_y_continuous(labels = percent,\n                              limits = c(0, 1)) +\n  labs(title = \"\\\"Women and children first\\\"\",\n                x = NULL, y = \"Survival rate\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\n\nSurvival rate by sex. The single strongest predictor in the data.\n\n\n\n\n~74% of women survived vs ~19% of men. Sex is the dominant predictor — any model that ignores it is leaving the table.\n\n\nSurvival by passenger class\n\n\nShow code\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  group_by(Pclass) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\")) |&gt;\n  ggplot(aes(x = Pclass, y = survival_rate, fill = Pclass)) +\n  geom_col(width = 0.6) +\n  geom_text(aes(label = percent(survival_rate, accuracy = 1)),\n                     vjust = -0.4) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  labs(title = \"Class mattered\",\n                x = \"Passenger class\", y = \"Survival rate\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\n\nSurvival rate by passenger class (1 = first class).\n\n\n\n\nA clear gradient: 1st class ~63%, 2nd ~47%, 3rd ~24%. Class is a proxy for deck location, wealth, and access to lifeboats.\n\n\nSex and class together\n\n\nShow code\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  group_by(Sex, Pclass) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), .groups = \"drop\") |&gt;\n  ggplot(aes(x = Pclass, y = survival_rate, fill = Sex)) +\n  geom_col(position = \"dodge\", width = 0.7) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  labs(title = \"Sex × class interaction\",\n                x = \"Passenger class\", y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\n\nSurvival by sex within each class — the interaction is striking.\n\n\n\n\nFirst-class women survived almost universally; third-class men almost never. Tree-based models capture this interaction automatically; for the neural net it helps to have rich, normalized features."
+  },
+  {
+    "objectID": "docs/01-eda.html#age-fare-and-continuous-structure",
+    "href": "docs/01-eda.html#age-fare-and-continuous-structure",
+    "title": "Exploratory Data Analysis",
+    "section": "Age, fare, and continuous structure",
+    "text": "Age, fare, and continuous structure\n\nAge distribution by survival\n\n\nShow code\ntrain |&gt;\n  ggplot(aes(x = Age, fill = Survived)) +\n  geom_histogram(binwidth = 5, position = \"identity\", alpha = 0.6) +\n  scale_fill_manual(values = c(\"0\" = \"grey50\", \"1\" = \"seagreen\"),\n                             labels = c(\"Died\", \"Survived\")) +\n  labs(title = \"Age distribution by outcome\",\n                x = \"Age (years)\", y = \"Count\", fill = NULL) +\n  theme_minimal()\n\n\n\n\n\nAge distribution split by survival. Note the spike of saved children.\n\n\n\n\n\n\nShow code\ntrain |&gt;\n  ggplot(aes(x = Age, fill = Survived)) +\n  geom_density(alpha = 0.5) +\n  scale_fill_manual(values = c(\"0\" = \"grey50\", \"1\" = \"seagreen\"),\n                             labels = c(\"Died\", \"Survived\")) +\n  labs(title = \"Age density by outcome\",\n                x = \"Age (years)\", y = \"Density\", fill = NULL) +\n  theme_minimal()\n\n\n\n\n\nSame story as a density — young children survived disproportionately.\n\n\n\n\nChildren (roughly under 10) survived at a higher rate — the “and children” half of the rule. Because Age is ~20% missing, imputation in the recipe is essential; a median or bagged-tree imputation keeps these rows in play.\n\n\nFare by class\n\n\nShow code\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  ggplot(aes(x = Pclass, y = Fare, fill = Pclass)) +\n  geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +\n  scale_y_log10(labels = dollar) +\n  labs(title = \"Fare by passenger class (log scale)\",\n                x = \"Passenger class\", y = \"Fare (log10)\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\n\nFare by class (log scale). Fare is largely a continuous echo of class.\n\n\n\n\nFare is right-skewed and strongly tied to class — a candidate for a log transform so models (especially the neural net) see a better-behaved distribution."
+  },
+  {
+    "objectID": "docs/01-eda.html#engineered-signal-family-and-title",
+    "href": "docs/01-eda.html#engineered-signal-family-and-title",
+    "title": "Exploratory Data Analysis",
+    "section": "Engineered signal: family and title",
+    "text": "Engineered signal: family and title\nThese two features are not columns in the raw data — we derive them. This is the heart of feature engineering and exactly what make_recipe() will encode.\n\nFamily size\nSibSp (siblings/spouses aboard) + Parch (parents/children aboard) + 1 (self) gives a family size. Travelling alone vs. in a small vs. large group changes survival odds.\n\n\nShow code\ntrain |&gt;\n  mutate(FamilySize = SibSp + Parch + 1) |&gt;\n  group_by(FamilySize) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n(),\n                   .groups = \"drop\") |&gt;\n  ggplot(aes(x = FamilySize, y = survival_rate)) +\n  geom_col(aes(fill = n), width = 0.7) +\n  geom_text(aes(label = n), vjust = -0.4, size = 3) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  scale_fill_viridis_c(name = \"n passengers\") +\n  scale_x_continuous(breaks = 1:11) +\n  labs(title = \"Survival by family size\",\n                subtitle = \"Solo travellers and large families did worst\",\n                x = \"Family size (SibSp + Parch + 1)\", y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\n\nSurvival rate by family size. Small families fared best.\n\n\n\n\nA clear “Goldilocks” pattern: family size 2–4 survived best, while solo travellers and very large families fared worst. This motivates both a continuous FamilySize feature and possibly a binned IsAlone flag.\n\n\nTitle extracted from name\nThe Name column embeds a title (Mr, Mrs, Miss, Master, and rarer ones like Dr, Rev, Col). Title bundles sex, age band, and social status into one categorical feature — and Master in particular flags young boys, who survived more often than adult men.\n\n\nShow code\ntrain |&gt;\n  # Pull the title: the word ending in \".\" after the comma in the Name field.\n  mutate(\n    Title = str_extract(Name, \"(?&lt;=, )[A-Za-z]+(?=\\\\.)\")\n  ) |&gt;\n  # Collapse the long tail of rare titles so the plot (and later the model)\n  # is not dominated by singletons.\n  add_count(Title) |&gt;\n  mutate(Title = if_else(n &lt; 10, \"Rare\", Title)) |&gt;\n  group_by(Title) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n(),\n                   .groups = \"drop\") |&gt;\n  ggplot(aes(x = reorder(Title, survival_rate),\n                               y = survival_rate)) +\n  geom_col(aes(fill = n), width = 0.7) +\n  geom_text(aes(label = n), hjust = -0.1, size = 3) +\n  scale_y_continuous(labels = percent,\n                              limits = c(0, 1.05),\n                              expand = expansion(mult = c(0, 0.05))) +\n  scale_fill_viridis_c(name = \"n passengers\") +\n  coord_flip() +\n  labs(title = \"Survival by title\",\n                x = NULL, y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\n\nSurvival rate by extracted title (titles with &lt; 10 passengers grouped as ‘Rare’).\n\n\n\n\nMrs/Miss survived at high rates, Master (boys) noticeably better than Mr. Title is one of the most valuable engineered features in this dataset."
+  },
+  {
+    "objectID": "docs/01-eda.html#what-this-means-for-make_recipe",
+    "href": "docs/01-eda.html#what-this-means-for-make_recipe",
+    "title": "Exploratory Data Analysis",
+    "section": "What this means for make_recipe()",
+    "text": "What this means for make_recipe()\nEverything above is the justification for the shared recipe in R/02_features.R. In words, make_recipe(data) should:\n\nImpute Age (missing ~20%) — median or bagged imputation.\nImpute Embarked with the mode (only 2 missing).\nDerive FamilySize = SibSp + Parch + 1, and optionally an IsAlone flag.\nExtract Title from Name and lump rare titles together.\nLog-transform Fare (right-skewed) and consider a HasCabin flag from Cabin presence.\nEncode factors (Sex, Embarked, Pclass, Title) as dummies for models that need numeric input.\nDrop identifiers (PassengerId, Ticket, raw Name, raw Cabin).\n\n\n\n\n\n\n\nNote\n\n\n\nThe neural-net document adds one more step on top of the shared recipe — step_normalize(all_numeric_predictors()) — because MLPs are sensitive to input scale in a way that tree ensembles are not. See the Neural Net doc for why."
+  },
+  {
+    "objectID": "docs/01-eda.html#next-steps",
+    "href": "docs/01-eda.html#next-steps",
+    "title": "Exploratory Data Analysis",
+    "section": "Next steps",
+    "text": "Next steps\nYou now know why the features look the way they do. Time to model:\n\nXGBoost — start here; it’s the Kaggle workhorse and establishes the modelling template the other docs reuse.\nRandom Forest — a robust, low-tuning comparison.\nNeural Net — a small MLP that leans on the normalized recipe.\nBack to the master document for the big picture and the results table."
+  },
+  {
+    "objectID": "docs/03-random-forest.html",
+    "href": "docs/03-random-forest.html",
+    "title": "Model 2 — Random Forest",
+    "section": "",
+    "text": "Where we are: Second of three model documents in the Titanic — Tidymodels Tour. It follows the same structure as the XGBoost doc — recipe → spec → workflow → tune → finalize → evaluate → save — so skim for the differences. Features come from the EDA via the shared make_recipe()."
+  },
+  {
+    "objectID": "docs/03-random-forest.html#why-a-random-forest",
+    "href": "docs/03-random-forest.html#why-a-random-forest",
+    "title": "Model 2 — Random Forest",
+    "section": "Why a random forest?",
+    "text": "Why a random forest?\nWhere XGBoost grows trees sequentially to correct residuals, a random forest grows many independent deep trees on bootstrap samples and averages them. It is famously forgiving: with trees = 1000 fixed, there are really only two knobs worth tuning (mtry, min_n), it rarely overfits badly, and it gives a strong baseline with almost no fuss. We use the fast ranger engine and ask it for permutation importance."
+  },
+  {
+    "objectID": "docs/03-random-forest.html#setup",
+    "href": "docs/03-random-forest.html#setup",
+    "title": "Model 2 — Random Forest",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))      # tidyverse + tidymodels, seed = 42\nsource(here::here(\"R\", \"02_features.R\"))   # make_recipe(data)\n\nlibrary(tidyverse)    # dplyr, ggplot2, readr, etc.\nlibrary(tidymodels)   # recipes, parsnip, workflows, tune, yardstick, rsample, dials\nlibrary(here)         # project-root-relative paths\nlibrary(vip)          # variable importance plots\nlibrary(ranger)       # the engine\n\n\n\n\nShow code\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#the-recipe",
+    "href": "docs/03-random-forest.html#the-recipe",
+    "title": "Model 2 — Random Forest",
+    "section": "The recipe",
+    "text": "The recipe\nIdentical shared recipe — that is the whole point: a fair comparison across models on the same features.\n\n\nShow code\nrf_recipe &lt;- make_recipe(train)\nrf_recipe\n\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#the-model-specification",
+    "href": "docs/03-random-forest.html#the-model-specification",
+    "title": "Model 2 — Random Forest",
+    "section": "The model specification",
+    "text": "The model specification\ntrees is fixed at 1000 (more is rarely worth it); we tune mtry and min_n. We set importance = \"permutation\" so we can plot variable importance later.\n\n\nShow code\n  rf_spec &lt;- rand_forest(mtry = tune(),\n                         min_n = tune(),\n                         trees = 1000) |&gt;\n    set_engine(\"ranger\", importance = \"permutation\") |&gt;\n    set_mode(\"classification\")\n\n\nrf_spec\n\n\nRandom Forest Model Specification (classification)\n\nMain Arguments:\n  mtry = tune()\n  trees = 1000\n  min_n = tune()\n\nEngine-Specific Arguments:\n  importance = permutation\n\nComputational engine: ranger"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#the-workflow",
+    "href": "docs/03-random-forest.html#the-workflow",
+    "title": "Model 2 — Random Forest",
+    "section": "The workflow",
+    "text": "The workflow\n\n\nShow code\nrf_wf &lt;- workflow() |&gt;\n  add_recipe(rf_recipe) |&gt;\n  add_model(rf_spec)"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#tuning-with-5-fold-cross-validation",
+    "href": "docs/03-random-forest.html#tuning-with-5-fold-cross-validation",
+    "title": "Model 2 — Random Forest",
+    "section": "Tuning with 5-fold cross-validation",
+    "text": "Tuning with 5-fold cross-validation\n\n\nShow code\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n\n\nShow code\n# mtry's upper bound depends on the number of predictors AFTER the recipe runs,\n# so we finalize() its range against a prepped predictor set rather than\n# guessing. num_comp (PCA) is tuned over a sensible range.\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nrf_params &lt;- extract_parameter_set_dials(rf_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nrf_grid &lt;- grid_space_filling(rf_params, size = 18)\n\n\n\n\nShow code\nrf_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nrf_tuned &lt;- tune_grid(\n  rf_wf,\n  resamples = folds,\n  grid      = rf_grid,\n  metrics   = rf_metrics,\n  # Positive class \"1\" is the second factor level.\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\n\n\nShow code\nsaveRDS(rf_tuned, here(\"models\", \"rf_res.rds\"))\n\n\n\nTuning results\n\n\nShow code\nautoplot(rf_tuned, metric = \"roc_auc\")\n\n\n\n\n\nROC-AUC across the mtry / min_n grid (autoplot).\n\n\n\n\n\n\nShow code\nshow_best(rf_tuned, metric = \"roc_auc\", n = 5)"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#finalize-and-fit-on-the-full-training-set",
+    "href": "docs/03-random-forest.html#finalize-and-fit-on-the-full-training-set",
+    "title": "Model 2 — Random Forest",
+    "section": "Finalize and fit on the full training set",
+    "text": "Finalize and fit on the full training set\n\n\nShow code\nbest_rf &lt;- select_best(rf_tuned, metric = \"roc_auc\")\nbest_rf\n\n\n\n  \n\n\n\nShow code\nfinal_rf_wf &lt;- finalize_workflow(rf_wf, best_rf)\n\nset.seed(42)\nrf_fit &lt;- fit(final_rf_wf, data = train)"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#cross-validated-performance",
+    "href": "docs/03-random-forest.html#cross-validated-performance",
+    "title": "Model 2 — Random Forest",
+    "section": "Cross-validated performance",
+    "text": "Cross-validated performance\n\n\nShow code\ncollect_metrics(rf_tuned) |&gt;\n  semi_join(best_rf, by = names(best_rf)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nThese CV metrics feed the results table on the master document automatically — it reads models/rf_res.rds at render time, so there’s nothing to copy by hand.\n\n\n\nConfusion matrix\n\n\nShow code\nrf_cv_preds &lt;- collect_predictions(rf_tuned, parameters = best_rf)\n\nrf_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"Random Forest — CV confusion matrix\")\n\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\n\n\nShow code\nrf_fit |&gt;\n  extract_fit_parsnip() |&gt;\n  vip(num_features = 15, geom = \"col\",\n      aesthetics = list(fill = \"forestgreen\")) +\n  labs(title = \"Random Forest variable importance (permutation)\") +\n  theme_minimal()\n\n\n\n\n\nPermutation importance — drop in accuracy when each feature is shuffled.\n\n\n\n\nReassuringly, the forest leans on the same engineered features as XGBoost — Title, Sex, Fare, class. Different algorithm, same story from the data."
+  },
+  {
+    "objectID": "docs/03-random-forest.html#save-the-fitted-workflow",
+    "href": "docs/03-random-forest.html#save-the-fitted-workflow",
+    "title": "Model 2 — Random Forest",
+    "section": "Save the fitted workflow",
+    "text": "Save the fitted workflow\n\n\nShow code\n# Project convention: models/&lt;model&gt;_fit.rds — note the file is rf_fit.rds.\nsaveRDS(rf_fit, file = here(\"models\", \"rf_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/03-random-forest.html#submission",
+    "href": "docs/03-random-forest.html#submission",
+    "title": "Model 2 — Random Forest",
+    "section": "Submission",
+    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:rf\nThat loads models/rf_fit.rds, predicts on data/raw/test.csv, writes models/submission_rf.csv, and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
+  },
+  {
+    "objectID": "docs/03-random-forest.html#next-steps",
+    "href": "docs/03-random-forest.html#next-steps",
+    "title": "Model 2 — Random Forest",
+    "section": "Next steps",
+    "text": "Next steps\n\nFinish the tour with the Neural Net (needs normalized inputs).\nRevisit XGBoost to compare importance and CV scores.\nBuild the CSV with the Submission doc.\nRecord this model’s CV scores in the master results table."
+  },
+  {
+    "objectID": "docs/05-stack.html",
+    "href": "docs/05-stack.html",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "",
+    "text": "Where we are: The capstone of the Titanic — Tidymodels Tour. The three model documents (XGBoost, Random Forest, Neural Net) each saved their tuning results (every candidate model and its out-of-fold predictions) to models/&lt;model&gt;_res.rds. Here we feed all of those candidates to stacks, which learns a regularised linear blend over them — usually beating any single model, because the members make different mistakes."
+  },
+  {
+    "objectID": "docs/05-stack.html#why-stack",
+    "href": "docs/05-stack.html#why-stack",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Why stack?",
+    "text": "Why stack?\nEach model family has a different inductive bias: gradient boosting chases interactions, the random forest averages decorrelated trees, the neural net learns a smooth function of the principal components. A stack fits a meta-learner (penalised logistic regression) on the members’ out-of-fold predictions, keeping only the candidates that pull their weight."
+  },
+  {
+    "objectID": "docs/05-stack.html#setup",
+    "href": "docs/05-stack.html#setup",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))   # tidyverse + tidymodels, seed = 42\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(stacks)\n# The member engines must be attached so fit_members() can refit them.\nlibrary(ranger)\nlibrary(xgboost)\nlibrary(nnet)"
+  },
+  {
+    "objectID": "docs/05-stack.html#load-the-tuning-results",
+    "href": "docs/05-stack.html#load-the-tuning-results",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Load the tuning results",
+    "text": "Load the tuning results\n\n\nShow code\n# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,\n# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.\nxgb_res  &lt;- readRDS(here(\"models\", \"xgboost_res.rds\"))\nrf_res   &lt;- readRDS(here(\"models\", \"rf_res.rds\"))\nnnet_res &lt;- readRDS(here(\"models\", \"nnet_res.rds\"))"
+  },
+  {
+    "objectID": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
+    "href": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Build, blend, and fit the ensemble",
+    "text": "Build, blend, and fit the ensemble\n\n\nShow code\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n\n# A tibble: 5 × 3\n  member                           type        weight\n  &lt;chr&gt;                            &lt;chr&gt;        &lt;dbl&gt;\n1 .pred_1_xgb_respre3_mod14_post0  boost_tree   1.34 \n2 .pred_1_rf_respre1_mod05_post0   rand_forest  1.19 \n3 .pred_1_nnet_respre5_mod14_post0 mlp          1.14 \n4 .pred_1_nnet_respre7_mod08_post0 mlp          0.921\n5 .pred_1_xgb_respre1_mod10_post0  boost_tree   0.222\n\n\n\nWhich members survived the blend?\n\n\nShow code\nautoplot(titanic_stack, type = \"weights\")\n\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
+  },
+  {
+    "objectID": "docs/05-stack.html#save-the-fitted-ensemble",
+    "href": "docs/05-stack.html#save-the-fitted-ensemble",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Save the fitted ensemble",
+    "text": "Save the fitted ensemble\n\n\nShow code\nsaveRDS(titanic_stack, here(\"models\", \"stack_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/05-stack.html#build-the-kaggle-submission",
+    "href": "docs/05-stack.html#build-the-kaggle-submission",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Build the Kaggle submission",
+    "text": "Build the Kaggle submission\n\n\nShow code\ntest &lt;- read_csv(here(\"data\", \"processed\", \"test.csv\"), show_col_types = FALSE)\n\nstack_pred &lt;- predict(titanic_stack, new_data = test, type = \"class\")\n\nsubmission &lt;- tibble(\n  PassengerId = test$PassengerId,\n  Survived    = as.integer(as.character(stack_pred$.pred_class))\n)\nwrite_csv(submission, here(\"models\", \"submission_stack.csv\"))\n\nsubmission |&gt; count(Survived) |&gt; mutate(prop = n / sum(n))\n\n\n\n  \n\n\n\nUpload it the same way as any other model:\nkaggle competitions submit -c titanic -f models/submission_stack.csv \\\n  -m \"stacked ensemble (xgb + rf + nnet) via stacks\""
+  },
+  {
+    "objectID": "docs/05-stack.html#next-steps",
+    "href": "docs/05-stack.html#next-steps",
+    "title": "Model 4 — Stacked Ensemble",
+    "section": "Next steps",
+    "text": "Next steps\n\nThe parameterized submission doc also accepts -P model:stack.\nCompare the stack’s leaderboard score against the individual models on the master document — does the blend actually win on the held-out Kaggle test set, or only in cross-validation?\nSee the Kaggle setup guide for authentication."
+  },
+  {
     "objectID": "docs/setup-kaggle.html",
     "href": "docs/setup-kaggle.html",
     "title": "",
@@ -54,495 +544,5 @@
     "title": "",
     "section": "Troubleshooting",
     "text": "Troubleshooting\n\n\n\n\n\n\n\nSymptom\nFix\n\n\n\n\n403 Forbidden on download/submit\nYou have not accepted the competition rules — do step 1.3 in the browser.\n\n\nkaggle: command not found\nAdd ~/.local/bin to your PATH (step 3).\n\n\nCould not find kaggle.json\nIt must live at ~/.kaggle/kaggle.json (step 2).\n\n\nWarning about insecure permissions\nchmod 600 ~/.kaggle/kaggle.json."
-  },
-  {
-    "objectID": "docs/submission.html",
-    "href": "docs/submission.html",
-    "title": "Building a Kaggle Submission",
-    "section": "",
-    "text": "Where we are: The final stop on the Titanic — Tidymodels Tour. Each model document (XGBoost, Random Forest, Neural Net) fits a workflow and saves it to models/&lt;model&gt;_fit.rds. This document is parameterized: tell it which model, and it loads that fit, predicts on the test set, and writes a Kaggle-ready CSV."
-  },
-  {
-    "objectID": "docs/submission.html#how-to-render-this-document-per-model",
-    "href": "docs/submission.html#how-to-render-this-document-per-model",
-    "title": "Building a Kaggle Submission",
-    "section": "How to render this document per model",
-    "text": "How to render this document per model\nThis .qmd has a model parameter (default \"xgboost\"). Override it on the command line with -P model:&lt;value&gt;:\n# XGBoost (also the default if you omit -P)\nquarto render docs/submission.qmd -P model:xgboost\n\n# Random forest\nquarto render docs/submission.qmd -P model:rf\n\n# Neural net\nquarto render docs/submission.qmd -P model:nnet\nEach render reads the matching models/&lt;model&gt;_fit.rds, writes models/submission_&lt;model&gt;.csv, and prints the exact upload command. You must have fitted (rendered) the corresponding model document first so the .rds exists."
-  },
-  {
-    "objectID": "docs/submission.html#setup",
-    "href": "docs/submission.html#setup",
-    "title": "Building a Kaggle Submission",
-    "section": "Setup",
-    "text": "Setup\n\n# We need the tidymodels stack to load the saved workflow and call predict().\n# 00_setup.R also sets paths and the seed.\nsource(here::here(\"R\", \"00_setup.R\"))\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)"
-  },
-  {
-    "objectID": "docs/submission.html#resolve-and-validate-the-requested-model",
-    "href": "docs/submission.html#resolve-and-validate-the-requested-model",
-    "title": "Building a Kaggle Submission",
-    "section": "Resolve and validate the requested model",
-    "text": "Resolve and validate the requested model\n\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf      = here::here(\"models\", \"rf_fit.rds\"),\n  nnet    = here::here(\"models\", \"nnet_fit.rds\"),\n  stack   = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\nBuilding submission for model: nnet\n\nmessage(\"Loading fitted workflow from: \", fit_path)\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/nnet_fit.rds\n\n\nWe are building a submission for nnet."
-  },
-  {
-    "objectID": "docs/submission.html#load-the-model-and-the-test-data",
-    "href": "docs/submission.html#load-the-model-and-the-test-data",
-    "title": "Building a Kaggle Submission",
-    "section": "Load the model and the test data",
-    "text": "Load the model and the test data\n\n# The saved object is a fully fitted workflow (or a stacks ensemble) that knows\n# how to preprocess the engineered test data exactly as it was trained.\nmodel_fit &lt;- readRDS(fit_path)\n\n# Use the PROCESSED test set (engineered features added in R/03_engineer.R), so\n# the columns match what every model/recipe expects. PassengerId keys the\n# Kaggle submission.\ntest &lt;- read_csv(here(\"data\", \"processed\", \"test.csv\"))\n\nRows: 418 Columns: 23\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (13): Name, Sex, Ticket, Cabin, Embarked, Title, Surname, IsAlone, Deck,...\ndbl (10): PassengerId, Pclass, Age, SibSp, Parch, Fare, FamilySize, TicketGr...\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\nglimpse(test)\n\nRows: 418\nColumns: 23\n$ PassengerId     &lt;dbl&gt; 892, 893, 894, 895, 896, 897, 898, 899, 900, 901, 902,…\n$ Pclass          &lt;dbl&gt; 3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 3, 1, 1, 2, 1, 2, 2, 3, …\n$ Name            &lt;chr&gt; \"Kelly, Mr. James\", \"Wilkes, Mrs. James (Ellen Needs)\"…\n$ Sex             &lt;chr&gt; \"male\", \"female\", \"male\", \"male\", \"female\", \"male\", \"f…\n$ Age             &lt;dbl&gt; 34.5, 47.0, 62.0, 27.0, 22.0, 14.0, 30.0, 26.0, 18.0, …\n$ SibSp           &lt;dbl&gt; 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 0, 0, …\n$ Parch           &lt;dbl&gt; 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …\n$ Ticket          &lt;chr&gt; \"330911\", \"363272\", \"240276\", \"315154\", \"3101298\", \"75…\n$ Fare            &lt;dbl&gt; 7.8292, 7.0000, 9.6875, 8.6625, 12.2875, 9.2250, 7.629…\n$ Cabin           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, \"B45\",…\n$ Embarked        &lt;chr&gt; \"Q\", \"S\", \"Q\", \"S\", \"S\", \"S\", \"Q\", \"S\", \"C\", \"S\", \"S\",…\n$ Title           &lt;chr&gt; \"Mr\", \"Mrs\", \"Mr\", \"Mr\", \"Mrs\", \"Mr\", \"Miss\", \"Mr\", \"M…\n$ Surname         &lt;chr&gt; \"Kelly\", \"Wilkes\", \"Myles\", \"Wirz\", \"Hirvonen\", \"Svens…\n$ FamilySize      &lt;dbl&gt; 1, 2, 1, 1, 3, 1, 1, 3, 1, 3, 1, 1, 2, 2, 2, 2, 1, 1, …\n$ IsAlone         &lt;chr&gt; \"yes\", \"no\", \"yes\", \"yes\", \"no\", \"yes\", \"yes\", \"no\", \"…\n$ Deck            &lt;chr&gt; \"Unknown\", \"Unknown\", \"Unknown\", \"Unknown\", \"Unknown\",…\n$ HasCabin        &lt;chr&gt; \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", \"no\", …\n$ HasAge          &lt;chr&gt; \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\", \"yes\"…\n$ IsChild         &lt;chr&gt; \"no\", \"no\", \"no\", \"no\", \"no\", \"yes\", \"no\", \"no\", \"no\",…\n$ TicketGroupSize &lt;dbl&gt; 1, 1, 1, 1, 2, 1, 1, 3, 1, 3, 1, 1, 2, 2, 2, 2, 1, 1, …\n$ FarePerPerson   &lt;dbl&gt; 7.829200, 7.000000, 9.687500, 8.662500, 6.143750, 9.22…\n$ GroupSurvival   &lt;dbl&gt; 0.7500000, 0.3838384, 0.3838384, 0.3838384, 1.0000000,…\n$ GroupKnown      &lt;chr&gt; \"yes\", \"no\", \"no\", \"no\", \"yes\", \"yes\", \"yes\", \"yes\", \"…"
-  },
-  {
-    "objectID": "docs/submission.html#predict-and-assemble-the-submission",
-    "href": "docs/submission.html#predict-and-assemble-the-submission",
-    "title": "Building a Kaggle Submission",
-    "section": "Predict and assemble the submission",
-    "text": "Predict and assemble the submission\n\n# predict() runs the workflow's recipe on the raw test data, then the model.\n# type = \"class\" returns the hard 0/1 label Kaggle wants.\npreds &lt;- predict(model_fit, new_data = test, type = \"class\")\n\n# Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived\n# as 0/1 integers. .pred_class is a factor (\"0\"/\"1\"); convert via character so\n# we don't accidentally get factor codes (1/2).\nsubmission &lt;- tibble(\n  PassengerId = test$PassengerId,\n  Survived    = as.integer(as.character(preds$.pred_class))\n)\n\n# Sanity checks: right number of rows, right value set, no missing predictions.\nstopifnot(\n  nrow(submission) == nrow(test),\n  all(submission$Survived %in% c(0L, 1L)),\n  !anyNA(submission$Survived)\n)\n\nhead(submission, 10)"
-  },
-  {
-    "objectID": "docs/submission.html#write-the-csv",
-    "href": "docs/submission.html#write-the-csv",
-    "title": "Building a Kaggle Submission",
-    "section": "Write the CSV",
-    "text": "Write the CSV\n\nout_path &lt;- here(\"models\", paste0(\"submission_\", requested_model, \".csv\"))\n\nwrite_csv(submission, out_path)\n\nmessage(\"Wrote \", nrow(submission), \" predictions to: \", out_path)\n\nWrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_nnet.csv\n\n\nA quick summary of the predicted survival split (a sanity check against the ~38% base rate seen in the EDA):\n\nsubmission |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))"
-  },
-  {
-    "objectID": "docs/submission.html#submit-to-kaggle",
-    "href": "docs/submission.html#submit-to-kaggle",
-    "title": "Building a Kaggle Submission",
-    "section": "Submit to Kaggle",
-    "text": "Submit to Kaggle\nPush the CSV to the leaderboard with the Kaggle CLI. The command below is built for the model you rendered:\nkaggle competitions submit -c titanic -f models/submission_nnet.csv -m \"nnet via tidymodels\"\n\n\n\n\n\n\nNoteFirst time? Authenticate first\n\n\n\nThe kaggle CLI needs your API token (~/.kaggle/kaggle.json) before any submit or download will work. The Kaggle setup guide walks through creating and installing it.\n\n\n\n\n\n\n\n\nTipDaily submission limit\n\n\n\nKaggle caps Titanic submissions per day (commonly ~10). Submit your best candidate by CV score rather than spraying every experiment at the leaderboard."
-  },
-  {
-    "objectID": "docs/submission.html#next-steps",
-    "href": "docs/submission.html#next-steps",
-    "title": "Building a Kaggle Submission",
-    "section": "Next steps",
-    "text": "Next steps\n\nCompare each model’s leaderboard score against its CV score recorded in the master results table — divergence is a lesson in generalization.\nRe-render for the other models: -P model:xgboost, -P model:rf, -P model:nnet.\nNeed auth help? See the Kaggle setup guide.\nBack to the master document for the whole-project picture."
-  },
-  {
-    "objectID": "docs/04-neural-net.html",
-    "href": "docs/04-neural-net.html",
-    "title": "Model 3 — Neural Net",
-    "section": "",
-    "text": "Where we are: Last of three model documents in the Titanic — Tidymodels Tour. Same structure as the XGBoost and Random Forest docs — recipe → spec → workflow → tune → finalize → evaluate → save. The one twist: a neural net needs normalized inputs, so this doc extends the shared make_recipe() with a normalization step."
-  },
-  {
-    "objectID": "docs/04-neural-net.html#why-a-neural-net-here",
-    "href": "docs/04-neural-net.html#why-a-neural-net-here",
-    "title": "Model 3 — Neural Net",
-    "section": "Why a neural net here?",
-    "text": "Why a neural net here?\nOn a dataset this small (891 rows) a multilayer perceptron will not beat the tree ensembles — and that’s fine. The point is to explore a different model family and see how tidymodels makes swapping engines almost free. A small MLP with a single hidden layer and weight decay (penalty) is a clean, instructive choice.\n\n\n\n\n\n\nNoteEngine choice: nnet\n\n\n\nWe fit the MLP with base R’s nnet engine. It has no native-code dependency, so it trains identically on your laptop, in the Quarto site build, and in GitHub Actions CI. A torch-backed alternative (brulee) is shown later as an optional local upgrade — but it does not load inside this project’s render/CI session, so nnet is the engine we publish."
-  },
-  {
-    "objectID": "docs/04-neural-net.html#setup",
-    "href": "docs/04-neural-net.html#setup",
-    "title": "Model 3 — Neural Net",
-    "section": "Setup",
-    "text": "Setup\n\nsource(here::here(\"R\", \"00_setup.R\"))      # tidyverse + tidymodels, seed = 42\nsource(here(\"R\", \"02_features.R\"))   # make_recipe(data)\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(nnet)     # the MLP engine (base R, no native deps)\nlibrary(vip)      # variable importance plots\n\n\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))\n\n\n# Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid\n# is tiny, so this is plenty fast and keeps results deterministic (no worker\n# package-loading surprises).\nif (exists(\"cl\")) try(parallel::stopCluster(cl), silent = TRUE)\nregisterDoSEQ()"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#the-recipe-with-normalization",
-    "href": "docs/04-neural-net.html#the-recipe-with-normalization",
-    "title": "Model 3 — Neural Net",
-    "section": "The recipe — with normalization",
-    "text": "The recipe — with normalization\nTree ensembles are invariant to monotone rescaling, so the shared recipe didn’t bother normalizing. A neural net is not invariant: gradient descent behaves far better when every numeric predictor has mean 0 and unit variance, otherwise large-scale features (like Fare) dominate the gradient. So we take the shared recipe and append step_normalize().\n\n# Extend the shared recipe with normalization of all numeric predictors. This\n# step must come AFTER dummy encoding in make_recipe() so the 0/1 dummy columns\n# are normalized too (standard practice for MLPs).\nnnet_recipe &lt;- make_recipe(train)\n\nnnet_recipe\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#the-model-specification",
-    "href": "docs/04-neural-net.html#the-model-specification",
-    "title": "Model 3 — Neural Net",
-    "section": "The model specification",
-    "text": "The model specification\n\n# Single-hidden-layer MLP via base R's nnet engine: one hidden layer\n# (hidden_units) and L2 weight decay (penalty). nnet has no native-code\n# dependency, so it trains and renders reliably everywhere — including the\n# Quarto site build and GitHub Actions CI.\nnnet_spec &lt;- mlp(\n  hidden_units = tune(),\n  penalty      = tune()\n) |&gt;\n  set_engine(\"nnet\") |&gt;\n  set_mode(\"classification\")\n\nnnet_spec\n\nSingle Layer Neural Network Model Specification (classification)\n\nMain Arguments:\n  hidden_units = tune()\n  penalty = tune()\n\nComputational engine: nnet \n\n\n\n\n\n\n\n\nTipOptional: a torch-backed MLP with brulee (local only)\n\n\n\nFor a deeper net with a tuned epoch budget you can swap in brulee (a torch backend) when running locally. It also exposes epochs:\nnnet_spec &lt;- mlp(\n  hidden_units = tune(),\n  penalty      = tune(),\n  epochs       = tune()       # brulee only\n) |&gt;\n  set_engine(\"brulee\") |&gt;\n  set_mode(\"classification\")\nWe keep nnet as the published engine on purpose: brulee’s libtorch backend does not load inside the Quarto/knitr render session (or in CI) under this project’s renv setup — every fit fails with “Lantern is not loaded”. nnet sidesteps that entirely. If you switch to brulee, add epochs back to the tuning grid below and train sequentially (foreach::registerDoSEQ())."
-  },
-  {
-    "objectID": "docs/04-neural-net.html#the-workflow",
-    "href": "docs/04-neural-net.html#the-workflow",
-    "title": "Model 3 — Neural Net",
-    "section": "The workflow",
-    "text": "The workflow\n\nnnet_wf &lt;- workflow() |&gt;\n  add_recipe(nnet_recipe) |&gt;\n  add_model(nnet_spec)"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#tuning-with-5-fold-cross-validation",
-    "href": "docs/04-neural-net.html#tuning-with-5-fold-cross-validation",
-    "title": "Model 3 — Neural Net",
-    "section": "Tuning with 5-fold cross-validation",
-    "text": "Tuning with 5-fold cross-validation\n\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n# The recipe now adds PCA internally, so num_comp is a tunable parameter too.\n# Bake a small recipe to give finalize() the predictor columns it needs to set\n# sensible ranges (e.g. hidden_units).\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nnnet_params &lt;- extract_parameter_set_dials(nnet_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nnnet_grid &lt;- grid_space_filling(nnet_params, size = 18)\n\n\nnnet_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nnnet_tuned &lt;- tune_grid(\n  nnet_wf,\n  resamples = folds,\n  grid      = nnet_grid,\n  metrics   = nnet_metrics,\n  # Positive class \"1\" is the second factor level.\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\nsaveRDS(nnet_tuned, here(\"models\", \"nnet_res.rds\"))\n\n\nTuning results\n\nautoplot(nnet_tuned, metric = \"roc_auc\")\n\n\n\n\nROC-AUC across the MLP tuning grid (autoplot).\n\n\n\n\n\nshow_best(nnet_tuned, metric = \"roc_auc\", n = 5)"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#finalize-and-fit-on-the-full-training-set",
-    "href": "docs/04-neural-net.html#finalize-and-fit-on-the-full-training-set",
-    "title": "Model 3 — Neural Net",
-    "section": "Finalize and fit on the full training set",
-    "text": "Finalize and fit on the full training set\n\nbest_nnet &lt;- select_best(nnet_tuned, metric = \"roc_auc\")\nbest_nnet\n\n\n  \n\n\nfinal_nnet_wf &lt;- finalize_workflow(nnet_wf, best_nnet)\n\nset.seed(42)\nnnet_fit &lt;- fit(final_nnet_wf, data = train)"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#cross-validated-performance",
-    "href": "docs/04-neural-net.html#cross-validated-performance",
-    "title": "Model 3 — Neural Net",
-    "section": "Cross-validated performance",
-    "text": "Cross-validated performance\n\n# Join on whatever parameters best_nnet carries (hidden_units, penalty, num_comp)\n# so this stays correct as the tuned parameter set changes.\ncollect_metrics(nnet_tuned) |&gt;\n  semi_join(best_nnet, by = names(best_nnet)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nCopy the accuracy and roc_auc mean values into the results table on the master document.\n\n\n\nConfusion matrix\n\nnnet_cv_preds &lt;- collect_predictions(nnet_tuned, parameters = best_nnet)\n\nnnet_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"Neural Net — CV confusion matrix\")\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\nNeural nets don’t expose importance natively. For an nnet model vip derives it from the trained connection weights (Garson’s algorithm) — no shuffling or prediction wrapper needed, so it’s robust in any render environment.\n\n# Pull the underlying nnet engine object out of the fitted workflow and let vip\n# read importance straight from the network weights.\nnnet_fit |&gt;\n  extract_fit_engine() |&gt;\n  vip(num_features = 15) +\n  labs(title = \"Neural Net variable importance (Garson weights)\") +\n  theme_minimal()\n\n\n\n\nConnection-weight (Garson) importance for the MLP.\n\n\n\n\nEven through a different lens, the same features carry the weight — Title, Sex, class, Fare — consistent with XGBoost and the Random Forest."
-  },
-  {
-    "objectID": "docs/04-neural-net.html#save-the-fitted-workflow",
-    "href": "docs/04-neural-net.html#save-the-fitted-workflow",
-    "title": "Model 3 — Neural Net",
-    "section": "Save the fitted workflow",
-    "text": "Save the fitted workflow\n\n# Project convention: the neural-net model saves to nnet_fit.rds.\nsaveRDS(nnet_fit, file = here(\"models\", \"nnet_fit.rds\"))"
-  },
-  {
-    "objectID": "docs/04-neural-net.html#submission",
-    "href": "docs/04-neural-net.html#submission",
-    "title": "Model 3 — Neural Net",
-    "section": "Submission",
-    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:nnet\nThat loads models/nnet_fit.rds, predicts on data/raw/test.csv, writes models/submission_nnet.csv, and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
-  },
-  {
-    "objectID": "docs/04-neural-net.html#next-steps",
-    "href": "docs/04-neural-net.html#next-steps",
-    "title": "Model 3 — Neural Net",
-    "section": "Next steps",
-    "text": "Next steps\n\nYou’ve now fit all three families — compare their CV scores side by side in the master results table.\nRevisit XGBoost and the Random Forest.\nBuild the CSV with the Submission doc and push it to the leaderboard."
-  },
-  {
-    "objectID": "docs/02-xgboost.html",
-    "href": "docs/02-xgboost.html",
-    "title": "Model 1 — XGBoost",
-    "section": "",
-    "text": "Where we are: First of three model documents in the Titanic — Tidymodels Tour. All three follow the same structure — recipe → spec → workflow → tune → finalize → evaluate → save — so once you’ve read this one, Random Forest and Neural Net are quick to skim for the differences. The features come from the EDA and the shared make_recipe()."
-  },
-  {
-    "objectID": "docs/02-xgboost.html#why-xgboost-first",
-    "href": "docs/02-xgboost.html#why-xgboost-first",
-    "title": "Model 1 — XGBoost",
-    "section": "Why XGBoost first?",
-    "text": "Why XGBoost first?\nGradient-boosted decision trees are the default first reach on tabular Kaggle problems. They handle mixed numeric/categorical features, capture interactions (like sex × class) automatically, are robust to monotone transforms, and tune to strong accuracy with modest effort. We tune four of the most impactful knobs."
-  },
-  {
-    "objectID": "docs/02-xgboost.html#setup",
-    "href": "docs/02-xgboost.html#setup",
-    "title": "Model 1 — XGBoost",
-    "section": "Setup",
-    "text": "Setup\n\n# Project setup: tidyverse + tidymodels, seed = 42, paths, parallel backend.\nsource(here::here(\"R\", \"00_setup.R\"))\n# Shared feature engineering: defines make_recipe(data).\nsource(here(\"R\", \"02_features.R\"))\n\n# Attach the libraries used throughout this document.\nlibrary(tidyverse)   # dplyr, ggplot2, readr, stringr, tibble, tidyr, purrr\nlibrary(tidymodels)  # recipes, parsnip, workflows, tune, yardstick, rsample, dials, broom\nlibrary(here)        # path construction\nlibrary(vip)         # variable importance plots\nlibrary(xgboost)     # the engine\n\n\ntrain &lt;- readr::read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  # Project-wide convention: Survived is a factor, levels c(\"0\",\"1\"),\n  # positive class = \"1\" (so metrics use event_level = \"second\").\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#the-recipe",
-    "href": "docs/02-xgboost.html#the-recipe",
-    "title": "Model 1 — XGBoost",
-    "section": "The recipe",
-    "text": "The recipe\nThe shared recipe encodes everything we justified in the EDA: impute Age/Embarked, derive FamilySize, extract Title, log-transform Fare, dummy-encode factors, drop identifiers.\n\nxgb_recipe &lt;- make_recipe(train)\nxgb_recipe\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#the-model-specification",
-    "href": "docs/02-xgboost.html#the-model-specification",
-    "title": "Model 1 — XGBoost",
-    "section": "The model specification",
-    "text": "The model specification\nWe mark the four tuning parameters with tune(). tidymodels will fill them in during the grid search.\n\nxgb_spec &lt;- boost_tree(\n  trees      = tune(),\n  tree_depth = tune(),\n  learn_rate = tune(),\n  min_n      = tune()\n) |&gt;\n  set_engine(\"xgboost\") |&gt;\n  set_mode(\"classification\")\n\nxgb_spec\n\nBoosted Tree Model Specification (classification)\n\nMain Arguments:\n  trees = tune()\n  min_n = tune()\n  tree_depth = tune()\n  learn_rate = tune()\n\nComputational engine: xgboost"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#the-workflow",
-    "href": "docs/02-xgboost.html#the-workflow",
-    "title": "Model 1 — XGBoost",
-    "section": "The workflow",
-    "text": "The workflow\nA workflow bundles the recipe and the model so resampling applies the exact same preprocessing to every fold — no leakage.\n\nxgb_wf &lt;- workflow() |&gt;\n  add_recipe(xgb_recipe) |&gt;\n  add_model(xgb_spec)"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#tuning-with-5-fold-cross-validation",
-    "href": "docs/02-xgboost.html#tuning-with-5-fold-cross-validation",
-    "title": "Model 1 — XGBoost",
-    "section": "Tuning with 5-fold cross-validation",
-    "text": "Tuning with 5-fold cross-validation\n\n# Stratify on the outcome so each fold preserves the ~38% survival rate.\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n# Predictors used to finalize data-dependent params (mtry, num_comp upper bound).\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nxgb_params &lt;- extract_parameter_set_dials(xgb_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nxgb_grid &lt;- grid_space_filling(xgb_params, size = 18)\n\n\n# Score every candidate on both metrics. event_level = \"second\" because the\n# positive class (\"survived\" = \"1\") is the SECOND factor level.\nxgb_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nxgb_tuned &lt;- tune_grid(\n  xgb_wf,\n  resamples = folds,\n  grid      = xgb_grid,\n  metrics   = xgb_metrics,\n  control   = control_grid(save_pred = TRUE,\n                           save_workflow = TRUE,\n                           event_level = \"second\")\n)\n\n\nsaveRDS(xgb_tuned, here(\"models\", \"xgboost_res.rds\"))\n\n\nTuning results\n\nautoplot(xgb_tuned, metric = \"roc_auc\")\n\n\n\n\nROC-AUC across the tuning grid for each hyperparameter (autoplot).\n\n\n\n\n\n# The top candidates by ROC-AUC.\nshow_best(xgb_tuned, metric = \"roc_auc\", n = 5)"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#finalize-and-fit-on-the-full-training-set",
-    "href": "docs/02-xgboost.html#finalize-and-fit-on-the-full-training-set",
-    "title": "Model 1 — XGBoost",
-    "section": "Finalize and fit on the full training set",
-    "text": "Finalize and fit on the full training set\n\n# Pick the best ROC-AUC candidate and lock those hyperparameters in.\nbest_xgb &lt;- select_best(xgb_tuned, metric = \"roc_auc\")\nbest_xgb\n\n\n  \n\n\nfinal_xgb_wf &lt;- finalize_workflow(xgb_wf, best_xgb)\n\n# Fit the finalized workflow on ALL the training data — this is the model we\n# will ship to Kaggle.\nset.seed(42)\nxgb_fit &lt;- fit(final_xgb_wf, data = train)"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#cross-validated-performance",
-    "href": "docs/02-xgboost.html#cross-validated-performance",
-    "title": "Model 1 — XGBoost",
-    "section": "Cross-validated performance",
-    "text": "Cross-validated performance\nThe fairest estimate of out-of-sample skill is the CV score of the chosen configuration — not the fit on the full training data (which overfits by construction).\n\n# Collect the CV metrics for the winning hyperparameters.\ncollect_metrics(xgb_tuned) |&gt;\n  semi_join(best_xgb, by = names(best_xgb)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nCopy the accuracy and roc_auc mean values into the results table on the master document.\n\n\n\nConfusion matrix\nBuilt from the held-out CV predictions for the best configuration — so it reflects generalization, not memorization.\n\nxgb_cv_preds &lt;- collect_predictions(xgb_tuned, parameters = best_xgb)\n\nxgb_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"XGBoost — CV confusion matrix\")\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\n\nxgb_fit |&gt;\n  extract_fit_parsnip() |&gt;\n  vip(num_features = 15, geom = \"col\",\n      aesthetics = list(fill = \"steelblue\")) +\n  labs(title = \"XGBoost variable importance\") +\n  theme_minimal()\n\n\n\n\nTop features by XGBoost gain. Title, Sex, Fare and class dominate.\n\n\n\n\nThe engineered Title, plus Sex, Fare, and class, sit at the top — exactly the signal the EDA surfaced. Feature engineering earns its keep."
-  },
-  {
-    "objectID": "docs/02-xgboost.html#save-the-fitted-workflow",
-    "href": "docs/02-xgboost.html#save-the-fitted-workflow",
-    "title": "Model 1 — XGBoost",
-    "section": "Save the fitted workflow",
-    "text": "Save the fitted workflow\n\n# Persist the full fitted workflow (recipe + model) so the submission document\n# can load it without refitting. Project convention: models/&lt;model&gt;_fit.rds.\nsaveRDS(xgb_fit, file = here(\"models\", \"xgboost_fit.rds\"))"
-  },
-  {
-    "objectID": "docs/02-xgboost.html#submission",
-    "href": "docs/02-xgboost.html#submission",
-    "title": "Model 1 — XGBoost",
-    "section": "Submission",
-    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:xgboost\nThat loads models/xgboost_fit.rds, predicts on data/raw/test.csv, writes models/submission_xgboost.csv (columns PassengerId, Survived as 0/1 integers), and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
-  },
-  {
-    "objectID": "docs/02-xgboost.html#next-steps",
-    "href": "docs/02-xgboost.html#next-steps",
-    "title": "Model 1 — XGBoost",
-    "section": "Next steps",
-    "text": "Next steps\n\nCompare against the Random Forest — a robust, almost-no-tuning baseline.\nThen the Neural Net, which needs normalized inputs.\nBuild the CSV with the Submission doc.\nRecord this model’s CV scores in the master results table."
-  },
-  {
-    "objectID": "docs/01-eda.html",
-    "href": "docs/01-eda.html",
-    "title": "Exploratory Data Analysis",
-    "section": "",
-    "text": "Where we are: This is step one of the Titanic — Tidymodels Tour. Before fitting any model we look at the data, find the signal, and let what we see motivate the shared feature recipe in R/02_features.R (make_recipe()). Every model document downstream trains on those features, so the decisions we justify here ripple through the whole project."
-  },
-  {
-    "objectID": "docs/01-eda.html#setup",
-    "href": "docs/01-eda.html#setup",
-    "title": "Exploratory Data Analysis",
-    "section": "Setup",
-    "text": "Setup\n\n# Source the project setup: loads tidyverse + tidymodels, sets seed = 42,\n# defines path_* helpers, and registers the parallel backend.\nsource(here::here(\"R\", \"00_setup.R\"))\n\n# Attach the libraries whose functions are used bare throughout this doc.\nlibrary(tidyverse)   # dplyr, ggplot2, readr, stringr, tidyr, purrr, forcats, etc.\nlibrary(tidymodels)  # recipes and friends for the shared feature recipe\nlibrary(here)        # here() for project-relative paths\n\n# A couple of EDA-only helpers.\nlibrary(skimr)   # skim() — richer than summary()\nlibrary(naniar)  # missingness visualisation (optional but lovely)\nlibrary(scales)  # percent()/dollar() axis + label formatting (not attached by tidyverse)\n\n\n# Read the training data. Only the training set has the Survived label, so all\n# exploratory analysis happens here.\ntrain &lt;- read_csv(here(\"data\", \"raw\", \"train.csv\"))\n\n# Survived is the outcome. Treat it as a factor with explicit levels.\n# Convention for the whole project: levels c(\"0\", \"1\"), positive class = \"1\".\ntrain &lt;- train |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))\n\nglimpse(train)\n\nRows: 891\nColumns: 12\n$ PassengerId &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,…\n$ Survived    &lt;fct&gt; 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1…\n$ Pclass      &lt;dbl&gt; 3, 1, 3, 1, 3, 3, 1, 3, 3, 2, 3, 1, 3, 3, 3, 2, 3, 2, 3, 3…\n$ Name        &lt;chr&gt; \"Braund, Mr. Owen Harris\", \"Cumings, Mrs. John Bradley (Fl…\n$ Sex         &lt;chr&gt; \"male\", \"female\", \"female\", \"female\", \"male\", \"male\", \"mal…\n$ Age         &lt;dbl&gt; 22, 38, 26, 35, 35, NA, 54, 2, 27, 14, 4, 58, 20, 39, 14, …\n$ SibSp       &lt;dbl&gt; 1, 1, 0, 1, 0, 0, 0, 3, 0, 1, 1, 0, 0, 1, 0, 0, 4, 0, 1, 0…\n$ Parch       &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 0, 0, 5, 0, 0, 1, 0, 0, 0…\n$ Ticket      &lt;chr&gt; \"A/5 21171\", \"PC 17599\", \"STON/O2. 3101282\", \"113803\", \"37…\n$ Fare        &lt;dbl&gt; 7.2500, 71.2833, 7.9250, 53.1000, 8.0500, 8.4583, 51.8625,…\n$ Cabin       &lt;chr&gt; NA, \"C85\", NA, \"C123\", NA, NA, \"E46\", NA, NA, NA, \"G6\", \"C…\n$ Embarked    &lt;chr&gt; \"S\", \"C\", \"S\", \"S\", \"S\", \"Q\", \"S\", \"S\", \"S\", \"C\", \"S\", \"S\"…"
-  },
-  {
-    "objectID": "docs/01-eda.html#first-look-structure-and-missingness",
-    "href": "docs/01-eda.html#first-look-structure-and-missingness",
-    "title": "Exploratory Data Analysis",
-    "section": "First look: structure and missingness",
-    "text": "First look: structure and missingness\n\n# skim() gives per-type summaries: completeness, mean/sd for numerics,\n# top counts for characters. The `complete_rate` column is the one to watch.\nskim(train)\n\n\nData summary\n\n\nName\ntrain\n\n\nNumber of rows\n891\n\n\nNumber of columns\n12\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n5\n\n\nfactor\n1\n\n\nnumeric\n6\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nName\n0\n1.00\n12\n82\n0\n891\n0\n\n\nSex\n0\n1.00\n4\n6\n0\n2\n0\n\n\nTicket\n0\n1.00\n3\n18\n0\n681\n0\n\n\nCabin\n687\n0.23\n1\n15\n0\n147\n0\n\n\nEmbarked\n2\n1.00\n1\n1\n0\n3\n0\n\n\n\nVariable type: factor\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nordered\nn_unique\ntop_counts\n\n\n\n\nSurvived\n0\n1\nFALSE\n2\n0: 549, 1: 342\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\nPassengerId\n0\n1.0\n446.00\n257.35\n1.00\n223.50\n446.00\n668.5\n891.00\n▇▇▇▇▇\n\n\nPclass\n0\n1.0\n2.31\n0.84\n1.00\n2.00\n3.00\n3.0\n3.00\n▃▁▃▁▇\n\n\nAge\n177\n0.8\n29.70\n14.53\n0.42\n20.12\n28.00\n38.0\n80.00\n▂▇▅▂▁\n\n\nSibSp\n0\n1.0\n0.52\n1.10\n0.00\n0.00\n0.00\n1.0\n8.00\n▇▁▁▁▁\n\n\nParch\n0\n1.0\n0.38\n0.81\n0.00\n0.00\n0.00\n0.0\n6.00\n▇▁▁▁▁\n\n\nFare\n0\n1.0\n32.20\n49.69\n0.00\n7.91\n14.45\n31.0\n512.33\n▇▁▁▁▁\n\n\n\n\n\nThe headline structural facts:\n\n891 passengers, the outcome Survived is binary.\nAge is missing for ~20% of passengers — too much to drop, so we will impute it in the recipe.\nCabin is missing for ~77% — mostly unusable as-is, though its presence/absence may carry signal (a recorded cabin ≈ higher class).\nEmbarked has 2 missing values — trivially imputable with the mode.\n\n\n# A quick ggplot of missingness so we can *see* what skim told us.\ntrain |&gt;\n  summarise(across(everything(), ~ mean(is.na(.x)))) |&gt;\n  pivot_longer(everything(),\n                      names_to = \"variable\", values_to = \"pct_missing\") |&gt;\n  filter(pct_missing &gt; 0) |&gt;\n  ggplot(aes(x = reorder(variable, pct_missing),\n                               y = pct_missing)) +\n  geom_col(fill = \"steelblue\") +\n  geom_text(aes(label = percent(pct_missing, accuracy = 1)),\n                     hjust = -0.1, size = 3.5) +\n  scale_y_continuous(labels = percent,\n                              expand = expansion(mult = c(0, 0.15))) +\n  coord_flip() +\n  labs(title = \"Missingness by column\",\n                x = NULL, y = \"Missing\") +\n  theme_minimal()\n\n\n\n\nProportion of missing values per column. Age and Cabin dominate.\n\n\n\n\nThe overall survival rate is our base rate — the number to beat with any model:\n\ntrain |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))\n\n\n  \n\n\n\nAbout 38% survived. A “predict everyone died” baseline would therefore score ~62% accuracy — keep that in mind when judging model scores."
-  },
-  {
-    "objectID": "docs/01-eda.html#who-survived-the-classic-patterns",
-    "href": "docs/01-eda.html#who-survived-the-classic-patterns",
-    "title": "Exploratory Data Analysis",
-    "section": "Who survived? The classic patterns",
-    "text": "Who survived? The classic patterns\n\nSurvival by sex\n\ntrain |&gt;\n  group_by(Sex) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n()) |&gt;\n  ggplot(aes(x = Sex, y = survival_rate, fill = Sex)) +\n  geom_col(width = 0.6) +\n  geom_text(aes(label = percent(survival_rate, accuracy = 1)),\n                     vjust = -0.4) +\n  scale_y_continuous(labels = percent,\n                              limits = c(0, 1)) +\n  labs(title = \"\\\"Women and children first\\\"\",\n                x = NULL, y = \"Survival rate\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\nSurvival rate by sex. The single strongest predictor in the data.\n\n\n\n\n~74% of women survived vs ~19% of men. Sex is the dominant predictor — any model that ignores it is leaving the table.\n\n\nSurvival by passenger class\n\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  group_by(Pclass) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\")) |&gt;\n  ggplot(aes(x = Pclass, y = survival_rate, fill = Pclass)) +\n  geom_col(width = 0.6) +\n  geom_text(aes(label = percent(survival_rate, accuracy = 1)),\n                     vjust = -0.4) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  labs(title = \"Class mattered\",\n                x = \"Passenger class\", y = \"Survival rate\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\nSurvival rate by passenger class (1 = first class).\n\n\n\n\nA clear gradient: 1st class ~63%, 2nd ~47%, 3rd ~24%. Class is a proxy for deck location, wealth, and access to lifeboats.\n\n\nSex and class together\n\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  group_by(Sex, Pclass) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), .groups = \"drop\") |&gt;\n  ggplot(aes(x = Pclass, y = survival_rate, fill = Sex)) +\n  geom_col(position = \"dodge\", width = 0.7) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  labs(title = \"Sex × class interaction\",\n                x = \"Passenger class\", y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\nSurvival by sex within each class — the interaction is striking.\n\n\n\n\nFirst-class women survived almost universally; third-class men almost never. Tree-based models capture this interaction automatically; for the neural net it helps to have rich, normalized features."
-  },
-  {
-    "objectID": "docs/01-eda.html#age-fare-and-continuous-structure",
-    "href": "docs/01-eda.html#age-fare-and-continuous-structure",
-    "title": "Exploratory Data Analysis",
-    "section": "Age, fare, and continuous structure",
-    "text": "Age, fare, and continuous structure\n\nAge distribution by survival\n\ntrain |&gt;\n  ggplot(aes(x = Age, fill = Survived)) +\n  geom_histogram(binwidth = 5, position = \"identity\", alpha = 0.6) +\n  scale_fill_manual(values = c(\"0\" = \"grey50\", \"1\" = \"seagreen\"),\n                             labels = c(\"Died\", \"Survived\")) +\n  labs(title = \"Age distribution by outcome\",\n                x = \"Age (years)\", y = \"Count\", fill = NULL) +\n  theme_minimal()\n\n\n\n\nAge distribution split by survival. Note the spike of saved children.\n\n\n\n\n\ntrain |&gt;\n  ggplot(aes(x = Age, fill = Survived)) +\n  geom_density(alpha = 0.5) +\n  scale_fill_manual(values = c(\"0\" = \"grey50\", \"1\" = \"seagreen\"),\n                             labels = c(\"Died\", \"Survived\")) +\n  labs(title = \"Age density by outcome\",\n                x = \"Age (years)\", y = \"Density\", fill = NULL) +\n  theme_minimal()\n\n\n\n\nSame story as a density — young children survived disproportionately.\n\n\n\n\nChildren (roughly under 10) survived at a higher rate — the “and children” half of the rule. Because Age is ~20% missing, imputation in the recipe is essential; a median or bagged-tree imputation keeps these rows in play.\n\n\nFare by class\n\ntrain |&gt;\n  mutate(Pclass = factor(Pclass)) |&gt;\n  ggplot(aes(x = Pclass, y = Fare, fill = Pclass)) +\n  geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +\n  scale_y_log10(labels = dollar) +\n  labs(title = \"Fare by passenger class (log scale)\",\n                x = \"Passenger class\", y = \"Fare (log10)\") +\n  theme_minimal() +\n  theme(legend.position = \"none\")\n\n\n\n\nFare by class (log scale). Fare is largely a continuous echo of class.\n\n\n\n\nFare is right-skewed and strongly tied to class — a candidate for a log transform so models (especially the neural net) see a better-behaved distribution."
-  },
-  {
-    "objectID": "docs/01-eda.html#engineered-signal-family-and-title",
-    "href": "docs/01-eda.html#engineered-signal-family-and-title",
-    "title": "Exploratory Data Analysis",
-    "section": "Engineered signal: family and title",
-    "text": "Engineered signal: family and title\nThese two features are not columns in the raw data — we derive them. This is the heart of feature engineering and exactly what make_recipe() will encode.\n\nFamily size\nSibSp (siblings/spouses aboard) + Parch (parents/children aboard) + 1 (self) gives a family size. Travelling alone vs. in a small vs. large group changes survival odds.\n\ntrain |&gt;\n  mutate(FamilySize = SibSp + Parch + 1) |&gt;\n  group_by(FamilySize) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n(),\n                   .groups = \"drop\") |&gt;\n  ggplot(aes(x = FamilySize, y = survival_rate)) +\n  geom_col(aes(fill = n), width = 0.7) +\n  geom_text(aes(label = n), vjust = -0.4, size = 3) +\n  scale_y_continuous(labels = percent, limits = c(0, 1)) +\n  scale_fill_viridis_c(name = \"n passengers\") +\n  scale_x_continuous(breaks = 1:11) +\n  labs(title = \"Survival by family size\",\n                subtitle = \"Solo travellers and large families did worst\",\n                x = \"Family size (SibSp + Parch + 1)\", y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\nSurvival rate by family size. Small families fared best.\n\n\n\n\nA clear “Goldilocks” pattern: family size 2–4 survived best, while solo travellers and very large families fared worst. This motivates both a continuous FamilySize feature and possibly a binned IsAlone flag.\n\n\nTitle extracted from name\nThe Name column embeds a title (Mr, Mrs, Miss, Master, and rarer ones like Dr, Rev, Col). Title bundles sex, age band, and social status into one categorical feature — and Master in particular flags young boys, who survived more often than adult men.\n\ntrain |&gt;\n  # Pull the title: the word ending in \".\" after the comma in the Name field.\n  mutate(\n    Title = str_extract(Name, \"(?&lt;=, )[A-Za-z]+(?=\\\\.)\")\n  ) |&gt;\n  # Collapse the long tail of rare titles so the plot (and later the model)\n  # is not dominated by singletons.\n  add_count(Title) |&gt;\n  mutate(Title = if_else(n &lt; 10, \"Rare\", Title)) |&gt;\n  group_by(Title) |&gt;\n  summarise(survival_rate = mean(Survived == \"1\"), n = n(),\n                   .groups = \"drop\") |&gt;\n  ggplot(aes(x = reorder(Title, survival_rate),\n                               y = survival_rate)) +\n  geom_col(aes(fill = n), width = 0.7) +\n  geom_text(aes(label = n), hjust = -0.1, size = 3) +\n  scale_y_continuous(labels = percent,\n                              limits = c(0, 1.05),\n                              expand = expansion(mult = c(0, 0.05))) +\n  scale_fill_viridis_c(name = \"n passengers\") +\n  coord_flip() +\n  labs(title = \"Survival by title\",\n                x = NULL, y = \"Survival rate\") +\n  theme_minimal()\n\n\n\n\nSurvival rate by extracted title (titles with &lt; 10 passengers grouped as ‘Rare’).\n\n\n\n\nMrs/Miss survived at high rates, Master (boys) noticeably better than Mr. Title is one of the most valuable engineered features in this dataset."
-  },
-  {
-    "objectID": "docs/01-eda.html#what-this-means-for-make_recipe",
-    "href": "docs/01-eda.html#what-this-means-for-make_recipe",
-    "title": "Exploratory Data Analysis",
-    "section": "What this means for make_recipe()",
-    "text": "What this means for make_recipe()\nEverything above is the justification for the shared recipe in R/02_features.R. In words, make_recipe(data) should:\n\nImpute Age (missing ~20%) — median or bagged imputation.\nImpute Embarked with the mode (only 2 missing).\nDerive FamilySize = SibSp + Parch + 1, and optionally an IsAlone flag.\nExtract Title from Name and lump rare titles together.\nLog-transform Fare (right-skewed) and consider a HasCabin flag from Cabin presence.\nEncode factors (Sex, Embarked, Pclass, Title) as dummies for models that need numeric input.\nDrop identifiers (PassengerId, Ticket, raw Name, raw Cabin).\n\n\n\n\n\n\n\nNote\n\n\n\nThe neural-net document adds one more step on top of the shared recipe — step_normalize(all_numeric_predictors()) — because MLPs are sensitive to input scale in a way that tree ensembles are not. See the Neural Net doc for why."
-  },
-  {
-    "objectID": "docs/01-eda.html#next-steps",
-    "href": "docs/01-eda.html#next-steps",
-    "title": "Exploratory Data Analysis",
-    "section": "Next steps",
-    "text": "Next steps\nYou now know why the features look the way they do. Time to model:\n\nXGBoost — start here; it’s the Kaggle workhorse and establishes the modelling template the other docs reuse.\nRandom Forest — a robust, low-tuning comparison.\nNeural Net — a small MLP that leans on the normalized recipe.\nBack to the master document for the big picture and the results table."
-  },
-  {
-    "objectID": "docs/03-random-forest.html",
-    "href": "docs/03-random-forest.html",
-    "title": "Model 2 — Random Forest",
-    "section": "",
-    "text": "Where we are: Second of three model documents in the Titanic — Tidymodels Tour. It follows the same structure as the XGBoost doc — recipe → spec → workflow → tune → finalize → evaluate → save — so skim for the differences. Features come from the EDA via the shared make_recipe()."
-  },
-  {
-    "objectID": "docs/03-random-forest.html#why-a-random-forest",
-    "href": "docs/03-random-forest.html#why-a-random-forest",
-    "title": "Model 2 — Random Forest",
-    "section": "Why a random forest?",
-    "text": "Why a random forest?\nWhere XGBoost grows trees sequentially to correct residuals, a random forest grows many independent deep trees on bootstrap samples and averages them. It is famously forgiving: with trees = 1000 fixed, there are really only two knobs worth tuning (mtry, min_n), it rarely overfits badly, and it gives a strong baseline with almost no fuss. We use the fast ranger engine and ask it for permutation importance."
-  },
-  {
-    "objectID": "docs/03-random-forest.html#setup",
-    "href": "docs/03-random-forest.html#setup",
-    "title": "Model 2 — Random Forest",
-    "section": "Setup",
-    "text": "Setup\n\nsource(here::here(\"R\", \"00_setup.R\"))      # tidyverse + tidymodels, seed = 42\nsource(here::here(\"R\", \"02_features.R\"))   # make_recipe(data)\n\nlibrary(tidyverse)    # dplyr, ggplot2, readr, etc.\nlibrary(tidymodels)   # recipes, parsnip, workflows, tune, yardstick, rsample, dials\nlibrary(here)         # project-root-relative paths\nlibrary(vip)          # variable importance plots\nlibrary(ranger)       # the engine\n\n\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#the-recipe",
-    "href": "docs/03-random-forest.html#the-recipe",
-    "title": "Model 2 — Random Forest",
-    "section": "The recipe",
-    "text": "The recipe\nIdentical shared recipe — that is the whole point: a fair comparison across models on the same features.\n\nrf_recipe &lt;- make_recipe(train)\nrf_recipe\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#the-model-specification",
-    "href": "docs/03-random-forest.html#the-model-specification",
-    "title": "Model 2 — Random Forest",
-    "section": "The model specification",
-    "text": "The model specification\ntrees is fixed at 1000 (more is rarely worth it); we tune mtry and min_n. We set importance = \"permutation\" so we can plot variable importance later.\n\n  rf_spec &lt;- rand_forest(mtry = tune(),\n                         min_n = tune(),\n                         trees = 1000) |&gt;\n    set_engine(\"ranger\", importance = \"permutation\") |&gt;\n    set_mode(\"classification\")\n\n\nrf_spec\n\nRandom Forest Model Specification (classification)\n\nMain Arguments:\n  mtry = tune()\n  trees = 1000\n  min_n = tune()\n\nEngine-Specific Arguments:\n  importance = permutation\n\nComputational engine: ranger"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#the-workflow",
-    "href": "docs/03-random-forest.html#the-workflow",
-    "title": "Model 2 — Random Forest",
-    "section": "The workflow",
-    "text": "The workflow\n\nrf_wf &lt;- workflow() |&gt;\n  add_recipe(rf_recipe) |&gt;\n  add_model(rf_spec)"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#tuning-with-5-fold-cross-validation",
-    "href": "docs/03-random-forest.html#tuning-with-5-fold-cross-validation",
-    "title": "Model 2 — Random Forest",
-    "section": "Tuning with 5-fold cross-validation",
-    "text": "Tuning with 5-fold cross-validation\n\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n# mtry's upper bound depends on the number of predictors AFTER the recipe runs,\n# so we finalize() its range against a prepped predictor set rather than\n# guessing. num_comp (PCA) is tuned over a sensible range.\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nrf_params &lt;- extract_parameter_set_dials(rf_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nrf_grid &lt;- grid_space_filling(rf_params, size = 18)\n\n\nrf_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nrf_tuned &lt;- tune_grid(\n  rf_wf,\n  resamples = folds,\n  grid      = rf_grid,\n  metrics   = rf_metrics,\n  # Positive class \"1\" is the second factor level.\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\nsaveRDS(rf_tuned, here(\"models\", \"rf_res.rds\"))\n\n\nTuning results\n\nautoplot(rf_tuned, metric = \"roc_auc\")\n\n\n\n\nROC-AUC across the mtry / min_n grid (autoplot).\n\n\n\n\n\nshow_best(rf_tuned, metric = \"roc_auc\", n = 5)"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#finalize-and-fit-on-the-full-training-set",
-    "href": "docs/03-random-forest.html#finalize-and-fit-on-the-full-training-set",
-    "title": "Model 2 — Random Forest",
-    "section": "Finalize and fit on the full training set",
-    "text": "Finalize and fit on the full training set\n\nbest_rf &lt;- select_best(rf_tuned, metric = \"roc_auc\")\nbest_rf\n\n\n  \n\n\nfinal_rf_wf &lt;- finalize_workflow(rf_wf, best_rf)\n\nset.seed(42)\nrf_fit &lt;- fit(final_rf_wf, data = train)"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#cross-validated-performance",
-    "href": "docs/03-random-forest.html#cross-validated-performance",
-    "title": "Model 2 — Random Forest",
-    "section": "Cross-validated performance",
-    "text": "Cross-validated performance\n\ncollect_metrics(rf_tuned) |&gt;\n  semi_join(best_rf, by = names(best_rf)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nCopy the accuracy and roc_auc mean values into the results table on the master document.\n\n\n\nConfusion matrix\n\nrf_cv_preds &lt;- collect_predictions(rf_tuned, parameters = best_rf)\n\nrf_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  labs(title = \"Random Forest — CV confusion matrix\")\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\n\nrf_fit |&gt;\n  extract_fit_parsnip() |&gt;\n  vip(num_features = 15, geom = \"col\",\n      aesthetics = list(fill = \"forestgreen\")) +\n  labs(title = \"Random Forest variable importance (permutation)\") +\n  theme_minimal()\n\n\n\n\nPermutation importance — drop in accuracy when each feature is shuffled.\n\n\n\n\nReassuringly, the forest leans on the same engineered features as XGBoost — Title, Sex, Fare, class. Different algorithm, same story from the data."
-  },
-  {
-    "objectID": "docs/03-random-forest.html#save-the-fitted-workflow",
-    "href": "docs/03-random-forest.html#save-the-fitted-workflow",
-    "title": "Model 2 — Random Forest",
-    "section": "Save the fitted workflow",
-    "text": "Save the fitted workflow\n\n# Project convention: models/&lt;model&gt;_fit.rds — note the file is rf_fit.rds.\nsaveRDS(rf_fit, file = here(\"models\", \"rf_fit.rds\"))"
-  },
-  {
-    "objectID": "docs/03-random-forest.html#submission",
-    "href": "docs/03-random-forest.html#submission",
-    "title": "Model 2 — Random Forest",
-    "section": "Submission",
-    "text": "Submission\nGenerate this model’s leaderboard CSV with the parameterized submission document:\nquarto render docs/submission.qmd -P model:rf\nThat loads models/rf_fit.rds, predicts on data/raw/test.csv, writes models/submission_rf.csv, and prints the exact kaggle competitions submit command. See the Kaggle setup guide for authentication."
-  },
-  {
-    "objectID": "docs/03-random-forest.html#next-steps",
-    "href": "docs/03-random-forest.html#next-steps",
-    "title": "Model 2 — Random Forest",
-    "section": "Next steps",
-    "text": "Next steps\n\nFinish the tour with the Neural Net (needs normalized inputs).\nRevisit XGBoost to compare importance and CV scores.\nBuild the CSV with the Submission doc.\nRecord this model’s CV scores in the master results table."
-  },
-  {
-    "objectID": "docs/05-stack.html",
-    "href": "docs/05-stack.html",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "",
-    "text": "Where we are: The capstone of the Titanic — Tidymodels Tour. The three model documents (XGBoost, Random Forest, Neural Net) each saved their tuning results (every candidate model and its out-of-fold predictions) to models/&lt;model&gt;_res.rds. Here we feed all of those candidates to stacks, which learns a regularised linear blend over them — usually beating any single model, because the members make different mistakes."
-  },
-  {
-    "objectID": "docs/05-stack.html#why-stack",
-    "href": "docs/05-stack.html#why-stack",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Why stack?",
-    "text": "Why stack?\nEach model family has a different inductive bias: gradient boosting chases interactions, the random forest averages decorrelated trees, the neural net learns a smooth function of the principal components. A stack fits a meta-learner (penalised logistic regression) on the members’ out-of-fold predictions, keeping only the candidates that pull their weight."
-  },
-  {
-    "objectID": "docs/05-stack.html#setup",
-    "href": "docs/05-stack.html#setup",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Setup",
-    "text": "Setup\n\nsource(here::here(\"R\", \"00_setup.R\"))   # tidyverse + tidymodels, seed = 42\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(stacks)\n# The member engines must be attached so fit_members() can refit them.\nlibrary(ranger)\nlibrary(xgboost)\nlibrary(nnet)"
-  },
-  {
-    "objectID": "docs/05-stack.html#load-the-tuning-results",
-    "href": "docs/05-stack.html#load-the-tuning-results",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Load the tuning results",
-    "text": "Load the tuning results\n\n# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,\n# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.\nxgb_res  &lt;- readRDS(here(\"models\", \"xgboost_res.rds\"))\nrf_res   &lt;- readRDS(here(\"models\", \"rf_res.rds\"))\nnnet_res &lt;- readRDS(here(\"models\", \"nnet_res.rds\"))"
-  },
-  {
-    "objectID": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
-    "href": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Build, blend, and fit the ensemble",
-    "text": "Build, blend, and fit the ensemble\n\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n# A tibble: 5 × 3\n  member                           type        weight\n  &lt;chr&gt;                            &lt;chr&gt;        &lt;dbl&gt;\n1 .pred_1_xgb_respre3_mod14_post0  boost_tree   1.34 \n2 .pred_1_rf_respre1_mod05_post0   rand_forest  1.19 \n3 .pred_1_nnet_respre5_mod14_post0 mlp          1.14 \n4 .pred_1_nnet_respre7_mod08_post0 mlp          0.921\n5 .pred_1_xgb_respre1_mod10_post0  boost_tree   0.222\n\n\n\nWhich members survived the blend?\n\nautoplot(titanic_stack, type = \"weights\")\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
-  },
-  {
-    "objectID": "docs/05-stack.html#save-the-fitted-ensemble",
-    "href": "docs/05-stack.html#save-the-fitted-ensemble",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Save the fitted ensemble",
-    "text": "Save the fitted ensemble\n\nsaveRDS(titanic_stack, here(\"models\", \"stack_fit.rds\"))"
-  },
-  {
-    "objectID": "docs/05-stack.html#build-the-kaggle-submission",
-    "href": "docs/05-stack.html#build-the-kaggle-submission",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Build the Kaggle submission",
-    "text": "Build the Kaggle submission\n\ntest &lt;- read_csv(here(\"data\", \"processed\", \"test.csv\"), show_col_types = FALSE)\n\nstack_pred &lt;- predict(titanic_stack, new_data = test, type = \"class\")\n\nsubmission &lt;- tibble(\n  PassengerId = test$PassengerId,\n  Survived    = as.integer(as.character(stack_pred$.pred_class))\n)\nwrite_csv(submission, here(\"models\", \"submission_stack.csv\"))\n\nsubmission |&gt; count(Survived) |&gt; mutate(prop = n / sum(n))\n\n\n  \n\n\n\nUpload it the same way as any other model:\nkaggle competitions submit -c titanic -f models/submission_stack.csv \\\n  -m \"stacked ensemble (xgb + rf + nnet) via stacks\""
-  },
-  {
-    "objectID": "docs/05-stack.html#next-steps",
-    "href": "docs/05-stack.html#next-steps",
-    "title": "Model 4 — Stacked Ensemble",
-    "section": "Next steps",
-    "text": "Next steps\n\nThe parameterized submission doc also accepts -P model:stack.\nCompare the stack’s leaderboard score against the individual models on the master document — does the blend actually win on the held-out Kaggle test set, or only in cross-validation?\nSee the Kaggle setup guide for authentication."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "",
-    "text": "This site is a guided tour of the Kaggle Titanic — Machine Learning from Disaster competition, worked end to end in R with the tidymodels framework. It is written for an R user who is comfortable with the language and with statistics, but is new to Kaggle — so we narrate the competition workflow as well as the modelling reasoning, and we lean on ggplot2 for every chart.\nIf you have taught or sat through an intro-to-ML workshop, this will feel familiar: split, engineer features, resample, tune, evaluate, predict. Kaggle just adds a public leaderboard and a strict submission format on top.\n\n\nTitanic is the canonical “first Kaggle competition” — the Hello, World of predictive modelling. The setup:\n\nYou are given a training set (data/raw/train.csv, 891 passengers) where the outcome is known: did each passenger survive (Survived = 1) or not (Survived = 0)?\nYou are given a test set (data/raw/test.csv, 418 passengers) with the same features but no Survived column.\nYour job: predict Survived for every passenger in the test set, write those predictions to a CSV in the required format, and upload it. Kaggle scores your CSV on accuracy against the hidden true labels and places you on the leaderboard.\n\nThere is no prize money here — it’s a sandbox. That is exactly why it’s a great place to have fun and explore: try a model, submit, see your score, iterate.\n\n\n\n\n\n\nTipThe Kaggle mental model for a newcomer\n\n\n\nThink of it as a take-home exam where you can resubmit as often as you like and see your grade each time (with a daily submission cap). Your cross-validation score on the training data is your private estimate; the leaderboard score is the graded result. When the two diverge, you are learning something about generalization — which is the whole point."
-  },
-  {
-    "objectID": "index.html#welcome-aboard",
-    "href": "index.html#welcome-aboard",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "",
-    "text": "This site is a guided tour of the Kaggle Titanic — Machine Learning from Disaster competition, worked end to end in R with the tidymodels framework. It is written for an R user who is comfortable with the language and with statistics, but is new to Kaggle — so we narrate the competition workflow as well as the modelling reasoning, and we lean on ggplot2 for every chart.\nIf you have taught or sat through an intro-to-ML workshop, this will feel familiar: split, engineer features, resample, tune, evaluate, predict. Kaggle just adds a public leaderboard and a strict submission format on top.\n\n\nTitanic is the canonical “first Kaggle competition” — the Hello, World of predictive modelling. The setup:\n\nYou are given a training set (data/raw/train.csv, 891 passengers) where the outcome is known: did each passenger survive (Survived = 1) or not (Survived = 0)?\nYou are given a test set (data/raw/test.csv, 418 passengers) with the same features but no Survived column.\nYour job: predict Survived for every passenger in the test set, write those predictions to a CSV in the required format, and upload it. Kaggle scores your CSV on accuracy against the hidden true labels and places you on the leaderboard.\n\nThere is no prize money here — it’s a sandbox. That is exactly why it’s a great place to have fun and explore: try a model, submit, see your score, iterate.\n\n\n\n\n\n\nTipThe Kaggle mental model for a newcomer\n\n\n\nThink of it as a take-home exam where you can resubmit as often as you like and see your grade each time (with a daily submission cap). Your cross-validation score on the training data is your private estimate; the leaderboard score is the graded result. When the two diverge, you are learning something about generalization — which is the whole point."
-  },
-  {
-    "objectID": "index.html#the-goal",
-    "href": "index.html#the-goal",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "The goal",
-    "text": "The goal\nPredict the binary outcome Survived for the 418 test passengers as accurately as possible, and document the reasoning so the whole thing is reproducible and teachable.\nWe fit three different model families on identical features so they can be compared apples-to-apples:\n\n\n\nModel\nEngine\nWhy it’s interesting\n\n\n\n\nXGBoost\nxgboost\nGradient-boosted trees — the Kaggle workhorse\n\n\nRandom Forest\nranger\nBagged trees — robust, low-tuning baseline\n\n\nNeural Net\nbrulee / nnet\nA small MLP — needs normalized inputs"
-  },
-  {
-    "objectID": "index.html#how-the-documents-link-together",
-    "href": "index.html#how-the-documents-link-together",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "How the documents link together",
-    "text": "How the documents link together\nThis is a small Quarto website. index.qmd (this page) is the master document; everything else lives in docs/ and the navbar ties them into a narrative:\nHome (index)  →  EDA  →  Models {XGBoost, Random Forest, Neural Net}  →  Submission  →  Kaggle Setup\n\nExploratory Data Analysis — look at the data, find the patterns (sex, class, age, family, title), and motivate the feature engineering.\nModel docs — each one follows the same structure (recipe → spec → workflow → tune → finalize → evaluate → save), so once you’ve read one, the others are easy to skim for the differences.\nSubmission — a single parameterized document that turns any of the three saved models into a leaderboard-ready CSV.\nKaggle Setup — how to authenticate the Kaggle CLI so you can download the data and push submissions."
-  },
-  {
-    "objectID": "index.html#project-structure",
-    "href": "index.html#project-structure",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "Project structure",
-    "text": "Project structure\ntitantic/\n├── _quarto.yml              # website config (theme, navbar, freeze)\n├── index.qmd                # ← you are here (master document)\n├── renv.lock                # pinned package versions (reproducibility)\n├── R/\n│   ├── 00_setup.R           # libraries, seed=42, paths, parallel backend\n│   ├── 01_eda.R             # standalone EDA script\n│   └── 02_features.R        # make_recipe(data) — the SHARED feature recipe\n├── data/\n│   └── raw/\n│       ├── train.csv        # 891 rows, has Survived\n│       └── test.csv         # 418 rows, no Survived\n├── docs/\n│   ├── 01-eda.qmd           # exploratory analysis\n│   ├── 02-xgboost.qmd       # boosted trees\n│   ├── 03-random-forest.qmd # ranger random forest\n│   ├── 04-neural-net.qmd    # brulee/nnet MLP\n│   ├── submission.qmd       # parameterized: build a submission CSV\n│   └── setup-kaggle.md      # Kaggle CLI auth guide\n├── models/                  # fitted workflows (*_fit.rds) + submission_*.csv\n└── figures/                 # exported plots\nThe single most important shared piece is R/02_features.R, which defines make_recipe(data). Every model sources it so they all train on the same engineered features — that is what makes the comparison fair."
-  },
-  {
-    "objectID": "index.html#how-to-reproduce",
-    "href": "index.html#how-to-reproduce",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "How to reproduce",
-    "text": "How to reproduce\nEverything is pinned with renv and uses here::here() for paths, so there is no setwd() fragility.\n\nRestore the environment (installs the exact package versions):\nrenv::restore()\nGet the data — follow the Kaggle setup guide to authenticate, then download train.csv and test.csv into data/raw/.\nRender the site. Because of freeze: auto, the heavy model fits only run the first time (or when a model doc changes):\nquarto render\nLogical run order if you prefer to step through it: EDA → each model doc (which saves its fitted workflow to models/) → submission.\nGenerate submissions for each model (see below).\n\n\n\n\n\n\n\nNote\n\n\n\nset.seed(42) is set in R/00_setup.R and the resampling folds are seeded, so CV results are reproducible across machines that share the renv lockfile."
-  },
-  {
-    "objectID": "index.html#results-summary",
-    "href": "index.html#results-summary",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "Results summary",
-    "text": "Results summary\nThe table below compares the three models on 5-fold cross-validated accuracy and roc_auc (positive class = \"1\", survived). These are honest estimates computed on the training data before we ever touch the test set.\n\n\n\n\n\n\n\n\n\nModel\nCV accuracy\nCV ROC-AUC\nNotes\n\n\n\n\nXGBoost\nTBD\nTBD\ntuned trees, tree_depth, learn_rate, min_n\n\n\nRandom Forest\nTBD\nTBD\ntuned mtry, min_n; 1000 trees\n\n\nNeural Net\nTBD\nTBD\ntuned hidden_units, penalty, epochs; normalized inputs\n\n\n\n\n\n\n\n\n\nImportant\n\n\n\nThis table is a placeholder. Fill the cells in after you render the model documents — each one prints its collect_metrics() summary that you can copy here. (A nice exercise: write a small chunk that reads the three *_fit.rds files and assembles this table automatically.)"
-  },
-  {
-    "objectID": "index.html#the-submission-workflow-at-a-glance",
-    "href": "index.html#the-submission-workflow-at-a-glance",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "The submission workflow at a glance",
-    "text": "The submission workflow at a glance\nOnce a model is fitted and saved (each model doc does this), turning it into a leaderboard entry is mechanical:\n\nLoad the fitted workflow from models/&lt;model&gt;_fit.rds.\nRead data/raw/test.csv.\npredict() the class for each test passenger.\nWrite models/submission_&lt;model&gt;.csv with exactly two columns, PassengerId and Survived (0/1 integers).\nPush it to Kaggle:\nkaggle competitions submit -c titanic \\\n  -f models/submission_xgboost.csv \\\n  -m \"xgboost via tidymodels\"\n\nAll of that is wrapped in the parameterized submission document, so you generate any model’s CSV with one command:\nquarto render docs/submission.qmd -P model:xgboost\nquarto render docs/submission.qmd -P model:rf\nquarto render docs/submission.qmd -P model:nnet"
-  },
-  {
-    "objectID": "index.html#next-steps",
-    "href": "index.html#next-steps",
-    "title": "Titanic — Tidymodels Tour",
-    "section": "Next steps",
-    "text": "Next steps\n\nStart with the Exploratory Data Analysis to see the patterns that drive the features.\nThen read the model docs in order: XGBoost → Random Forest → Neural Net.\nBuild a leaderboard CSV with the Submission doc.\nStuck on authentication? See the Kaggle Setup guide."
   }
 ]
