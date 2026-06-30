@@ -1,6 +1,11 @@
 project:
   type: website
   output-dir: _site
+  render:
+    - "*.qmd"
+    - "docs/*.qmd"
+    - "docs/setup-kaggle.md"
+    # everything else (e.g. titanic_claude.md project brief) is excluded
 
 # Freezing is critical here. The model docs run real tidymodels tuning over
 # 5-fold CV, which is expensive. `freeze: auto` means a document is only

@@ -18,3 +18,5 @@ figures/
 /.quarto/
 _site/
 /docs/_site/
+
+**/*.quarto_ipynb

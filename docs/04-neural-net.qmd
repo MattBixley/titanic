@@ -1,6 +1,6 @@
 ---
 title: "Model 3 — Neural Net"
-subtitle: "A small multilayer perceptron with brulee (torch) — and why scale matters"
+subtitle: "A small multilayer perceptron with nnet — and why scale matters"
 ---
 
 > **Where we are:** Last of three model documents in the
@@ -15,16 +15,16 @@ subtitle: "A small multilayer perceptron with brulee (torch) — and why scale m
 On a dataset this small (891 rows) a multilayer perceptron will not beat the
 tree ensembles — and that's fine. The point is to *explore* a different model
 family and see how tidymodels makes swapping engines almost free. A small MLP
-with a single hidden layer, weight decay (`penalty`), and a tuned number of
-training `epochs` is a clean, instructive choice.
+with a single hidden layer and weight decay (`penalty`) is a clean, instructive
+choice.
 
 ::: {.callout-note}
-## brulee needs torch
-The `brulee` engine fits neural nets via [torch](https://torch.mlverse.org/) for
-R. The first time you use it, torch downloads its C++/LibTorch backend
-(`torch::install_torch()` if it didn't auto-install). If torch is unavailable in
-your environment (e.g. a locked-down CI runner), use the **nnet fallback** noted
-below — the rest of the document is unchanged.
+## Engine choice: `nnet`
+We fit the MLP with base R's `nnet` engine. It has no native-code dependency, so
+it trains identically on your laptop, in the Quarto site build, and in GitHub
+Actions CI. A `torch`-backed alternative (`brulee`) is shown later as an optional
+local upgrade — but it does **not** load inside this project's render/CI session,
+so `nnet` is the engine we publish.
 :::
 
 ## Setup
@@ -37,7 +37,7 @@ below — the rest of the document is unchanged.
 source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
 source(here::here("R", "02_features.R"))   # make_recipe(data)
 
-library(brulee)   # the engine (torch-backed). See fallback note below.
+library(nnet)     # the MLP engine (base R, no native deps)
 library(vip)      # variable importance plots
 ```
 
@@ -47,6 +47,15 @@ library(vip)      # variable importance plots
 
 train <- readr::read_csv(here::here("data", "raw", "train.csv")) |>
   dplyr::mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+```{r}
+#| label: sequential-backend
+# Tear down the PSOCK cluster from 00_setup.R and tune single-process. The grid
+# is tiny, so this is plenty fast and keeps results deterministic (no worker
+# package-loading surprises).
+if (exists("cl")) try(parallel::stopCluster(cl), silent = TRUE)
+foreach::registerDoSEQ()
 ```
 
 ## The recipe — with normalization
@@ -72,37 +81,40 @@ nnet_recipe
 
 ```{r}
 #| label: spec
-# brulee MLP: one hidden layer (hidden_units), L2 weight decay (penalty), and a
-# tuned number of training epochs.
-nnet_spec <- mlp(
-  hidden_units = tune(),
-  penalty      = tune(),
-  epochs       = tune()
-) |>
-  set_engine("brulee") |>
-  set_mode("classification")
-
-nnet_spec
-```
-
-::: {.callout-important}
-## Fallback: no torch? Use nnet
-If `brulee`/`torch` cannot be installed, swap the engine to base R's `nnet`.
-`nnet::nnet` does not expose an `epochs` argument the same way, so drop it and
-tune just two parameters:
-
-```r
+# Single-hidden-layer MLP via base R's nnet engine: one hidden layer
+# (hidden_units) and L2 weight decay (penalty). nnet has no native-code
+# dependency, so it trains and renders reliably everywhere — including the
+# Quarto site build and GitHub Actions CI.
 nnet_spec <- mlp(
   hidden_units = tune(),
   penalty      = tune()
 ) |>
   set_engine("nnet") |>
   set_mode("classification")
+
+nnet_spec
 ```
 
-Everything downstream (workflow, tuning, evaluation, save) works unchanged — just
-remember to drop `epochs` from the tuning grid and from any `select_best()`
-join keys below.
+::: {.callout-tip}
+## Optional: a torch-backed MLP with `brulee` (local only)
+For a deeper net with a tuned epoch budget you can swap in `brulee` (a `torch`
+backend) **when running locally**. It also exposes `epochs`:
+
+```r
+nnet_spec <- mlp(
+  hidden_units = tune(),
+  penalty      = tune(),
+  epochs       = tune()       # brulee only
+) |>
+  set_engine("brulee") |>
+  set_mode("classification")
+```
+
+We keep `nnet` as the published engine on purpose: `brulee`'s libtorch backend
+does not load inside the Quarto/knitr render session (or in CI) under this
+project's `renv` setup — every fit fails with *"Lantern is not loaded"*. `nnet`
+sidesteps that entirely. If you switch to `brulee`, add `epochs` back to the
+tuning grid below and train sequentially (`foreach::registerDoSEQ()`).
 :::
 
 ## The workflow
@@ -124,14 +136,13 @@ folds <- vfold_cv(train, v = 5, strata = Survived)
 
 ```{r}
 #| label: grid
-# Modest ranges suited to a tiny dataset: a handful of hidden units, light-to-
-# moderate weight decay, and enough epochs to converge without overfitting.
+# Modest grid for a tiny dataset: a handful of hidden units and light-to-moderate
+# weight decay. (nnet has no epochs hyperparameter — it iterates to convergence.)
 set.seed(42)
-nnet_grid <- grid_latin_hypercube(
-  hidden_units(range = c(4L, 32L)),
+nnet_grid <- grid_space_filling(
+  hidden_units(range = c(2L, 16L)),
   penalty(range = c(-4, -0.5)),     # log10 scale → 1e-4 to ~0.3
-  epochs(range = c(50L, 300L)),
-  size = 20
+  size = 12
 )
 ```
 
@@ -186,10 +197,11 @@ nnet_fit <- fit(final_nnet_wf, data = train)
 
 ```{r}
 #| label: cv-metrics
-# Note: if using the nnet fallback, drop "epochs" from the join keys.
+# nnet tunes hidden_units + penalty (no epochs). If you switch to the brulee
+# engine, add "epochs" to the join keys.
 collect_metrics(nnet_tuned) |>
   dplyr::semi_join(best_nnet,
-                   by = c("hidden_units", "penalty", "epochs")) |>
+                   by = c("hidden_units", "penalty")) |>
   dplyr::select(.metric, mean, std_err, n)
 ```
 
@@ -216,37 +228,24 @@ nnet_cv_preds |>
 
 ### Variable importance
 
-Neural nets don't expose importance natively, so we use a **permutation-based**
-importance via `vip` — shuffle each feature and measure the drop in ROC-AUC.
+Neural nets don't expose importance natively. For an `nnet` model `vip` derives
+it from the trained connection weights (Garson's algorithm) — no shuffling or
+prediction wrapper needed, so it's robust in any render environment.
 
 ```{r}
 #| label: vip
-#| fig-cap: "Permutation importance for the MLP (drop in ROC-AUC when shuffled)."
+#| fig-cap: "Connection-weight (Garson) importance for the MLP."
 #| fig-width: 7
 #| fig-height: 5
 #| message: false
 #| warning: false
 
-# A small prediction wrapper for vip's model-agnostic permutation method.
-pred_wrapper <- function(object, newdata) {
-  predict(object, new_data = newdata, type = "prob")$.pred_1
-}
-
-# Bake the (normalized) predictors for the permutation routine.
-nnet_baked <- nnet_recipe |> prep() |> bake(new_data = train)
-
-vip::vip(
-  nnet_fit,
-  method      = "permute",
-  train       = nnet_baked,
-  target      = "Survived",
-  metric      = "roc_auc",
-  event_level = "second",
-  reference_class = "1",
-  pred_wrapper = pred_wrapper,
-  num_features = 15
-) +
-  ggplot2::labs(title = "Neural Net variable importance (permutation)") +
+# Pull the underlying nnet engine object out of the fitted workflow and let vip
+# read importance straight from the network weights.
+nnet_fit |>
+  extract_fit_engine() |>
+  vip::vip(num_features = 15) +
+  ggplot2::labs(title = "Neural Net variable importance (Garson weights)") +
   ggplot2::theme_minimal()
 ```
 
