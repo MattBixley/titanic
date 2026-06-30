@@ -142,7 +142,7 @@ CV results are reproducible across machines that share the `renv` lockfile.
 
 ## Results summary
 
-The table below compares the three base models on **5-fold cross-validated**
+The table below compares the four base models on **cross-validated**
 `accuracy` and `roc_auc` (positive class = `"1"`, survived). These are *honest*
 estimates computed on the training data before we ever touch the test set — and
 they are read **directly** from each model's saved tuning results
@@ -179,7 +179,9 @@ bind_rows(
   cv_metrics(here("models", "rf_res.rds"), "Random Forest",
              "tuned mtry / min_n + num_comp; 1000 trees"),
   cv_metrics(here("models", "nnet_res.rds"), "Neural Net",
-             "tuned hidden_units / penalty + num_comp; PCA-normalized")
+             "tuned hidden_units / penalty + num_comp; PCA-normalized"),
+  cv_metrics(here("models", "logistic_res.rds"), "Logistic Regression",
+             "elastic-net (glmnet): tuned penalty / mixture + num_comp")
 ) |>
   arrange(desc(`CV ROC-AUC`)) |>
   mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \(x) round(x, 4))) |>

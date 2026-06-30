@@ -5,10 +5,17 @@ project:
   # so every model document (and CI) has the features it needs.
   pre-render: R/03_engineer.R
   render:
-    # Order matters: the model docs save *_res.rds, the stack consumes them, and
+    # Order matters: every base model saves *_res.rds; the stack consumes them
+    # (so all four base models — incl. logistic — render BEFORE 05-stack), and
     # index.qmd renders LAST so its results table can read every model's
     # cross-validated metrics. titanic_claude.md (the brief) is excluded.
-    - "docs/*.qmd"
+    - "docs/01-eda.qmd"
+    - "docs/02-xgboost.qmd"
+    - "docs/03-random-forest.qmd"
+    - "docs/04-neural-net.qmd"
+    - "docs/06-logistic.qmd"
+    - "docs/05-stack.qmd"
+    - "docs/submission.qmd"
     - "docs/setup-kaggle.md"
     - "index.qmd"
 
@@ -37,6 +44,8 @@ website:
             href: docs/03-random-forest.qmd
           - text: "Neural Net"
             href: docs/04-neural-net.qmd
+          - text: "Logistic Regression"
+            href: docs/06-logistic.qmd
           - text: "Stacked Ensemble"
             href: docs/05-stack.qmd
       - text: "Submission"

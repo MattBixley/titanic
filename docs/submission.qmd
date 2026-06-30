@@ -61,10 +61,11 @@ requested_model <- params$model
 # Map each valid model key to its saved fit. This single lookup table is the
 # source of truth for which models are submittable.
 model_paths <- c(
-  xgboost = here::here("models", "xgboost_fit.rds"),
-  rf      = here::here("models", "rf_fit.rds"),
-  nnet    = here::here("models", "nnet_fit.rds"),
-  stack   = here::here("models", "stack_fit.rds")
+  xgboost  = here::here("models", "xgboost_fit.rds"),
+  rf       = here::here("models", "rf_fit.rds"),
+  nnet     = here::here("models", "nnet_fit.rds"),
+  logistic = here::here("models", "logistic_fit.rds"),
+  stack    = here::here("models", "stack_fit.rds")
 )
 
 # Fail loudly and helpfully if someone passes an unknown model.

@@ -1,0 +1,241 @@
+---
+title: "Model 5 — Logistic Regression"
+subtitle: "A penalised linear baseline with glmnet — interpretable and fast"
+---
+
+> **Where we are:** A fourth base learner for the
+> [Titanic — Tidymodels Tour](../index.qmd), following the same
+> recipe → spec → workflow → tune → finalize → evaluate → save structure as the
+> [XGBoost](02-xgboost.qmd), [Random Forest](03-random-forest.qmd) and
+> [Neural Net](04-neural-net.qmd) docs. It also feeds the
+> [stacked ensemble](05-stack.qmd).
+
+## Why logistic regression?
+
+It is the classic starting point for binary classification: a linear model of the
+log-odds of survival. With the `glmnet` engine we get **elastic-net
+regularisation** — `penalty` (how much to shrink) and `mixture` (ridge ↔ lasso) —
+which guards against overfitting the wide, PCA-augmented feature space and does
+automatic feature selection. It is fast, interpretable (signed coefficients), and
+a strong, honest baseline the fancier models must beat.
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))      # tidyverse + tidymodels, seed = 42
+source(here("R", "02_features.R"))         # make_recipe(data)
+
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(glmnet)   # penalised logistic regression engine
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- read_csv(here("data", "processed", "train.csv")) |>
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe
+
+The same shared recipe as every other model — a fair comparison on identical
+features (including the principal components).
+
+```{r}
+#| label: recipe
+logistic_recipe <- make_recipe(train)
+logistic_recipe
+```
+
+## The model specification
+
+```{r}
+#| label: spec
+# Elastic-net logistic regression: penalty = shrinkage strength, mixture = the
+# ridge(0) <-> lasso(1) balance. Both tuned.
+logistic_spec <- logistic_reg(
+  penalty = tune(),
+  mixture = tune()
+) |>
+  set_engine("glmnet") |>
+  set_mode("classification")
+
+logistic_spec
+```
+
+## The workflow
+
+```{r}
+#| label: workflow
+logistic_wf <- workflow() |>
+  add_recipe(logistic_recipe) |>
+  add_model(logistic_spec)
+```
+
+## Tuning with cross-validation
+
+```{r}
+#| label: resamples
+set.seed(42)
+folds <- vfold_cv(train, v = 10, strata = Survived)
+```
+
+```{r}
+#| label: grid
+# The recipe adds PCA internally, so num_comp is tunable too. finalize() against
+# a prepped predictor set resolves any data-dependent ranges.
+preds <- prep(make_recipe(train, num_comp = 2)) |>
+  bake(new_data = NULL) |>
+  select(-Survived, -PassengerId)
+
+logistic_params <- extract_parameter_set_dials(logistic_wf) |>
+  finalize(preds) |>
+  update(num_comp = num_comp(range = c(2L, 10L)))
+
+set.seed(42)
+logistic_grid <- grid_space_filling(logistic_params, size = 18)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+logistic_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+logistic_tuned <- tune_grid(
+  logistic_wf,
+  resamples = folds,
+  grid      = logistic_grid,
+  metrics   = logistic_metrics,
+  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = "second")
+)
+```
+
+```{r}
+#| label: save-res
+saveRDS(logistic_tuned, here("models", "logistic_res.rds"))
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the penalty / mixture grid (autoplot)."
+#| fig-width: 8
+#| fig-height: 5
+
+autoplot(logistic_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+show_best(logistic_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+best_logistic <- select_best(logistic_tuned, metric = "roc_auc")
+best_logistic
+
+final_logistic_wf <- finalize_workflow(logistic_wf, best_logistic)
+
+set.seed(42)
+logistic_fit <- fit(final_logistic_wf, data = train)
+```
+
+## Cross-validated performance
+
+```{r}
+#| label: cv-metrics
+collect_metrics(logistic_tuned) |>
+  semi_join(best_logistic, by = names(best_logistic)) |>
+  select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+These CV metrics feed the results table on the
+[master document](../index.qmd) automatically — it reads `models/logistic_res.rds`
+at render time, so there's nothing to copy by hand.
+:::
+
+### Confusion matrix
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+logistic_cv_preds <- collect_predictions(logistic_tuned, parameters = best_logistic)
+
+logistic_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
+  labs(title = "Logistic Regression — CV confusion matrix")
+```
+
+### Coefficients (the linear story)
+
+Unlike the tree models, a logistic regression hands us **signed** effects: the
+log-odds contribution of each (standardised) feature at the chosen penalty.
+Positive pushes toward survival, negative toward not.
+
+```{r}
+#| label: coefficients
+#| fig-cap: "Largest elastic-net coefficients (log-odds). Green = toward survival."
+#| fig-width: 7
+#| fig-height: 5
+
+logistic_fit |>
+  extract_fit_parsnip() |>
+  tidy() |>
+  filter(term != "(Intercept)", estimate != 0) |>
+  slice_max(abs(estimate), n = 15) |>
+  ggplot(aes(x = reorder(term, abs(estimate)), y = estimate,
+             fill = estimate > 0)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(values = c(`TRUE` = kakapo_pal[1], `FALSE` = kakapo_pal[5]),
+                    labels = c(`TRUE` = "toward survival", `FALSE` = "toward death"),
+                    name = NULL) +
+  labs(title = "Logistic Regression coefficients",
+       x = NULL, y = "Coefficient (log-odds)") +
+  theme_minimal()
+```
+
+The same engineered signals — `GroupSurvival`, `Title`, `Sex`, class — carry the
+weight, now with an explicit direction.
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+saveRDS(logistic_fit, file = here("models", "logistic_fit.rds"))
+```
+
+## Submission
+
+```bash
+quarto render docs/submission.qmd -P model:logistic
+```
+
+Loads `models/logistic_fit.rds`, predicts on the processed test set, writes
+`models/submission_logistic.csv`, and prints the `kaggle competitions submit`
+command. See the [Kaggle setup guide](setup-kaggle.md).
+
+## Next steps
+
+- See how it blends in the **[Stacked Ensemble](05-stack.qmd)**.
+- Compare CV scores on the **[master results table](../index.qmd)**.

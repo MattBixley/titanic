@@ -1,13 +1,14 @@
 ---
 title: "Model 4 — Stacked Ensemble"
-subtitle: "Blending XGBoost + Random Forest + Neural Net with stacks"
+subtitle: "Blending XGBoost + Random Forest + Neural Net + Logistic Regression with stacks"
 ---
 
 > **Where we are:** The capstone of the
-> [Titanic — Tidymodels Tour](../index.qmd). The three model documents
+> [Titanic — Tidymodels Tour](../index.qmd). The four base-model documents
 > ([XGBoost](02-xgboost.qmd), [Random Forest](03-random-forest.qmd),
-> [Neural Net](04-neural-net.qmd)) each saved their *tuning results* (every
-> candidate model and its out-of-fold predictions) to `models/<model>_res.rds`.
+> [Neural Net](04-neural-net.qmd), [Logistic Regression](06-logistic.qmd)) each
+> saved their *tuning results* (every candidate model and its out-of-fold
+> predictions) to `models/<model>_res.rds`.
 > Here we feed all of those candidates to [`stacks`](https://stacks.tidymodels.org/),
 > which learns a regularised linear blend over them — usually beating any single
 > model, because the members make different mistakes.
@@ -37,6 +38,7 @@ library(stacks)
 library(ranger)
 library(xgboost)
 library(nnet)
+library(glmnet)
 ```
 
 ## Load the tuning results
@@ -45,9 +47,10 @@ library(nnet)
 #| label: load-candidates
 # Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,
 # save_workflow = TRUE) — exactly what stacks needs to assemble candidates.
-xgb_res  <- readRDS(here("models", "xgboost_res.rds"))
-rf_res   <- readRDS(here("models", "rf_res.rds"))
-nnet_res <- readRDS(here("models", "nnet_res.rds"))
+xgb_res      <- readRDS(here("models", "xgboost_res.rds"))
+rf_res       <- readRDS(here("models", "rf_res.rds"))
+nnet_res     <- readRDS(here("models", "nnet_res.rds"))
+logistic_res <- readRDS(here("models", "logistic_res.rds"))
 ```
 
 ## Build, blend, and fit the ensemble
@@ -62,6 +65,7 @@ titanic_stack <- stacks() |>
   add_candidates(xgb_res) |>
   add_candidates(rf_res) |>
   add_candidates(nnet_res) |>
+  add_candidates(logistic_res) |>
   blend_predictions() |>     # LASSO over candidates -> keeps the useful ones
   fit_members()              # refit the retained members on all training data
 
