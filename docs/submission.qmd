@@ -2,7 +2,7 @@
 title: "Building a Kaggle Submission"
 subtitle: "One parameterized document, three models, leaderboard-ready CSVs"
 params:
-  model: "nnet"
+  model: "logistic"
 execute:
   freeze: false   # parameterized: must re-run per -P model:, never serve a cached model
 ---

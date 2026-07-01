@@ -1,5 +1,5 @@
 ---
-title: "Model 4 — Stacked Ensemble"
+title: "Model 5 — Stacked Ensemble"
 subtitle: "Blending XGBoost + Random Forest + Neural Net + Logistic Regression with stacks"
 ---
 

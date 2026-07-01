@@ -22,3 +22,7 @@ _site/
 /docs/_site/
 
 **/*.quarto_ipynb
+
+# stray local render leftovers (site is built to _site/)
+docs/*.html
+*.rmarkdown
