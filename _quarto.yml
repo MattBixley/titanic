@@ -14,6 +14,8 @@ project:
     - "docs/03-random-forest.qmd"
     - "docs/04-neural-net.qmd"
     - "docs/06-logistic.qmd"
+    - "docs/07-svm.qmd"
+    - "docs/08-mars.qmd"
     - "docs/05-stack.qmd"
     - "docs/submission.qmd"
     - "docs/setup-kaggle.md"
@@ -46,6 +48,10 @@ website:
             href: docs/04-neural-net.qmd
           - text: "Logistic Regression"
             href: docs/06-logistic.qmd
+          - text: "Support Vector Machine"
+            href: docs/07-svm.qmd
+          - text: "MARS"
+            href: docs/08-mars.qmd
           - text: "Stacked Ensemble"
             href: docs/05-stack.qmd
       - text: "Submission"

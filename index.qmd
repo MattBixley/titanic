@@ -49,14 +49,18 @@ Predict the binary outcome `Survived` for the 418 test passengers as accurately
 as possible, and document the reasoning so the whole thing is reproducible and
 teachable.
 
-We fit **three** different model families on identical features so they can be
-compared apples-to-apples:
+We fit **six** different model families on identical features so they can be
+compared apples-to-apples, then blend them in a stacked ensemble:
 
 | Model | Engine | Why it's interesting |
 |-------|--------|----------------------|
 | [XGBoost](docs/02-xgboost.qmd) | `xgboost` | Gradient-boosted trees — the Kaggle workhorse |
 | [Random Forest](docs/03-random-forest.qmd) | `ranger` | Bagged trees — robust, low-tuning baseline |
-| [Neural Net](docs/04-neural-net.qmd) | `brulee` / `nnet` | A small MLP — needs normalized inputs |
+| [Neural Net](docs/04-neural-net.qmd) | `nnet` | A small MLP — needs normalized inputs |
+| [Logistic Regression](docs/06-logistic.qmd) | `glmnet` | Elastic-net linear baseline — interpretable |
+| [SVM (RBF)](docs/07-svm.qmd) | `kernlab` | Nonlinear kernel boundary — diverse errors |
+| [MARS](docs/08-mars.qmd) | `earth` | Piecewise-linear splines — nonlinear, interpretable |
+| [Stacked Ensemble](docs/05-stack.qmd) | `stacks` | Learns a blend over all of the above |
 
 ## How the documents link together
 
@@ -142,7 +146,7 @@ CV results are reproducible across machines that share the `renv` lockfile.
 
 ## Results summary
 
-The table below compares the four base models on **cross-validated**
+The table below compares the six base models on **cross-validated**
 `accuracy` and `roc_auc` (positive class = `"1"`, survived). These are *honest*
 estimates computed on the training data before we ever touch the test set — and
 they are read **directly** from each model's saved tuning results
@@ -181,7 +185,11 @@ bind_rows(
   cv_metrics(here("models", "nnet_res.rds"), "Neural Net",
              "tuned hidden_units / penalty + num_comp; PCA-normalized"),
   cv_metrics(here("models", "logistic_res.rds"), "Logistic Regression",
-             "elastic-net (glmnet): tuned penalty / mixture + num_comp")
+             "elastic-net (glmnet): tuned penalty / mixture + num_comp"),
+  cv_metrics(here("models", "svm_res.rds"), "SVM (RBF)",
+             "kernlab: tuned cost / rbf_sigma + num_comp"),
+  cv_metrics(here("models", "mars_res.rds"), "MARS",
+             "earth: tuned num_terms / prod_degree + num_comp")
 ) |>
   arrange(desc(`CV ROC-AUC`)) |>
   mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \(x) round(x, 4))) |>

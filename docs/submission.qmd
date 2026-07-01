@@ -65,6 +65,8 @@ model_paths <- c(
   rf       = here::here("models", "rf_fit.rds"),
   nnet     = here::here("models", "nnet_fit.rds"),
   logistic = here::here("models", "logistic_fit.rds"),
+  svm      = here::here("models", "svm_fit.rds"),
+  mars     = here::here("models", "mars_fit.rds"),
   stack    = here::here("models", "stack_fit.rds")
 )
 

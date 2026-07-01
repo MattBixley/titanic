@@ -1,0 +1,217 @@
+---
+title: "Model 7 — MARS"
+subtitle: "Multivariate adaptive regression splines with earth — nonlinear, interpretable"
+---
+
+> **Where we are:** The last individual base learner in the
+> [Titanic — Tidymodels Tour](../index.qmd), same structure as the other model
+> docs and a final candidate for the [stacked ensemble](05-stack.qmd).
+
+## Why MARS?
+
+**Multivariate Adaptive Regression Splines** fit the response as a sum of hinge
+functions — piecewise-linear pieces that bend at data-driven knots. That lets it
+capture *nonlinear* effects (a survival rate that changes slope at a certain age
+or fare) and simple interactions, while staying more interpretable than a kernel
+machine. Its bias sits between the linear logistic model and the trees — useful
+diversity for the stack. We tune `num_terms` (model size) and `prod_degree`
+(1 = additive, 2 = allow pairwise interactions).
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))
+source(here("R", "02_features.R"))
+
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(earth)   # the MARS engine
+library(vip)     # earth exposes variable importance
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- read_csv(here("data", "processed", "train.csv")) |>
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe
+
+```{r}
+#| label: recipe
+mars_recipe <- make_recipe(train)
+mars_recipe
+```
+
+## The model specification
+
+```{r}
+#| label: spec
+mars_spec <- mars(
+  num_terms   = tune(),
+  prod_degree = tune()
+) |>
+  set_engine("earth") |>
+  set_mode("classification")
+
+mars_spec
+```
+
+## The workflow
+
+```{r}
+#| label: workflow
+mars_wf <- workflow() |>
+  add_recipe(mars_recipe) |>
+  add_model(mars_spec)
+```
+
+## Tuning with cross-validation
+
+```{r}
+#| label: resamples
+set.seed(42)
+folds <- vfold_cv(train, v = 10, strata = Survived)
+```
+
+```{r}
+#| label: grid
+preds <- prep(make_recipe(train, num_comp = 2)) |>
+  bake(new_data = NULL) |>
+  select(-Survived, -PassengerId)
+
+mars_params <- extract_parameter_set_dials(mars_wf) |>
+  finalize(preds) |>
+  update(num_comp = num_comp(range = c(2L, 10L)))
+
+set.seed(42)
+mars_grid <- grid_space_filling(mars_params, size = 18)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+mars_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+mars_tuned <- tune_grid(
+  mars_wf,
+  resamples = folds,
+  grid      = mars_grid,
+  metrics   = mars_metrics,
+  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = "second")
+)
+```
+
+```{r}
+#| label: save-res
+saveRDS(mars_tuned, here("models", "mars_res.rds"))
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the num_terms / prod_degree grid (autoplot)."
+#| fig-width: 8
+#| fig-height: 5
+
+autoplot(mars_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+show_best(mars_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+best_mars <- select_best(mars_tuned, metric = "roc_auc")
+best_mars
+
+final_mars_wf <- finalize_workflow(mars_wf, best_mars)
+
+set.seed(42)
+mars_fit <- fit(final_mars_wf, data = train)
+```
+
+## Cross-validated performance
+
+```{r}
+#| label: cv-metrics
+collect_metrics(mars_tuned) |>
+  semi_join(best_mars, by = names(best_mars)) |>
+  select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+These CV metrics feed the results table on the
+[master document](../index.qmd) automatically — it reads `models/mars_res.rds`
+at render time, so there's nothing to copy by hand.
+:::
+
+### Confusion matrix
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+mars_cv_preds <- collect_predictions(mars_tuned, parameters = best_mars)
+
+mars_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
+  labs(title = "MARS — CV confusion matrix")
+```
+
+### Variable importance
+
+MARS reports how often each feature enters the retained hinge terms (the `earth`
+`nsubsets` criterion) — the features the splines actually bend on.
+
+```{r}
+#| label: vip
+#| fig-cap: "MARS variable importance (number of subsets each feature appears in)."
+#| fig-width: 7
+#| fig-height: 5
+
+mars_fit |>
+  extract_fit_parsnip() |>
+  vip(num_features = 15, aesthetics = list(fill = kakapo_pal[1])) +
+  labs(title = "MARS variable importance") +
+  theme_minimal()
+```
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+saveRDS(mars_fit, file = here("models", "mars_fit.rds"))
+```
+
+## Submission
+
+```bash
+quarto render docs/submission.qmd -P model:mars
+```
+
+Writes `models/submission_mars.csv`. See the [Kaggle setup guide](setup-kaggle.md).
+
+## Next steps
+
+- See how it blends in the **[Stacked Ensemble](05-stack.qmd)**.
+- Compare CV scores on the **[master results table](../index.qmd)**.

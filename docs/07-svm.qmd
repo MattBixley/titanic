@@ -1,0 +1,210 @@
+---
+title: "Model 6 — Support Vector Machine"
+subtitle: "A radial-basis-function SVM with kernlab — a nonlinear kernel boundary"
+---
+
+> **Where we are:** Another base learner for the
+> [Titanic — Tidymodels Tour](../index.qmd), same
+> recipe → spec → workflow → tune → finalize → evaluate → save structure as the
+> other model docs, and another candidate for the
+> [stacked ensemble](05-stack.qmd).
+
+## Why an SVM?
+
+A support vector machine with a **radial basis function (RBF)** kernel draws a
+smooth, curved decision boundary in a high-dimensional feature space — a
+genuinely different shape of model from the trees, the linear logistic fit, and
+the small neural net. That difference is exactly what a stack likes: when the
+SVM is wrong, it tends to be wrong on *different* passengers. We tune `cost`
+(margin softness) and `rbf_sigma` (kernel width).
+
+## Setup
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+source(here::here("R", "00_setup.R"))
+source(here("R", "02_features.R"))
+
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(kernlab)   # the SVM engine
+```
+
+```{r}
+#| label: load-data
+#| message: false
+
+train <- read_csv(here("data", "processed", "train.csv")) |>
+  mutate(Survived = factor(Survived, levels = c("0", "1")))
+```
+
+## The recipe
+
+The shared recipe — normalisation matters a lot for a distance-based kernel, and
+`make_recipe()` already normalises before adding the principal components.
+
+```{r}
+#| label: recipe
+svm_recipe <- make_recipe(train)
+svm_recipe
+```
+
+## The model specification
+
+```{r}
+#| label: spec
+svm_spec <- svm_rbf(
+  cost      = tune(),
+  rbf_sigma = tune()
+) |>
+  set_engine("kernlab") |>
+  set_mode("classification")
+
+svm_spec
+```
+
+## The workflow
+
+```{r}
+#| label: workflow
+svm_wf <- workflow() |>
+  add_recipe(svm_recipe) |>
+  add_model(svm_spec)
+```
+
+## Tuning with cross-validation
+
+```{r}
+#| label: resamples
+set.seed(42)
+folds <- vfold_cv(train, v = 10, strata = Survived)
+```
+
+```{r}
+#| label: grid
+preds <- prep(make_recipe(train, num_comp = 2)) |>
+  bake(new_data = NULL) |>
+  select(-Survived, -PassengerId)
+
+svm_params <- extract_parameter_set_dials(svm_wf) |>
+  finalize(preds) |>
+  update(num_comp = num_comp(range = c(2L, 10L)))
+
+set.seed(42)
+svm_grid <- grid_space_filling(svm_params, size = 18)
+```
+
+```{r}
+#| label: tune
+#| message: false
+#| warning: false
+
+svm_metrics <- metric_set(roc_auc, accuracy)
+
+set.seed(42)
+svm_tuned <- tune_grid(
+  svm_wf,
+  resamples = folds,
+  grid      = svm_grid,
+  metrics   = svm_metrics,
+  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = "second")
+)
+```
+
+```{r}
+#| label: save-res
+saveRDS(svm_tuned, here("models", "svm_res.rds"))
+```
+
+### Tuning results
+
+```{r}
+#| label: tune-plot
+#| fig-cap: "ROC-AUC across the cost / rbf_sigma grid (autoplot)."
+#| fig-width: 8
+#| fig-height: 5
+
+autoplot(svm_tuned, metric = "roc_auc")
+```
+
+```{r}
+#| label: tune-table
+show_best(svm_tuned, metric = "roc_auc", n = 5)
+```
+
+## Finalize and fit on the full training set
+
+```{r}
+#| label: finalize
+best_svm <- select_best(svm_tuned, metric = "roc_auc")
+best_svm
+
+final_svm_wf <- finalize_workflow(svm_wf, best_svm)
+
+set.seed(42)
+svm_fit <- fit(final_svm_wf, data = train)
+```
+
+## Cross-validated performance
+
+```{r}
+#| label: cv-metrics
+collect_metrics(svm_tuned) |>
+  semi_join(best_svm, by = names(best_svm)) |>
+  select(.metric, mean, std_err, n)
+```
+
+::: {.callout-tip}
+These CV metrics feed the results table on the
+[master document](../index.qmd) automatically — it reads `models/svm_res.rds`
+at render time, so there's nothing to copy by hand.
+:::
+
+### Confusion matrix
+
+```{r}
+#| label: confusion
+#| fig-cap: "Confusion matrix from out-of-fold CV predictions."
+#| fig-width: 5
+#| fig-height: 4
+
+svm_cv_preds <- collect_predictions(svm_tuned, parameters = best_svm)
+
+svm_cv_preds |>
+  conf_mat(truth = Survived, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = kakapo_pal[1]) +
+  labs(title = "SVM (RBF) — CV confusion matrix")
+```
+
+::: {.callout-note}
+## No native variable importance
+An RBF-kernel SVM is effectively a black box — there is no coefficient or split
+to read importance from. If you want it, use a *model-agnostic* permutation
+approach (e.g. `DALEX`/`vip::vi(method = "permute")`). We lean on the other
+models for the importance story.
+:::
+
+## Save the fitted workflow
+
+```{r}
+#| label: save
+saveRDS(svm_fit, file = here("models", "svm_fit.rds"))
+```
+
+## Submission
+
+```bash
+quarto render docs/submission.qmd -P model:svm
+```
+
+Writes `models/submission_svm.csv`. See the [Kaggle setup guide](setup-kaggle.md).
+
+## Next steps
+
+- See how it blends in the **[Stacked Ensemble](05-stack.qmd)**.
+- Compare CV scores on the **[master results table](../index.qmd)**.
