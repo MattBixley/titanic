@@ -18,7 +18,7 @@
     "href": "index.html#the-goal",
     "title": "Titanic — Tidymodels Tour",
     "section": "The goal",
-    "text": "The goal\nPredict the binary outcome Survived for the 418 test passengers as accurately as possible, and document the reasoning so the whole thing is reproducible and teachable.\nWe fit three different model families on identical features so they can be compared apples-to-apples:\n\n\n\nModel\nEngine\nWhy it’s interesting\n\n\n\n\nXGBoost\nxgboost\nGradient-boosted trees — the Kaggle workhorse\n\n\nRandom Forest\nranger\nBagged trees — robust, low-tuning baseline\n\n\nNeural Net\nbrulee / nnet\nA small MLP — needs normalized inputs"
+    "text": "The goal\nPredict the binary outcome Survived for the 418 test passengers as accurately as possible, and document the reasoning so the whole thing is reproducible and teachable.\nWe fit six different model families on identical features so they can be compared apples-to-apples, then blend them in a stacked ensemble:\n\n\n\nModel\nEngine\nWhy it’s interesting\n\n\n\n\nXGBoost\nxgboost\nGradient-boosted trees — the Kaggle workhorse\n\n\nRandom Forest\nranger\nBagged trees — robust, low-tuning baseline\n\n\nNeural Net\nnnet\nA small MLP — needs normalized inputs\n\n\nLogistic Regression\nglmnet\nElastic-net linear baseline — interpretable\n\n\nSVM (RBF)\nkernlab\nNonlinear kernel boundary — diverse errors\n\n\nMARS\nearth\nPiecewise-linear splines — nonlinear, interpretable\n\n\nStacked Ensemble\nstacks\nLearns a blend over all of the above"
   },
   {
     "objectID": "index.html#how-the-documents-link-together",
@@ -46,7 +46,7 @@
     "href": "index.html#results-summary",
     "title": "Titanic — Tidymodels Tour",
     "section": "Results summary",
-    "text": "Results summary\nThe table below compares the four base models on cross-validated accuracy and roc_auc (positive class = \"1\", survived). These are honest estimates computed on the training data before we ever touch the test set — and they are read directly from each model’s saved tuning results (models/*_res.rds), so they update automatically on every render. No copying.\n\n\nShow code\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\n\n# Pull the best (roc_auc-selected) configuration's CV metrics from a saved\n# tune_grid result.\ncv_metrics &lt;- function(path, label, notes) {\n  res  &lt;- readRDS(path)\n  best &lt;- select_best(res, metric = \"roc_auc\")\n  m    &lt;- collect_metrics(res) |&gt; semi_join(best, by = names(best))\n  tibble(\n    Model         = label,\n    `CV accuracy` = m$mean[m$.metric == \"accuracy\"],\n    `CV ROC-AUC`  = m$mean[m$.metric == \"roc_auc\"],\n    `Best num_comp` = best$num_comp,\n    Notes         = notes\n  )\n}\n\nbind_rows(\n  cv_metrics(here(\"models\", \"xgboost_res.rds\"), \"XGBoost\",\n             \"tuned trees / tree_depth / learn_rate / min_n + num_comp\"),\n  cv_metrics(here(\"models\", \"rf_res.rds\"), \"Random Forest\",\n             \"tuned mtry / min_n + num_comp; 1000 trees\"),\n  cv_metrics(here(\"models\", \"nnet_res.rds\"), \"Neural Net\",\n             \"tuned hidden_units / penalty + num_comp; PCA-normalized\"),\n  cv_metrics(here(\"models\", \"logistic_res.rds\"), \"Logistic Regression\",\n             \"elastic-net (glmnet): tuned penalty / mixture + num_comp\")\n) |&gt;\n  arrange(desc(`CV ROC-AUC`)) |&gt;\n  mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \\(x) round(x, 4))) |&gt;\n  knitr::kable(align = \"lrrrl\")\n\n\n\n\n\n\n\n\n\n\n\n\nModel\nCV accuracy\nCV ROC-AUC\nBest num_comp\nNotes\n\n\n\n\nRandom Forest\n0.8463\n0.8953\n2\ntuned mtry / min_n + num_comp; 1000 trees\n\n\nXGBoost\n0.8429\n0.8929\n3\ntuned trees / tree_depth / learn_rate / min_n + num_comp\n\n\nNeural Net\n0.8351\n0.8916\n6\ntuned hidden_units / penalty + num_comp; PCA-normalized\n\n\nLogistic Regression\n0.8373\n0.8874\n6\nelastic-net (glmnet): tuned penalty / mixture + num_comp\n\n\n\n\n\nThe stacked ensemble blends all three; its real test is the Kaggle leaderboard rather than a single CV number (the stack’s weights are shown on its own page)."
+    "text": "Results summary\nThe table below compares the six base models on cross-validated accuracy and roc_auc (positive class = \"1\", survived). These are honest estimates computed on the training data before we ever touch the test set — and they are read directly from each model’s saved tuning results (models/*_res.rds), so they update automatically on every render. No copying.\n\n\nShow code\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\n\n# Pull the best (roc_auc-selected) configuration's CV metrics from a saved\n# tune_grid result.\ncv_metrics &lt;- function(path, label, notes) {\n  res  &lt;- readRDS(path)\n  best &lt;- select_best(res, metric = \"roc_auc\")\n  m    &lt;- collect_metrics(res) |&gt; semi_join(best, by = names(best))\n  tibble(\n    Model         = label,\n    `CV accuracy` = m$mean[m$.metric == \"accuracy\"],\n    `CV ROC-AUC`  = m$mean[m$.metric == \"roc_auc\"],\n    `Best num_comp` = best$num_comp,\n    Notes         = notes\n  )\n}\n\nbind_rows(\n  cv_metrics(here(\"models\", \"xgboost_res.rds\"), \"XGBoost\",\n             \"tuned trees / tree_depth / learn_rate / min_n + num_comp\"),\n  cv_metrics(here(\"models\", \"rf_res.rds\"), \"Random Forest\",\n             \"tuned mtry / min_n + num_comp; 1000 trees\"),\n  cv_metrics(here(\"models\", \"nnet_res.rds\"), \"Neural Net\",\n             \"tuned hidden_units / penalty + num_comp; PCA-normalized\"),\n  cv_metrics(here(\"models\", \"logistic_res.rds\"), \"Logistic Regression\",\n             \"elastic-net (glmnet): tuned penalty / mixture + num_comp\"),\n  cv_metrics(here(\"models\", \"svm_res.rds\"), \"SVM (RBF)\",\n             \"kernlab: tuned cost / rbf_sigma + num_comp\"),\n  cv_metrics(here(\"models\", \"mars_res.rds\"), \"MARS\",\n             \"earth: tuned num_terms / prod_degree + num_comp\")\n) |&gt;\n  arrange(desc(`CV ROC-AUC`)) |&gt;\n  mutate(across(c(`CV accuracy`, `CV ROC-AUC`), \\(x) round(x, 4))) |&gt;\n  knitr::kable(align = \"lrrrl\")\n\n\n\n\n\n\n\n\n\n\n\n\nModel\nCV accuracy\nCV ROC-AUC\nBest num_comp\nNotes\n\n\n\n\nRandom Forest\n0.8463\n0.8953\n2\ntuned mtry / min_n + num_comp; 1000 trees\n\n\nMARS\n0.8452\n0.8945\n3\nearth: tuned num_terms / prod_degree + num_comp\n\n\nXGBoost\n0.8429\n0.8929\n3\ntuned trees / tree_depth / learn_rate / min_n + num_comp\n\n\nNeural Net\n0.8351\n0.8916\n6\ntuned hidden_units / penalty + num_comp; PCA-normalized\n\n\nLogistic Regression\n0.8373\n0.8874\n6\nelastic-net (glmnet): tuned penalty / mixture + num_comp\n\n\nSVM (RBF)\n0.8250\n0.8841\n2\nkernlab: tuned cost / rbf_sigma + num_comp\n\n\n\n\n\nThe stacked ensemble blends all three; its real test is the Kaggle leaderboard rather than a single CV number (the stack’s weights are shown on its own page)."
   },
   {
     "objectID": "index.html#the-submission-workflow-at-a-glance",
@@ -88,7 +88,7 @@
     "href": "docs/submission.html#resolve-and-validate-the-requested-model",
     "title": "Building a Kaggle Submission",
     "section": "Resolve and validate the requested model",
-    "text": "Resolve and validate the requested model\n\n\nShow code\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost  = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf       = here::here(\"models\", \"rf_fit.rds\"),\n  nnet     = here::here(\"models\", \"nnet_fit.rds\"),\n  logistic = here::here(\"models\", \"logistic_fit.rds\"),\n  stack    = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\n\nBuilding submission for model: logistic\n\n\nShow code\nmessage(\"Loading fitted workflow from: \", fit_path)\n\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/logistic_fit.rds\n\n\nWe are building a submission for logistic."
+    "text": "Resolve and validate the requested model\n\n\nShow code\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost  = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf       = here::here(\"models\", \"rf_fit.rds\"),\n  nnet     = here::here(\"models\", \"nnet_fit.rds\"),\n  logistic = here::here(\"models\", \"logistic_fit.rds\"),\n  svm      = here::here(\"models\", \"svm_fit.rds\"),\n  mars     = here::here(\"models\", \"mars_fit.rds\"),\n  stack    = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\n\nBuilding submission for model: logistic\n\n\nShow code\nmessage(\"Loading fitted workflow from: \", fit_path)\n\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/logistic_fit.rds\n\n\nWe are building a submission for logistic."
   },
   {
     "objectID": "docs/submission.html#load-the-model-and-the-test-data",
@@ -124,6 +124,90 @@
     "title": "Building a Kaggle Submission",
     "section": "Next steps",
     "text": "Next steps\n\nCompare each model’s leaderboard score against its CV score recorded in the master results table — divergence is a lesson in generalization.\nRe-render for the other models: -P model:xgboost, -P model:rf, -P model:nnet.\nNeed auth help? See the Kaggle setup guide.\nBack to the master document for the whole-project picture."
+  },
+  {
+    "objectID": "docs/08-mars.html",
+    "href": "docs/08-mars.html",
+    "title": "Model 7 — MARS",
+    "section": "",
+    "text": "Where we are: The last individual base learner in the Titanic — Tidymodels Tour, same structure as the other model docs and a final candidate for the stacked ensemble."
+  },
+  {
+    "objectID": "docs/08-mars.html#why-mars",
+    "href": "docs/08-mars.html#why-mars",
+    "title": "Model 7 — MARS",
+    "section": "Why MARS?",
+    "text": "Why MARS?\nMultivariate Adaptive Regression Splines fit the response as a sum of hinge functions — piecewise-linear pieces that bend at data-driven knots. That lets it capture nonlinear effects (a survival rate that changes slope at a certain age or fare) and simple interactions, while staying more interpretable than a kernel machine. Its bias sits between the linear logistic model and the trees — useful diversity for the stack. We tune num_terms (model size) and prod_degree (1 = additive, 2 = allow pairwise interactions)."
+  },
+  {
+    "objectID": "docs/08-mars.html#setup",
+    "href": "docs/08-mars.html#setup",
+    "title": "Model 7 — MARS",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))\nsource(here(\"R\", \"02_features.R\"))\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(earth)   # the MARS engine\nlibrary(vip)     # earth exposes variable importance\n\n\n\n\nShow code\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
+  },
+  {
+    "objectID": "docs/08-mars.html#the-recipe",
+    "href": "docs/08-mars.html#the-recipe",
+    "title": "Model 7 — MARS",
+    "section": "The recipe",
+    "text": "The recipe\n\n\nShow code\nmars_recipe &lt;- make_recipe(train)\nmars_recipe\n\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
+  },
+  {
+    "objectID": "docs/08-mars.html#the-model-specification",
+    "href": "docs/08-mars.html#the-model-specification",
+    "title": "Model 7 — MARS",
+    "section": "The model specification",
+    "text": "The model specification\n\n\nShow code\nmars_spec &lt;- mars(\n  num_terms   = tune(),\n  prod_degree = tune()\n) |&gt;\n  set_engine(\"earth\") |&gt;\n  set_mode(\"classification\")\n\nmars_spec\n\n\nMARS Model Specification (classification)\n\nMain Arguments:\n  num_terms = tune()\n  prod_degree = tune()\n\nComputational engine: earth"
+  },
+  {
+    "objectID": "docs/08-mars.html#the-workflow",
+    "href": "docs/08-mars.html#the-workflow",
+    "title": "Model 7 — MARS",
+    "section": "The workflow",
+    "text": "The workflow\n\n\nShow code\nmars_wf &lt;- workflow() |&gt;\n  add_recipe(mars_recipe) |&gt;\n  add_model(mars_spec)"
+  },
+  {
+    "objectID": "docs/08-mars.html#tuning-with-cross-validation",
+    "href": "docs/08-mars.html#tuning-with-cross-validation",
+    "title": "Model 7 — MARS",
+    "section": "Tuning with cross-validation",
+    "text": "Tuning with cross-validation\n\n\nShow code\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n\n\nShow code\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nmars_params &lt;- extract_parameter_set_dials(mars_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nmars_grid &lt;- grid_space_filling(mars_params, size = 18)\n\n\n\n\nShow code\nmars_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nmars_tuned &lt;- tune_grid(\n  mars_wf,\n  resamples = folds,\n  grid      = mars_grid,\n  metrics   = mars_metrics,\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\n\n\nShow code\nsaveRDS(mars_tuned, here(\"models\", \"mars_res.rds\"))\n\n\n\nTuning results\n\n\nShow code\nautoplot(mars_tuned, metric = \"roc_auc\")\n\n\n\n\n\nROC-AUC across the num_terms / prod_degree grid (autoplot).\n\n\n\n\n\n\nShow code\nshow_best(mars_tuned, metric = \"roc_auc\", n = 5)"
+  },
+  {
+    "objectID": "docs/08-mars.html#finalize-and-fit-on-the-full-training-set",
+    "href": "docs/08-mars.html#finalize-and-fit-on-the-full-training-set",
+    "title": "Model 7 — MARS",
+    "section": "Finalize and fit on the full training set",
+    "text": "Finalize and fit on the full training set\n\n\nShow code\nbest_mars &lt;- select_best(mars_tuned, metric = \"roc_auc\")\nbest_mars\n\n\n\n  \n\n\n\nShow code\nfinal_mars_wf &lt;- finalize_workflow(mars_wf, best_mars)\n\nset.seed(42)\nmars_fit &lt;- fit(final_mars_wf, data = train)"
+  },
+  {
+    "objectID": "docs/08-mars.html#cross-validated-performance",
+    "href": "docs/08-mars.html#cross-validated-performance",
+    "title": "Model 7 — MARS",
+    "section": "Cross-validated performance",
+    "text": "Cross-validated performance\n\n\nShow code\ncollect_metrics(mars_tuned) |&gt;\n  semi_join(best_mars, by = names(best_mars)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nThese CV metrics feed the results table on the master document automatically — it reads models/mars_res.rds at render time, so there’s nothing to copy by hand.\n\n\n\nConfusion matrix\n\n\nShow code\nmars_cv_preds &lt;- collect_predictions(mars_tuned, parameters = best_mars)\n\nmars_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  scale_fill_gradient(low = \"white\", high = kakapo_pal[1]) +\n  labs(title = \"MARS — CV confusion matrix\")\n\n\nScale for fill is already present.\nAdding another scale for fill, which will replace the existing scale.\n\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\nVariable importance\nMARS reports how often each feature enters the retained hinge terms (the earth nsubsets criterion) — the features the splines actually bend on.\n\n\nShow code\nmars_fit |&gt;\n  extract_fit_parsnip() |&gt;\n  vip(num_features = 15, aesthetics = list(fill = kakapo_pal[1])) +\n  labs(title = \"MARS variable importance\") +\n  theme_minimal()\n\n\n\n\n\nMARS variable importance (number of subsets each feature appears in)."
+  },
+  {
+    "objectID": "docs/08-mars.html#save-the-fitted-workflow",
+    "href": "docs/08-mars.html#save-the-fitted-workflow",
+    "title": "Model 7 — MARS",
+    "section": "Save the fitted workflow",
+    "text": "Save the fitted workflow\n\n\nShow code\nsaveRDS(mars_fit, file = here(\"models\", \"mars_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/08-mars.html#submission",
+    "href": "docs/08-mars.html#submission",
+    "title": "Model 7 — MARS",
+    "section": "Submission",
+    "text": "Submission\nquarto render docs/submission.qmd -P model:mars\nWrites models/submission_mars.csv. See the Kaggle setup guide."
+  },
+  {
+    "objectID": "docs/08-mars.html#next-steps",
+    "href": "docs/08-mars.html#next-steps",
+    "title": "Model 7 — MARS",
+    "section": "Next steps",
+    "text": "Next steps\n\nSee how it blends in the Stacked Ensemble.\nCompare CV scores on the master results table."
   },
   {
     "objectID": "docs/06-logistic.html",
@@ -518,11 +602,95 @@
     "text": "Next steps\n\nYou’ve now fit all three families — compare their CV scores side by side in the master results table.\nRevisit XGBoost and the Random Forest.\nBuild the CSV with the Submission doc and push it to the leaderboard."
   },
   {
+    "objectID": "docs/07-svm.html",
+    "href": "docs/07-svm.html",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "",
+    "text": "Where we are: Another base learner for the Titanic — Tidymodels Tour, same recipe → spec → workflow → tune → finalize → evaluate → save structure as the other model docs, and another candidate for the stacked ensemble."
+  },
+  {
+    "objectID": "docs/07-svm.html#why-an-svm",
+    "href": "docs/07-svm.html#why-an-svm",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Why an SVM?",
+    "text": "Why an SVM?\nA support vector machine with a radial basis function (RBF) kernel draws a smooth, curved decision boundary in a high-dimensional feature space — a genuinely different shape of model from the trees, the linear logistic fit, and the small neural net. That difference is exactly what a stack likes: when the SVM is wrong, it tends to be wrong on different passengers. We tune cost (margin softness) and rbf_sigma (kernel width)."
+  },
+  {
+    "objectID": "docs/07-svm.html#setup",
+    "href": "docs/07-svm.html#setup",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Setup",
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))\nsource(here(\"R\", \"02_features.R\"))\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(kernlab)   # the SVM engine\n\n\n\n\nShow code\ntrain &lt;- read_csv(here(\"data\", \"processed\", \"train.csv\")) |&gt;\n  mutate(Survived = factor(Survived, levels = c(\"0\", \"1\")))"
+  },
+  {
+    "objectID": "docs/07-svm.html#the-recipe",
+    "href": "docs/07-svm.html#the-recipe",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "The recipe",
+    "text": "The recipe\nThe shared recipe — normalisation matters a lot for a distance-based kernel, and make_recipe() already normalises before adding the principal components.\n\n\nShow code\nsvm_recipe &lt;- make_recipe(train)\nsvm_recipe\n\n\n\n\n\n── Recipe ──────────────────────────────────────────────────────────────────────\n\n\n\n\n\n── Inputs \n\n\nNumber of variables by role\n\n\noutcome:    1\npredictor: 22\nid:         1\n\n\n\n\n\n── Operations \n\n\n• Variables removed: Name, Ticket, Cabin, Surname\n\n\n• K-nearest neighbor imputation for: Age\n\n\n• Median imputation for: Fare FarePerPerson\n\n\n• Mode imputation for: Embarked\n\n\n• Variable mutation for: as.character(Pclass)\n\n\n• Collapsing factor levels for: Title\n\n\n• Novel factor level assignment for: all_nominal_predictors()\n\n\n• Dummy variables from: all_nominal_predictors()\n\n\n• Zero variance filter on: all_predictors()\n\n\n• Centering and scaling for: all_numeric_predictors()\n\n\n• PCA extraction with: all_numeric_predictors()"
+  },
+  {
+    "objectID": "docs/07-svm.html#the-model-specification",
+    "href": "docs/07-svm.html#the-model-specification",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "The model specification",
+    "text": "The model specification\n\n\nShow code\nsvm_spec &lt;- svm_rbf(\n  cost      = tune(),\n  rbf_sigma = tune()\n) |&gt;\n  set_engine(\"kernlab\") |&gt;\n  set_mode(\"classification\")\n\nsvm_spec\n\n\nRadial Basis Function Support Vector Machine Model Specification (classification)\n\nMain Arguments:\n  cost = tune()\n  rbf_sigma = tune()\n\nComputational engine: kernlab"
+  },
+  {
+    "objectID": "docs/07-svm.html#the-workflow",
+    "href": "docs/07-svm.html#the-workflow",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "The workflow",
+    "text": "The workflow\n\n\nShow code\nsvm_wf &lt;- workflow() |&gt;\n  add_recipe(svm_recipe) |&gt;\n  add_model(svm_spec)"
+  },
+  {
+    "objectID": "docs/07-svm.html#tuning-with-cross-validation",
+    "href": "docs/07-svm.html#tuning-with-cross-validation",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Tuning with cross-validation",
+    "text": "Tuning with cross-validation\n\n\nShow code\nset.seed(42)\nfolds &lt;- vfold_cv(train, v = 10, strata = Survived)\n\n\n\n\nShow code\npreds &lt;- prep(make_recipe(train, num_comp = 2)) |&gt;\n  bake(new_data = NULL) |&gt;\n  select(-Survived, -PassengerId)\n\nsvm_params &lt;- extract_parameter_set_dials(svm_wf) |&gt;\n  finalize(preds) |&gt;\n  update(num_comp = num_comp(range = c(2L, 10L)))\n\nset.seed(42)\nsvm_grid &lt;- grid_space_filling(svm_params, size = 18)\n\n\n\n\nShow code\nsvm_metrics &lt;- metric_set(roc_auc, accuracy)\n\nset.seed(42)\nsvm_tuned &lt;- tune_grid(\n  svm_wf,\n  resamples = folds,\n  grid      = svm_grid,\n  metrics   = svm_metrics,\n  control   = control_grid(save_pred = TRUE, save_workflow = TRUE, event_level = \"second\")\n)\n\n\n\n\nShow code\nsaveRDS(svm_tuned, here(\"models\", \"svm_res.rds\"))\n\n\n\nTuning results\n\n\nShow code\nautoplot(svm_tuned, metric = \"roc_auc\")\n\n\n\n\n\nROC-AUC across the cost / rbf_sigma grid (autoplot).\n\n\n\n\n\n\nShow code\nshow_best(svm_tuned, metric = \"roc_auc\", n = 5)"
+  },
+  {
+    "objectID": "docs/07-svm.html#finalize-and-fit-on-the-full-training-set",
+    "href": "docs/07-svm.html#finalize-and-fit-on-the-full-training-set",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Finalize and fit on the full training set",
+    "text": "Finalize and fit on the full training set\n\n\nShow code\nbest_svm &lt;- select_best(svm_tuned, metric = \"roc_auc\")\nbest_svm\n\n\n\n  \n\n\n\nShow code\nfinal_svm_wf &lt;- finalize_workflow(svm_wf, best_svm)\n\nset.seed(42)\nsvm_fit &lt;- fit(final_svm_wf, data = train)"
+  },
+  {
+    "objectID": "docs/07-svm.html#cross-validated-performance",
+    "href": "docs/07-svm.html#cross-validated-performance",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Cross-validated performance",
+    "text": "Cross-validated performance\n\n\nShow code\ncollect_metrics(svm_tuned) |&gt;\n  semi_join(best_svm, by = names(best_svm)) |&gt;\n  select(.metric, mean, std_err, n)\n\n\n\n  \n\n\n\n\n\n\n\n\n\nTip\n\n\n\nThese CV metrics feed the results table on the master document automatically — it reads models/svm_res.rds at render time, so there’s nothing to copy by hand.\n\n\n\nConfusion matrix\n\n\nShow code\nsvm_cv_preds &lt;- collect_predictions(svm_tuned, parameters = best_svm)\n\nsvm_cv_preds |&gt;\n  conf_mat(truth = Survived, estimate = .pred_class) |&gt;\n  autoplot(type = \"heatmap\") +\n  scale_fill_gradient(low = \"white\", high = kakapo_pal[1]) +\n  labs(title = \"SVM (RBF) — CV confusion matrix\")\n\n\nScale for fill is already present.\nAdding another scale for fill, which will replace the existing scale.\n\n\n\n\n\nConfusion matrix from out-of-fold CV predictions.\n\n\n\n\n\n\n\n\n\n\nNoteNo native variable importance\n\n\n\nAn RBF-kernel SVM is effectively a black box — there is no coefficient or split to read importance from. If you want it, use a model-agnostic permutation approach (e.g. DALEX/vip::vi(method = \"permute\")). We lean on the other models for the importance story."
+  },
+  {
+    "objectID": "docs/07-svm.html#save-the-fitted-workflow",
+    "href": "docs/07-svm.html#save-the-fitted-workflow",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Save the fitted workflow",
+    "text": "Save the fitted workflow\n\n\nShow code\nsaveRDS(svm_fit, file = here(\"models\", \"svm_fit.rds\"))"
+  },
+  {
+    "objectID": "docs/07-svm.html#submission",
+    "href": "docs/07-svm.html#submission",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Submission",
+    "text": "Submission\nquarto render docs/submission.qmd -P model:svm\nWrites models/submission_svm.csv. See the Kaggle setup guide."
+  },
+  {
+    "objectID": "docs/07-svm.html#next-steps",
+    "href": "docs/07-svm.html#next-steps",
+    "title": "Model 6 — Support Vector Machine",
+    "section": "Next steps",
+    "text": "Next steps\n\nSee how it blends in the Stacked Ensemble.\nCompare CV scores on the master results table."
+  },
+  {
     "objectID": "docs/05-stack.html",
     "href": "docs/05-stack.html",
     "title": "Model 5 — Stacked Ensemble",
     "section": "",
-    "text": "Where we are: The capstone of the Titanic — Tidymodels Tour. The four base-model documents (XGBoost, Random Forest, Neural Net, Logistic Regression) each saved their tuning results (every candidate model and its out-of-fold predictions) to models/&lt;model&gt;_res.rds. Here we feed all of those candidates to stacks, which learns a regularised linear blend over them — usually beating any single model, because the members make different mistakes."
+    "text": "Where we are: The capstone of the Titanic — Tidymodels Tour. The six base-model documents (XGBoost, Random Forest, Neural Net, Logistic Regression, SVM, MARS) each saved their tuning results (every candidate model and its out-of-fold predictions) to models/&lt;model&gt;_res.rds. Here we feed all of those candidates to stacks, which learns a regularised linear blend over them — usually beating any single model, because the members make different mistakes."
   },
   {
     "objectID": "docs/05-stack.html#why-stack",
@@ -536,21 +704,21 @@
     "href": "docs/05-stack.html#setup",
     "title": "Model 5 — Stacked Ensemble",
     "section": "Setup",
-    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))   # tidyverse + tidymodels, seed = 42\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(stacks)\n# The member engines must be attached so fit_members() can refit them.\nlibrary(ranger)\nlibrary(xgboost)\nlibrary(nnet)\nlibrary(glmnet)"
+    "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))   # tidyverse + tidymodels, seed = 42\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(stacks)\n# The member engines must be attached so fit_members() can refit them.\nlibrary(ranger)\nlibrary(xgboost)\nlibrary(nnet)\nlibrary(glmnet)\nlibrary(kernlab)\nlibrary(earth)"
   },
   {
     "objectID": "docs/05-stack.html#load-the-tuning-results",
     "href": "docs/05-stack.html#load-the-tuning-results",
     "title": "Model 5 — Stacked Ensemble",
     "section": "Load the tuning results",
-    "text": "Load the tuning results\n\n\nShow code\n# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,\n# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.\nxgb_res      &lt;- readRDS(here(\"models\", \"xgboost_res.rds\"))\nrf_res       &lt;- readRDS(here(\"models\", \"rf_res.rds\"))\nnnet_res     &lt;- readRDS(here(\"models\", \"nnet_res.rds\"))\nlogistic_res &lt;- readRDS(here(\"models\", \"logistic_res.rds\"))"
+    "text": "Load the tuning results\n\n\nShow code\n# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,\n# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.\nxgb_res      &lt;- readRDS(here(\"models\", \"xgboost_res.rds\"))\nrf_res       &lt;- readRDS(here(\"models\", \"rf_res.rds\"))\nnnet_res     &lt;- readRDS(here(\"models\", \"nnet_res.rds\"))\nlogistic_res &lt;- readRDS(here(\"models\", \"logistic_res.rds\"))\nsvm_res      &lt;- readRDS(here(\"models\", \"svm_res.rds\"))\nmars_res     &lt;- readRDS(here(\"models\", \"mars_res.rds\"))"
   },
   {
     "objectID": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
     "href": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
     "title": "Model 5 — Stacked Ensemble",
     "section": "Build, blend, and fit the ensemble",
-    "text": "Build, blend, and fit the ensemble\n\n\nShow code\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  add_candidates(logistic_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n\n# A tibble: 6 × 3\n  member                               type         weight\n  &lt;chr&gt;                                &lt;chr&gt;         &lt;dbl&gt;\n1 .pred_1_xgb_respre3_mod14_post0      boost_tree    1.32 \n2 .pred_1_rf_respre1_mod05_post0       rand_forest   1.16 \n3 .pred_1_nnet_respre7_mod08_post0     mlp           0.940\n4 .pred_1_nnet_respre5_mod14_post0     mlp           0.843\n5 .pred_1_xgb_respre1_mod10_post0      boost_tree    0.233\n6 .pred_1_logistic_respre5_mod14_post0 logistic_reg  0.181\n\n\n\nWhich members survived the blend?\n\n\nShow code\nautoplot(titanic_stack, type = \"weights\") +\n  scale_colour_manual(values = grDevices::colorRampPalette(kakapo_pal)(10)) +\n  scale_fill_manual(values = grDevices::colorRampPalette(kakapo_pal)(10))\n\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
+    "text": "Build, blend, and fit the ensemble\n\n\nShow code\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  add_candidates(logistic_res) |&gt;\n  add_candidates(svm_res) |&gt;\n  add_candidates(mars_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n\n# A tibble: 10 × 3\n   member                           type        weight\n   &lt;chr&gt;                            &lt;chr&gt;        &lt;dbl&gt;\n 1 .pred_1_mars_respre6_mod8_post0  mars        1.56  \n 2 .pred_1_nnet_respre7_mod08_post0 mlp         1.30  \n 3 .pred_1_xgb_respre1_mod10_post0  boost_tree  0.992 \n 4 .pred_1_xgb_respre3_mod14_post0  boost_tree  0.819 \n 5 .pred_1_nnet_respre6_mod18_post0 mlp         0.788 \n 6 .pred_1_mars_respre2_mod8_post0  mars        0.692 \n 7 .pred_1_nnet_respre5_mod14_post0 mlp         0.623 \n 8 .pred_1_rf_respre1_mod12_post0   rand_forest 0.275 \n 9 .pred_1_svm_respre4_mod17_post0  svm_rbf     0.174 \n10 .pred_1_nnet_respre1_mod12_post0 mlp         0.0887\n\n\n\nWhich members survived the blend?\n\n\nShow code\nautoplot(titanic_stack, type = \"weights\") +\n  scale_colour_manual(values = grDevices::colorRampPalette(kakapo_pal)(10)) +\n  scale_fill_manual(values = grDevices::colorRampPalette(kakapo_pal)(10))\n\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
   },
   {
     "objectID": "docs/05-stack.html#save-the-fitted-ensemble",

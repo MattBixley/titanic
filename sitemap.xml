@@ -2,38 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://MattBixley.github.io/titanic/index.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/submission.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MattBixley.github.io/titanic/docs/08-mars.html</loc>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/06-logistic.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/03-random-forest.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/01-eda.html</loc>
-    <lastmod>2026-07-01T00:24:40.417Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.527Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/02-xgboost.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/04-neural-net.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MattBixley.github.io/titanic/docs/07-svm.html</loc>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/05-stack.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
   <url>
     <loc>https://MattBixley.github.io/titanic/docs/setup-kaggle.html</loc>
-    <lastmod>2026-07-01T00:24:40.418Z</lastmod>
+    <lastmod>2026-07-01T01:17:03.528Z</lastmod>
   </url>
 </urlset>

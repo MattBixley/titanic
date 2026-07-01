@@ -158,6 +158,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">Logistic Regression</span></a>
   </li>  
         <li>
+    <a class="dropdown-item" href="../docs/07-svm.html">
+ <span class="dropdown-text">Support Vector Machine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../docs/08-mars.html">
+ <span class="dropdown-text">MARS</span></a>
+  </li>  
+        <li>
     <a class="dropdown-item" href="../docs/05-stack.html">
  <span class="dropdown-text">Stacked Ensemble</span></a>
   </li>  
@@ -266,33 +274,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">rf       =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"rf_fit.rds"</span>),</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">nnet     =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>),</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">logistic =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"logistic_fit.rds"</span>),</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">stack    =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"stack_fit.rds"</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Fail loudly and helpfully if someone passes an unknown model.</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>requested_model <span class="sc">%in%</span> <span class="fu">names</span>(model_paths)) {</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Unknown model '"</span>, requested_model, <span class="st">"'. "</span>,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Choose one of: "</span>, <span class="fu">paste</span>(<span class="fu">names</span>(model_paths), <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">". "</span>,</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Example: quarto render docs/submission.qmd -P model:rf"</span>,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>fit_path <span class="ot">&lt;-</span> model_paths[[requested_model]]</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">svm      =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"svm_fit.rds"</span>),</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">mars     =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"mars_fit.rds"</span>),</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">stack    =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"stack_fit.rds"</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Fail loudly and helpfully if someone passes an unknown model.</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>requested_model <span class="sc">%in%</span> <span class="fu">names</span>(model_paths)) {</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Unknown model '"</span>, requested_model, <span class="st">"'. "</span>,</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Choose one of: "</span>, <span class="fu">paste</span>(<span class="fu">names</span>(model_paths), <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">". "</span>,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Example: quarto render docs/submission.qmd -P model:rf"</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure the fitted workflow actually exists — i.e. the model doc was</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># rendered first.</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fit_path)) {</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fitted model not found at '"</span>, fit_path, <span class="st">"'. "</span>,</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Render the matching model document first (e.g. quarto render "</span>,</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"docs/02-xgboost.qmd) so the .rds is saved."</span>,</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Building submission for model: "</span>, requested_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>fit_path <span class="ot">&lt;-</span> model_paths[[requested_model]]</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure the fitted workflow actually exists — i.e. the model doc was</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># rendered first.</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fit_path)) {</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fitted model not found at '"</span>, fit_path, <span class="st">"'. "</span>,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Render the matching model document first (e.g. quarto render "</span>,</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"docs/02-xgboost.qmd) so the .rds is saved."</span>,</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Building submission for model: "</span>, requested_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Building submission for model: logistic</code></pre>
@@ -995,140 +1005,142 @@ $ GroupKnown      &lt;chr&gt; "yes", "no", "no", "no", "yes", "yes", "yes", "yes
 <span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>  <span class="at">rf       =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"rf_fit.rds"</span>),</span>
 <span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>  <span class="at">nnet     =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_fit.rds"</span>),</span>
 <span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>  <span class="at">logistic =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"logistic_fit.rds"</span>),</span>
-<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">stack    =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"stack_fit.rds"</span>)</span>
-<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Fail loudly and helpfully if someone passes an unknown model.</span></span>
-<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>requested_model <span class="sc">%in%</span> <span class="fu">names</span>(model_paths)) {</span>
-<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
-<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Unknown model '"</span>, requested_model, <span class="st">"'. "</span>,</span>
-<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Choose one of: "</span>, <span class="fu">paste</span>(<span class="fu">names</span>(model_paths), <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">". "</span>,</span>
-<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Example: quarto render docs/submission.qmd -P model:rf"</span>,</span>
-<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
-<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>fit_path <span class="ot">&lt;-</span> model_paths[[requested_model]]</span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">svm      =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"svm_fit.rds"</span>),</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">mars     =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"mars_fit.rds"</span>),</span>
+<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">stack    =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"stack_fit.rds"</span>)</span>
+<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a><span class="co"># Fail loudly and helpfully if someone passes an unknown model.</span></span>
+<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>requested_model <span class="sc">%in%</span> <span class="fu">names</span>(model_paths)) {</span>
+<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Unknown model '"</span>, requested_model, <span class="st">"'. "</span>,</span>
+<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Choose one of: "</span>, <span class="fu">paste</span>(<span class="fu">names</span>(model_paths), <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">". "</span>,</span>
+<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Example: quarto render docs/submission.qmd -P model:rf"</span>,</span>
+<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure the fitted workflow actually exists — i.e. the model doc was</span></span>
-<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a><span class="co"># rendered first.</span></span>
-<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fit_path)) {</span>
-<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
-<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fitted model not found at '"</span>, fit_path, <span class="st">"'. "</span>,</span>
-<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Render the matching model document first (e.g. quarto render "</span>,</span>
-<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a>    <span class="st">"docs/02-xgboost.qmd) so the .rds is saved."</span>,</span>
-<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
-<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb16-97"><a href="#cb16-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Building submission for model: "</span>, requested_model)</span>
-<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Loading fitted workflow from: "</span>, fit_path)</span>
-<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a>We are building a submission for **`r requested_model`**.</span>
+<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a>fit_path <span class="ot">&lt;-</span> model_paths[[requested_model]]</span>
+<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure the fitted workflow actually exists — i.e. the model doc was</span></span>
+<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a><span class="co"># rendered first.</span></span>
+<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fit_path)) {</span>
+<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fitted model not found at '"</span>, fit_path, <span class="st">"'. "</span>,</span>
+<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Render the matching model document first (e.g. quarto render "</span>,</span>
+<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>    <span class="st">"docs/02-xgboost.qmd) so the .rds is saved."</span>,</span>
+<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a>    <span class="at">call. =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-97"><a href="#cb16-97" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Building submission for model: "</span>, requested_model)</span>
+<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Loading fitted workflow from: "</span>, fit_path)</span>
+<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb16-103"><a href="#cb16-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Load the model and the test data</span></span>
+<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a>We are building a submission for **`r requested_model`**.</span>
 <span id="cb16-105"><a href="#cb16-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-108"><a href="#cb16-108" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-109"><a href="#cb16-109" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: load</span></span>
-<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved object is a fully fitted workflow (or a stacks ensemble) that knows</span></span>
-<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a><span class="co"># how to preprocess the engineered test data exactly as it was trained.</span></span>
-<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a>model_fit <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(fit_path)</span>
-<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-114"><a href="#cb16-114" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the PROCESSED test set (engineered features added in R/03_engineer.R), so</span></span>
-<span id="cb16-115"><a href="#cb16-115" aria-hidden="true" tabindex="-1"></a><span class="co"># the columns match what every model/recipe expects. PassengerId keys the</span></span>
-<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a><span class="co"># Kaggle submission.</span></span>
-<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed"</span>, <span class="st">"test.csv"</span>))</span>
-<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(test)</span>
-<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a><span class="fu">## Predict and assemble the submission</span></span>
+<span id="cb16-106"><a href="#cb16-106" aria-hidden="true" tabindex="-1"></a><span class="fu">## Load the model and the test data</span></span>
+<span id="cb16-107"><a href="#cb16-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: load</span></span>
+<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved object is a fully fitted workflow (or a stacks ensemble) that knows</span></span>
+<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a><span class="co"># how to preprocess the engineered test data exactly as it was trained.</span></span>
+<span id="cb16-114"><a href="#cb16-114" aria-hidden="true" tabindex="-1"></a>model_fit <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(fit_path)</span>
+<span id="cb16-115"><a href="#cb16-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the PROCESSED test set (engineered features added in R/03_engineer.R), so</span></span>
+<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a><span class="co"># the columns match what every model/recipe expects. PassengerId keys the</span></span>
+<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a><span class="co"># Kaggle submission.</span></span>
+<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed"</span>, <span class="st">"test.csv"</span>))</span>
+<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(test)</span>
+<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb16-123"><a href="#cb16-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-126"><a href="#cb16-126" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-127"><a href="#cb16-127" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: predict</span></span>
-<span id="cb16-128"><a href="#cb16-128" aria-hidden="true" tabindex="-1"></a><span class="co"># predict() runs the workflow's recipe on the raw test data, then the model.</span></span>
-<span id="cb16-129"><a href="#cb16-129" aria-hidden="true" tabindex="-1"></a><span class="co"># type = "class" returns the hard 0/1 label Kaggle wants.</span></span>
-<span id="cb16-130"><a href="#cb16-130" aria-hidden="true" tabindex="-1"></a>preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_fit, <span class="at">new_data =</span> test, <span class="at">type =</span> <span class="st">"class"</span>)</span>
-<span id="cb16-131"><a href="#cb16-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-132"><a href="#cb16-132" aria-hidden="true" tabindex="-1"></a><span class="co"># Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived</span></span>
-<span id="cb16-133"><a href="#cb16-133" aria-hidden="true" tabindex="-1"></a><span class="co"># as 0/1 integers. .pred_class is a factor ("0"/"1"); convert via character so</span></span>
-<span id="cb16-134"><a href="#cb16-134" aria-hidden="true" tabindex="-1"></a><span class="co"># we don't accidentally get factor codes (1/2).</span></span>
-<span id="cb16-135"><a href="#cb16-135" aria-hidden="true" tabindex="-1"></a>submission <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb16-136"><a href="#cb16-136" aria-hidden="true" tabindex="-1"></a>  <span class="at">PassengerId =</span> test<span class="sc">$</span>PassengerId,</span>
-<span id="cb16-137"><a href="#cb16-137" aria-hidden="true" tabindex="-1"></a>  <span class="at">Survived    =</span> <span class="fu">as.integer</span>(<span class="fu">as.character</span>(preds<span class="sc">$</span>.pred_class))</span>
-<span id="cb16-138"><a href="#cb16-138" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity checks: right number of rows, right value set, no missing predictions.</span></span>
-<span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
-<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>(submission) <span class="sc">==</span> <span class="fu">nrow</span>(test),</span>
-<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a>  <span class="fu">all</span>(submission<span class="sc">$</span>Survived <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>L, <span class="dv">1</span>L)),</span>
-<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a>  <span class="sc">!</span><span class="fu">anyNA</span>(submission<span class="sc">$</span>Survived)</span>
-<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(submission, <span class="dv">10</span>)</span>
-<span id="cb16-148"><a href="#cb16-148" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-150"><a href="#cb16-150" aria-hidden="true" tabindex="-1"></a><span class="fu">## Write the CSV</span></span>
+<span id="cb16-124"><a href="#cb16-124" aria-hidden="true" tabindex="-1"></a><span class="fu">## Predict and assemble the submission</span></span>
+<span id="cb16-125"><a href="#cb16-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-128"><a href="#cb16-128" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-129"><a href="#cb16-129" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: predict</span></span>
+<span id="cb16-130"><a href="#cb16-130" aria-hidden="true" tabindex="-1"></a><span class="co"># predict() runs the workflow's recipe on the raw test data, then the model.</span></span>
+<span id="cb16-131"><a href="#cb16-131" aria-hidden="true" tabindex="-1"></a><span class="co"># type = "class" returns the hard 0/1 label Kaggle wants.</span></span>
+<span id="cb16-132"><a href="#cb16-132" aria-hidden="true" tabindex="-1"></a>preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_fit, <span class="at">new_data =</span> test, <span class="at">type =</span> <span class="st">"class"</span>)</span>
+<span id="cb16-133"><a href="#cb16-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-134"><a href="#cb16-134" aria-hidden="true" tabindex="-1"></a><span class="co"># Kaggle requires EXACTLY two columns: PassengerId and Survived, with Survived</span></span>
+<span id="cb16-135"><a href="#cb16-135" aria-hidden="true" tabindex="-1"></a><span class="co"># as 0/1 integers. .pred_class is a factor ("0"/"1"); convert via character so</span></span>
+<span id="cb16-136"><a href="#cb16-136" aria-hidden="true" tabindex="-1"></a><span class="co"># we don't accidentally get factor codes (1/2).</span></span>
+<span id="cb16-137"><a href="#cb16-137" aria-hidden="true" tabindex="-1"></a>submission <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb16-138"><a href="#cb16-138" aria-hidden="true" tabindex="-1"></a>  <span class="at">PassengerId =</span> test<span class="sc">$</span>PassengerId,</span>
+<span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a>  <span class="at">Survived    =</span> <span class="fu">as.integer</span>(<span class="fu">as.character</span>(preds<span class="sc">$</span>.pred_class))</span>
+<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity checks: right number of rows, right value set, no missing predictions.</span></span>
+<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>(submission) <span class="sc">==</span> <span class="fu">nrow</span>(test),</span>
+<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">all</span>(submission<span class="sc">$</span>Survived <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>L, <span class="dv">1</span>L)),</span>
+<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a>  <span class="sc">!</span><span class="fu">anyNA</span>(submission<span class="sc">$</span>Survived)</span>
+<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-148"><a href="#cb16-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(submission, <span class="dv">10</span>)</span>
+<span id="cb16-150"><a href="#cb16-150" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb16-151"><a href="#cb16-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-154"><a href="#cb16-154" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-155"><a href="#cb16-155" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: write</span></span>
-<span id="cb16-156"><a href="#cb16-156" aria-hidden="true" tabindex="-1"></a>out_path <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"models"</span>, <span class="fu">paste0</span>(<span class="st">"submission_"</span>, requested_model, <span class="st">".csv"</span>))</span>
-<span id="cb16-157"><a href="#cb16-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-158"><a href="#cb16-158" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(submission, out_path)</span>
+<span id="cb16-152"><a href="#cb16-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## Write the CSV</span></span>
+<span id="cb16-153"><a href="#cb16-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-156"><a href="#cb16-156" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-157"><a href="#cb16-157" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: write</span></span>
+<span id="cb16-158"><a href="#cb16-158" aria-hidden="true" tabindex="-1"></a>out_path <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"models"</span>, <span class="fu">paste0</span>(<span class="st">"submission_"</span>, requested_model, <span class="st">".csv"</span>))</span>
 <span id="cb16-159"><a href="#cb16-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-160"><a href="#cb16-160" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Wrote "</span>, <span class="fu">nrow</span>(submission), <span class="st">" predictions to: "</span>, out_path)</span>
-<span id="cb16-161"><a href="#cb16-161" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-162"><a href="#cb16-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-163"><a href="#cb16-163" aria-hidden="true" tabindex="-1"></a>A quick summary of the predicted survival split (a sanity check against the</span>
-<span id="cb16-164"><a href="#cb16-164" aria-hidden="true" tabindex="-1"></a>~38% base rate seen in the <span class="co">[</span><span class="ot">EDA</span><span class="co">](01-eda.qmd)</span>):</span>
-<span id="cb16-165"><a href="#cb16-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-168"><a href="#cb16-168" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-169"><a href="#cb16-169" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: summary</span></span>
-<span id="cb16-170"><a href="#cb16-170" aria-hidden="true" tabindex="-1"></a>submission <span class="sc">|&gt;</span></span>
-<span id="cb16-171"><a href="#cb16-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Survived) <span class="sc">|&gt;</span></span>
-<span id="cb16-172"><a href="#cb16-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span>
-<span id="cb16-173"><a href="#cb16-173" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-174"><a href="#cb16-174" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-175"><a href="#cb16-175" aria-hidden="true" tabindex="-1"></a><span class="fu">## Submit to Kaggle</span></span>
+<span id="cb16-160"><a href="#cb16-160" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(submission, out_path)</span>
+<span id="cb16-161"><a href="#cb16-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-162"><a href="#cb16-162" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Wrote "</span>, <span class="fu">nrow</span>(submission), <span class="st">" predictions to: "</span>, out_path)</span>
+<span id="cb16-163"><a href="#cb16-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-164"><a href="#cb16-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-165"><a href="#cb16-165" aria-hidden="true" tabindex="-1"></a>A quick summary of the predicted survival split (a sanity check against the</span>
+<span id="cb16-166"><a href="#cb16-166" aria-hidden="true" tabindex="-1"></a>~38% base rate seen in the <span class="co">[</span><span class="ot">EDA</span><span class="co">](01-eda.qmd)</span>):</span>
+<span id="cb16-167"><a href="#cb16-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-170"><a href="#cb16-170" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-171"><a href="#cb16-171" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: summary</span></span>
+<span id="cb16-172"><a href="#cb16-172" aria-hidden="true" tabindex="-1"></a>submission <span class="sc">|&gt;</span></span>
+<span id="cb16-173"><a href="#cb16-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Survived) <span class="sc">|&gt;</span></span>
+<span id="cb16-174"><a href="#cb16-174" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span>
+<span id="cb16-175"><a href="#cb16-175" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb16-176"><a href="#cb16-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-177"><a href="#cb16-177" aria-hidden="true" tabindex="-1"></a>Push the CSV to the leaderboard with the Kaggle CLI. The command below is built</span>
-<span id="cb16-178"><a href="#cb16-178" aria-hidden="true" tabindex="-1"></a>for the model you rendered:</span>
-<span id="cb16-179"><a href="#cb16-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-182"><a href="#cb16-182" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb16-183"><a href="#cb16-183" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: kaggle-cmd</span></span>
-<span id="cb16-184"><a href="#cb16-184" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
-<span id="cb16-185"><a href="#cb16-185" aria-hidden="true" tabindex="-1"></a><span class="co">#| results: asis</span></span>
-<span id="cb16-186"><a href="#cb16-186" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-187"><a href="#cb16-187" aria-hidden="true" tabindex="-1"></a>cmd <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(</span>
-<span id="cb16-188"><a href="#cb16-188" aria-hidden="true" tabindex="-1"></a>  <span class="st">'kaggle competitions submit -c titanic -f models/submission_%s.csv -m "%s via tidymodels"'</span>,</span>
-<span id="cb16-189"><a href="#cb16-189" aria-hidden="true" tabindex="-1"></a>  requested_model, requested_model</span>
-<span id="cb16-190"><a href="#cb16-190" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-191"><a href="#cb16-191" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"```bash</span><span class="sc">\n</span><span class="st">"</span>, cmd, <span class="st">"</span><span class="sc">\n</span><span class="st">```</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span>
-<span id="cb16-192"><a href="#cb16-192" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-193"><a href="#cb16-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-194"><a href="#cb16-194" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb16-195"><a href="#cb16-195" aria-hidden="true" tabindex="-1"></a><span class="fu">## First time? Authenticate first</span></span>
-<span id="cb16-196"><a href="#cb16-196" aria-hidden="true" tabindex="-1"></a>The <span class="in">`kaggle`</span> CLI needs your API token (<span class="in">`~/.kaggle/kaggle.json`</span>) before any</span>
-<span id="cb16-197"><a href="#cb16-197" aria-hidden="true" tabindex="-1"></a><span class="in">`submit`</span> or <span class="in">`download`</span> will work. The</span>
-<span id="cb16-198"><a href="#cb16-198" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Kaggle setup guide</span><span class="co">](setup-kaggle.md)</span> walks through creating and installing it.</span>
-<span id="cb16-199"><a href="#cb16-199" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb16-200"><a href="#cb16-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-201"><a href="#cb16-201" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb16-202"><a href="#cb16-202" aria-hidden="true" tabindex="-1"></a><span class="fu">## Daily submission limit</span></span>
-<span id="cb16-203"><a href="#cb16-203" aria-hidden="true" tabindex="-1"></a>Kaggle caps Titanic submissions per day (commonly ~10). Submit your *best*</span>
-<span id="cb16-204"><a href="#cb16-204" aria-hidden="true" tabindex="-1"></a>candidate by CV score rather than spraying every experiment at the leaderboard.</span>
-<span id="cb16-205"><a href="#cb16-205" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb16-206"><a href="#cb16-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-207"><a href="#cb16-207" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
+<span id="cb16-177"><a href="#cb16-177" aria-hidden="true" tabindex="-1"></a><span class="fu">## Submit to Kaggle</span></span>
+<span id="cb16-178"><a href="#cb16-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-179"><a href="#cb16-179" aria-hidden="true" tabindex="-1"></a>Push the CSV to the leaderboard with the Kaggle CLI. The command below is built</span>
+<span id="cb16-180"><a href="#cb16-180" aria-hidden="true" tabindex="-1"></a>for the model you rendered:</span>
+<span id="cb16-181"><a href="#cb16-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-184"><a href="#cb16-184" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-185"><a href="#cb16-185" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: kaggle-cmd</span></span>
+<span id="cb16-186"><a href="#cb16-186" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
+<span id="cb16-187"><a href="#cb16-187" aria-hidden="true" tabindex="-1"></a><span class="co">#| results: asis</span></span>
+<span id="cb16-188"><a href="#cb16-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-189"><a href="#cb16-189" aria-hidden="true" tabindex="-1"></a>cmd <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(</span>
+<span id="cb16-190"><a href="#cb16-190" aria-hidden="true" tabindex="-1"></a>  <span class="st">'kaggle competitions submit -c titanic -f models/submission_%s.csv -m "%s via tidymodels"'</span>,</span>
+<span id="cb16-191"><a href="#cb16-191" aria-hidden="true" tabindex="-1"></a>  requested_model, requested_model</span>
+<span id="cb16-192"><a href="#cb16-192" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-193"><a href="#cb16-193" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"```bash</span><span class="sc">\n</span><span class="st">"</span>, cmd, <span class="st">"</span><span class="sc">\n</span><span class="st">```</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span>
+<span id="cb16-194"><a href="#cb16-194" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-195"><a href="#cb16-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-196"><a href="#cb16-196" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb16-197"><a href="#cb16-197" aria-hidden="true" tabindex="-1"></a><span class="fu">## First time? Authenticate first</span></span>
+<span id="cb16-198"><a href="#cb16-198" aria-hidden="true" tabindex="-1"></a>The <span class="in">`kaggle`</span> CLI needs your API token (<span class="in">`~/.kaggle/kaggle.json`</span>) before any</span>
+<span id="cb16-199"><a href="#cb16-199" aria-hidden="true" tabindex="-1"></a><span class="in">`submit`</span> or <span class="in">`download`</span> will work. The</span>
+<span id="cb16-200"><a href="#cb16-200" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Kaggle setup guide</span><span class="co">](setup-kaggle.md)</span> walks through creating and installing it.</span>
+<span id="cb16-201"><a href="#cb16-201" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb16-202"><a href="#cb16-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-203"><a href="#cb16-203" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb16-204"><a href="#cb16-204" aria-hidden="true" tabindex="-1"></a><span class="fu">## Daily submission limit</span></span>
+<span id="cb16-205"><a href="#cb16-205" aria-hidden="true" tabindex="-1"></a>Kaggle caps Titanic submissions per day (commonly ~10). Submit your *best*</span>
+<span id="cb16-206"><a href="#cb16-206" aria-hidden="true" tabindex="-1"></a>candidate by CV score rather than spraying every experiment at the leaderboard.</span>
+<span id="cb16-207"><a href="#cb16-207" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb16-208"><a href="#cb16-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-209"><a href="#cb16-209" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare each model's leaderboard score against its **CV score** recorded in</span>
-<span id="cb16-210"><a href="#cb16-210" aria-hidden="true" tabindex="-1"></a>  the <span class="co">[</span><span class="ot">master results table</span><span class="co">](../index.qmd)</span> — divergence is a lesson in</span>
-<span id="cb16-211"><a href="#cb16-211" aria-hidden="true" tabindex="-1"></a>  generalization.</span>
-<span id="cb16-212"><a href="#cb16-212" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Re-render for the other models:</span>
-<span id="cb16-213"><a href="#cb16-213" aria-hidden="true" tabindex="-1"></a>  <span class="in">`-P model:xgboost`</span>, <span class="in">`-P model:rf`</span>, <span class="in">`-P model:nnet`</span>.</span>
-<span id="cb16-214"><a href="#cb16-214" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Need auth help? See the **[Kaggle setup guide](setup-kaggle.md)**.</span>
-<span id="cb16-215"><a href="#cb16-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Back to the **[master document](../index.qmd)** for the whole-project picture.</span>
+<span id="cb16-209"><a href="#cb16-209" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
+<span id="cb16-210"><a href="#cb16-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-211"><a href="#cb16-211" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare each model's leaderboard score against its **CV score** recorded in</span>
+<span id="cb16-212"><a href="#cb16-212" aria-hidden="true" tabindex="-1"></a>  the <span class="co">[</span><span class="ot">master results table</span><span class="co">](../index.qmd)</span> — divergence is a lesson in</span>
+<span id="cb16-213"><a href="#cb16-213" aria-hidden="true" tabindex="-1"></a>  generalization.</span>
+<span id="cb16-214"><a href="#cb16-214" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Re-render for the other models:</span>
+<span id="cb16-215"><a href="#cb16-215" aria-hidden="true" tabindex="-1"></a>  <span class="in">`-P model:xgboost`</span>, <span class="in">`-P model:rf`</span>, <span class="in">`-P model:nnet`</span>.</span>
+<span id="cb16-216"><a href="#cb16-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Need auth help? See the **[Kaggle setup guide](setup-kaggle.md)**.</span>
+<span id="cb16-217"><a href="#cb16-217" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Back to the **[master document](../index.qmd)** for the whole-project picture.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

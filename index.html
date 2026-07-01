@@ -158,6 +158,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">Logistic Regression</span></a>
   </li>  
         <li>
+    <a class="dropdown-item" href="./docs/07-svm.html">
+ <span class="dropdown-text">Support Vector Machine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./docs/08-mars.html">
+ <span class="dropdown-text">MARS</span></a>
+  </li>  
+        <li>
     <a class="dropdown-item" href="./docs/05-stack.html">
  <span class="dropdown-text">Stacked Ensemble</span></a>
   </li>  
@@ -255,7 +263,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="the-goal" class="level2">
 <h2 class="anchored" data-anchor-id="the-goal">The goal</h2>
 <p>Predict the binary outcome <code>Survived</code> for the 418 test passengers as accurately as possible, and document the reasoning so the whole thing is reproducible and teachable.</p>
-<p>We fit <strong>three</strong> different model families on identical features so they can be compared apples-to-apples:</p>
+<p>We fit <strong>six</strong> different model families on identical features so they can be compared apples-to-apples, then blend them in a stacked ensemble:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -277,8 +285,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="./docs/04-neural-net.html">Neural Net</a></td>
-<td><code>brulee</code> / <code>nnet</code></td>
+<td><code>nnet</code></td>
 <td>A small MLP — needs normalized inputs</td>
+</tr>
+<tr class="even">
+<td><a href="./docs/06-logistic.html">Logistic Regression</a></td>
+<td><code>glmnet</code></td>
+<td>Elastic-net linear baseline — interpretable</td>
+</tr>
+<tr class="odd">
+<td><a href="./docs/07-svm.html">SVM (RBF)</a></td>
+<td><code>kernlab</code></td>
+<td>Nonlinear kernel boundary — diverse errors</td>
+</tr>
+<tr class="even">
+<td><a href="./docs/08-mars.html">MARS</a></td>
+<td><code>earth</code></td>
+<td>Piecewise-linear splines — nonlinear, interpretable</td>
+</tr>
+<tr class="odd">
+<td><a href="./docs/05-stack.html">Stacked Ensemble</a></td>
+<td><code>stacks</code></td>
+<td>Learns a blend over all of the above</td>
 </tr>
 </tbody>
 </table>
@@ -347,7 +375,7 @@ Note
 </section>
 <section id="results-summary" class="level2">
 <h2 class="anchored" data-anchor-id="results-summary">Results summary</h2>
-<p>The table below compares the four base models on <strong>cross-validated</strong> <code>accuracy</code> and <code>roc_auc</code> (positive class = <code>"1"</code>, survived). These are <em>honest</em> estimates computed on the training data before we ever touch the test set — and they are read <strong>directly</strong> from each model’s saved tuning results (<code>models/*_res.rds</code>), so they update automatically on every render. No copying.</p>
+<p>The table below compares the six base models on <strong>cross-validated</strong> <code>accuracy</code> and <code>roc_auc</code> (positive class = <code>"1"</code>, survived). These are <em>honest</em> estimates computed on the training data before we ever touch the test set — and they are read <strong>directly</strong> from each model’s saved tuning results (<code>models/*_res.rds</code>), so they update automatically on every render. No copying.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -378,11 +406,15 @@ Note
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_res.rds"</span>), <span class="st">"Neural Net"</span>,</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned hidden_units / penalty + num_comp; PCA-normalized"</span>),</span>
 <span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"logistic_res.rds"</span>), <span class="st">"Logistic Regression"</span>,</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>             <span class="st">"elastic-net (glmnet): tuned penalty / mixture + num_comp"</span>)</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span>, <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>), \(x) <span class="fu">round</span>(x, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="st">"lrrrl"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>             <span class="st">"elastic-net (glmnet): tuned penalty / mixture + num_comp"</span>),</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"svm_res.rds"</span>), <span class="st">"SVM (RBF)"</span>,</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>             <span class="st">"kernlab: tuned cost / rbf_sigma + num_comp"</span>),</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"mars_res.rds"</span>), <span class="st">"MARS"</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>             <span class="st">"earth: tuned num_terms / prod_degree + num_comp"</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span>, <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>), \(x) <span class="fu">round</span>(x, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="st">"lrrrl"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -411,25 +443,39 @@ Note
 <td style="text-align: left;">tuned mtry / min_n + num_comp; 1000 trees</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">MARS</td>
+<td style="text-align: right;">0.8452</td>
+<td style="text-align: right;">0.8945</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">earth: tuned num_terms / prod_degree + num_comp</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">XGBoost</td>
 <td style="text-align: right;">0.8429</td>
 <td style="text-align: right;">0.8929</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: left;">tuned trees / tree_depth / learn_rate / min_n + num_comp</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Neural Net</td>
 <td style="text-align: right;">0.8351</td>
 <td style="text-align: right;">0.8916</td>
 <td style="text-align: right;">6</td>
 <td style="text-align: left;">tuned hidden_units / penalty + num_comp; PCA-normalized</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Logistic Regression</td>
 <td style="text-align: right;">0.8373</td>
 <td style="text-align: right;">0.8874</td>
 <td style="text-align: right;">6</td>
 <td style="text-align: left;">elastic-net (glmnet): tuned penalty / mixture + num_comp</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">SVM (RBF)</td>
+<td style="text-align: right;">0.8250</td>
+<td style="text-align: right;">0.8841</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">kernlab: tuned cost / rbf_sigma + num_comp</td>
 </tr>
 </tbody>
 </table>
@@ -972,186 +1018,194 @@ Note
 <span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>as possible, and document the reasoning so the whole thing is reproducible and</span>
 <span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>teachable.</span>
 <span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>We fit **three** different model families on identical features so they can be</span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>compared apples-to-apples:</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>We fit **six** different model families on identical features so they can be</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>compared apples-to-apples, then blend them in a stacked ensemble:</span>
 <span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Model <span class="pp">|</span> Engine <span class="pp">|</span> Why it's interesting <span class="pp">|</span></span>
 <span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------|--------|----------------------|</span></span>
 <span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">XGBoost</span><span class="co">](docs/02-xgboost.qmd)</span> <span class="pp">|</span> <span class="in">`xgboost`</span> <span class="pp">|</span> Gradient-boosted trees — the Kaggle workhorse <span class="pp">|</span></span>
 <span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Random Forest</span><span class="co">](docs/03-random-forest.qmd)</span> <span class="pp">|</span> <span class="in">`ranger`</span> <span class="pp">|</span> Bagged trees — robust, low-tuning baseline <span class="pp">|</span></span>
-<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Neural Net</span><span class="co">](docs/04-neural-net.qmd)</span> <span class="pp">|</span> <span class="in">`brulee`</span> / <span class="in">`nnet`</span> <span class="pp">|</span> A small MLP — needs normalized inputs <span class="pp">|</span></span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a><span class="fu">## How the documents link together</span></span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>This is a small Quarto **website**. <span class="in">`index.qmd`</span> (this page) is the master</span>
-<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>document; everything else lives in <span class="in">`docs/`</span> and the navbar ties them into a</span>
-<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>narrative:</span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Neural Net</span><span class="co">](docs/04-neural-net.qmd)</span> <span class="pp">|</span> <span class="in">`nnet`</span> <span class="pp">|</span> A small MLP — needs normalized inputs <span class="pp">|</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Logistic Regression</span><span class="co">](docs/06-logistic.qmd)</span> <span class="pp">|</span> <span class="in">`glmnet`</span> <span class="pp">|</span> Elastic-net linear baseline — interpretable <span class="pp">|</span></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SVM (RBF)</span><span class="co">](docs/07-svm.qmd)</span> <span class="pp">|</span> <span class="in">`kernlab`</span> <span class="pp">|</span> Nonlinear kernel boundary — diverse errors <span class="pp">|</span></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MARS</span><span class="co">](docs/08-mars.qmd)</span> <span class="pp">|</span> <span class="in">`earth`</span> <span class="pp">|</span> Piecewise-linear splines — nonlinear, interpretable <span class="pp">|</span></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Stacked Ensemble</span><span class="co">](docs/05-stack.qmd)</span> <span class="pp">|</span> <span class="in">`stacks`</span> <span class="pp">|</span> Learns a blend over all of the above <span class="pp">|</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a><span class="fu">## How the documents link together</span></span>
 <span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a><span class="in">Home (index)  →  EDA  →  Models {XGBoost, Random Forest, Neural Net}  →  Submission  →  Kaggle Setup</span></span>
-<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>This is a small Quarto **website**. <span class="in">`index.qmd`</span> (this page) is the master</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>document; everything else lives in <span class="in">`docs/`</span> and the navbar ties them into a</span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>narrative:</span>
 <span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Exploratory Data Analysis](docs/01-eda.qmd)** — look at the data, find the</span>
-<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>  patterns (sex, class, age, family, title), and *motivate* the feature</span>
-<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>  engineering.</span>
-<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Model docs** — each one follows the *same* structure (recipe → spec →</span>
-<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>  workflow → tune → finalize → evaluate → save), so once you've read one, the</span>
-<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>  others are easy to skim for the differences.</span>
-<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Submission](docs/submission.qmd)** — a single *parameterized* document that</span>
-<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>  turns any of the three saved models into a leaderboard-ready CSV.</span>
-<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Kaggle Setup](docs/setup-kaggle.md)** — how to authenticate the Kaggle CLI</span>
-<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>  so you can download the data and push submissions.</span>
-<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project structure</span></span>
-<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a><span class="in">titantic/</span></span>
-<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a><span class="in">├── _quarto.yml              # website config (theme, navbar, freeze)</span></span>
-<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a><span class="in">├── index.qmd                # ← you are here (master document)</span></span>
-<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a><span class="in">├── renv.lock                # pinned package versions (reproducibility)</span></span>
-<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a><span class="in">├── R/</span></span>
-<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 00_setup.R           # libraries, seed=42, paths, parallel backend</span></span>
-<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 01_eda.R             # standalone EDA script</span></span>
-<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── 02_features.R        # make_recipe(data) — the SHARED feature recipe</span></span>
-<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a><span class="in">├── data/</span></span>
-<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── raw/</span></span>
-<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a><span class="in">│       ├── train.csv        # 891 rows, has Survived</span></span>
-<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a><span class="in">│       └── test.csv         # 418 rows, no Survived</span></span>
-<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a><span class="in">├── docs/</span></span>
-<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 01-eda.qmd           # exploratory analysis</span></span>
-<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 02-xgboost.qmd       # boosted trees</span></span>
-<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 03-random-forest.qmd # ranger random forest</span></span>
-<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 04-neural-net.qmd    # brulee/nnet MLP</span></span>
-<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── submission.qmd       # parameterized: build a submission CSV</span></span>
-<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── setup-kaggle.md      # Kaggle CLI auth guide</span></span>
-<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a><span class="in">├── models/                  # fitted workflows (*_fit.rds) + submission_*.csv</span></span>
-<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a><span class="in">└── figures/                 # exported plots</span></span>
-<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-107"><a href="#cb8-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-108"><a href="#cb8-108" aria-hidden="true" tabindex="-1"></a>The single most important shared piece is **`R/02_features.R`**, which defines</span>
-<span id="cb8-109"><a href="#cb8-109" aria-hidden="true" tabindex="-1"></a><span class="in">`make_recipe(data)`</span>. Every model sources it so they all train on the *same*</span>
-<span id="cb8-110"><a href="#cb8-110" aria-hidden="true" tabindex="-1"></a>engineered features — that is what makes the comparison fair.</span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a><span class="in">Home (index)  →  EDA  →  Models {XGBoost, Random Forest, Neural Net}  →  Submission  →  Kaggle Setup</span></span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Exploratory Data Analysis](docs/01-eda.qmd)** — look at the data, find the</span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>  patterns (sex, class, age, family, title), and *motivate* the feature</span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>  engineering.</span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Model docs** — each one follows the *same* structure (recipe → spec →</span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>  workflow → tune → finalize → evaluate → save), so once you've read one, the</span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>  others are easy to skim for the differences.</span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Submission](docs/submission.qmd)** — a single *parameterized* document that</span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>  turns any of the three saved models into a leaderboard-ready CSV.</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**[Kaggle Setup](docs/setup-kaggle.md)** — how to authenticate the Kaggle CLI</span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>  so you can download the data and push submissions.</span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project structure</span></span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a><span class="in">titantic/</span></span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a><span class="in">├── _quarto.yml              # website config (theme, navbar, freeze)</span></span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a><span class="in">├── index.qmd                # ← you are here (master document)</span></span>
+<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a><span class="in">├── renv.lock                # pinned package versions (reproducibility)</span></span>
+<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a><span class="in">├── R/</span></span>
+<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 00_setup.R           # libraries, seed=42, paths, parallel backend</span></span>
+<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 01_eda.R             # standalone EDA script</span></span>
+<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── 02_features.R        # make_recipe(data) — the SHARED feature recipe</span></span>
+<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a><span class="in">├── data/</span></span>
+<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── raw/</span></span>
+<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a><span class="in">│       ├── train.csv        # 891 rows, has Survived</span></span>
+<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a><span class="in">│       └── test.csv         # 418 rows, no Survived</span></span>
+<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a><span class="in">├── docs/</span></span>
+<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 01-eda.qmd           # exploratory analysis</span></span>
+<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 02-xgboost.qmd       # boosted trees</span></span>
+<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 03-random-forest.qmd # ranger random forest</span></span>
+<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── 04-neural-net.qmd    # brulee/nnet MLP</span></span>
+<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── submission.qmd       # parameterized: build a submission CSV</span></span>
+<span id="cb8-107"><a href="#cb8-107" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── setup-kaggle.md      # Kaggle CLI auth guide</span></span>
+<span id="cb8-108"><a href="#cb8-108" aria-hidden="true" tabindex="-1"></a><span class="in">├── models/                  # fitted workflows (*_fit.rds) + submission_*.csv</span></span>
+<span id="cb8-109"><a href="#cb8-109" aria-hidden="true" tabindex="-1"></a><span class="in">└── figures/                 # exported plots</span></span>
+<span id="cb8-110"><a href="#cb8-110" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb8-111"><a href="#cb8-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-112"><a href="#cb8-112" aria-hidden="true" tabindex="-1"></a><span class="fu">## How to reproduce</span></span>
-<span id="cb8-113"><a href="#cb8-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-114"><a href="#cb8-114" aria-hidden="true" tabindex="-1"></a>Everything is pinned with <span class="co">[</span><span class="ot">`renv`</span><span class="co">](https://rstudio.github.io/renv/)</span> and uses</span>
-<span id="cb8-115"><a href="#cb8-115" aria-hidden="true" tabindex="-1"></a><span class="in">`here::here()`</span> for paths, so there is no <span class="in">`setwd()`</span> fragility.</span>
-<span id="cb8-116"><a href="#cb8-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-117"><a href="#cb8-117" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Restore the environment** (installs the exact package versions):</span>
-<span id="cb8-118"><a href="#cb8-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-119"><a href="#cb8-119" aria-hidden="true" tabindex="-1"></a>   <span class="in">```r</span></span>
-<span id="cb8-120"><a href="#cb8-120" aria-hidden="true" tabindex="-1"></a>   renv<span class="sc">::</span><span class="fu">restore</span>()</span>
-<span id="cb8-121"><a href="#cb8-121" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb8-112"><a href="#cb8-112" aria-hidden="true" tabindex="-1"></a>The single most important shared piece is **`R/02_features.R`**, which defines</span>
+<span id="cb8-113"><a href="#cb8-113" aria-hidden="true" tabindex="-1"></a><span class="in">`make_recipe(data)`</span>. Every model sources it so they all train on the *same*</span>
+<span id="cb8-114"><a href="#cb8-114" aria-hidden="true" tabindex="-1"></a>engineered features — that is what makes the comparison fair.</span>
+<span id="cb8-115"><a href="#cb8-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-116"><a href="#cb8-116" aria-hidden="true" tabindex="-1"></a><span class="fu">## How to reproduce</span></span>
+<span id="cb8-117"><a href="#cb8-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-118"><a href="#cb8-118" aria-hidden="true" tabindex="-1"></a>Everything is pinned with <span class="co">[</span><span class="ot">`renv`</span><span class="co">](https://rstudio.github.io/renv/)</span> and uses</span>
+<span id="cb8-119"><a href="#cb8-119" aria-hidden="true" tabindex="-1"></a><span class="in">`here::here()`</span> for paths, so there is no <span class="in">`setwd()`</span> fragility.</span>
+<span id="cb8-120"><a href="#cb8-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-121"><a href="#cb8-121" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Restore the environment** (installs the exact package versions):</span>
 <span id="cb8-122"><a href="#cb8-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-123"><a href="#cb8-123" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Get the data** — follow <span class="co">[</span><span class="ot">the Kaggle setup guide</span><span class="co">](docs/setup-kaggle.md)</span> to</span>
-<span id="cb8-124"><a href="#cb8-124" aria-hidden="true" tabindex="-1"></a>   authenticate, then download <span class="in">`train.csv`</span> and <span class="in">`test.csv`</span> into <span class="in">`data/raw/`</span>.</span>
-<span id="cb8-125"><a href="#cb8-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-126"><a href="#cb8-126" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Render the site.** Because of <span class="in">`freeze: auto`</span>, the heavy model fits only run</span>
-<span id="cb8-127"><a href="#cb8-127" aria-hidden="true" tabindex="-1"></a>   the first time (or when a model doc changes):</span>
-<span id="cb8-128"><a href="#cb8-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-129"><a href="#cb8-129" aria-hidden="true" tabindex="-1"></a>   <span class="in">```bash</span></span>
-<span id="cb8-130"><a href="#cb8-130" aria-hidden="true" tabindex="-1"></a>   <span class="ex">quarto</span> render</span>
-<span id="cb8-131"><a href="#cb8-131" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb8-123"><a href="#cb8-123" aria-hidden="true" tabindex="-1"></a>   <span class="in">```r</span></span>
+<span id="cb8-124"><a href="#cb8-124" aria-hidden="true" tabindex="-1"></a>   renv<span class="sc">::</span><span class="fu">restore</span>()</span>
+<span id="cb8-125"><a href="#cb8-125" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb8-126"><a href="#cb8-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-127"><a href="#cb8-127" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Get the data** — follow <span class="co">[</span><span class="ot">the Kaggle setup guide</span><span class="co">](docs/setup-kaggle.md)</span> to</span>
+<span id="cb8-128"><a href="#cb8-128" aria-hidden="true" tabindex="-1"></a>   authenticate, then download <span class="in">`train.csv`</span> and <span class="in">`test.csv`</span> into <span class="in">`data/raw/`</span>.</span>
+<span id="cb8-129"><a href="#cb8-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-130"><a href="#cb8-130" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Render the site.** Because of <span class="in">`freeze: auto`</span>, the heavy model fits only run</span>
+<span id="cb8-131"><a href="#cb8-131" aria-hidden="true" tabindex="-1"></a>   the first time (or when a model doc changes):</span>
 <span id="cb8-132"><a href="#cb8-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-133"><a href="#cb8-133" aria-hidden="true" tabindex="-1"></a>   Logical run order if you prefer to step through it: EDA → each model doc</span>
-<span id="cb8-134"><a href="#cb8-134" aria-hidden="true" tabindex="-1"></a>   (which saves its fitted workflow to <span class="in">`models/`</span>) → submission.</span>
-<span id="cb8-135"><a href="#cb8-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-136"><a href="#cb8-136" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Generate submissions** for each model (see below).</span>
-<span id="cb8-137"><a href="#cb8-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-138"><a href="#cb8-138" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb8-139"><a href="#cb8-139" aria-hidden="true" tabindex="-1"></a><span class="in">`set.seed(42)`</span> is set in <span class="in">`R/00_setup.R`</span> and the resampling folds are seeded, so</span>
-<span id="cb8-140"><a href="#cb8-140" aria-hidden="true" tabindex="-1"></a>CV results are reproducible across machines that share the <span class="in">`renv`</span> lockfile.</span>
-<span id="cb8-141"><a href="#cb8-141" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-142"><a href="#cb8-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-143"><a href="#cb8-143" aria-hidden="true" tabindex="-1"></a><span class="fu">## Results summary</span></span>
-<span id="cb8-144"><a href="#cb8-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-145"><a href="#cb8-145" aria-hidden="true" tabindex="-1"></a>The table below compares the four base models on **cross-validated**</span>
-<span id="cb8-146"><a href="#cb8-146" aria-hidden="true" tabindex="-1"></a><span class="in">`accuracy`</span> and <span class="in">`roc_auc`</span> (positive class = <span class="in">`"1"`</span>, survived). These are *honest*</span>
-<span id="cb8-147"><a href="#cb8-147" aria-hidden="true" tabindex="-1"></a>estimates computed on the training data before we ever touch the test set — and</span>
-<span id="cb8-148"><a href="#cb8-148" aria-hidden="true" tabindex="-1"></a>they are read **directly** from each model's saved tuning results</span>
-<span id="cb8-149"><a href="#cb8-149" aria-hidden="true" tabindex="-1"></a>(<span class="in">`models/*_res.rds`</span>), so they update automatically on every render. No copying.</span>
-<span id="cb8-150"><a href="#cb8-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-153"><a href="#cb8-153" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb8-154"><a href="#cb8-154" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-summary</span></span>
-<span id="cb8-155"><a href="#cb8-155" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb8-156"><a href="#cb8-156" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb8-157"><a href="#cb8-157" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
-<span id="cb8-158"><a href="#cb8-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-159"><a href="#cb8-159" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb8-160"><a href="#cb8-160" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb8-161"><a href="#cb8-161" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb8-133"><a href="#cb8-133" aria-hidden="true" tabindex="-1"></a>   <span class="in">```bash</span></span>
+<span id="cb8-134"><a href="#cb8-134" aria-hidden="true" tabindex="-1"></a>   <span class="ex">quarto</span> render</span>
+<span id="cb8-135"><a href="#cb8-135" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb8-136"><a href="#cb8-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-137"><a href="#cb8-137" aria-hidden="true" tabindex="-1"></a>   Logical run order if you prefer to step through it: EDA → each model doc</span>
+<span id="cb8-138"><a href="#cb8-138" aria-hidden="true" tabindex="-1"></a>   (which saves its fitted workflow to <span class="in">`models/`</span>) → submission.</span>
+<span id="cb8-139"><a href="#cb8-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-140"><a href="#cb8-140" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Generate submissions** for each model (see below).</span>
+<span id="cb8-141"><a href="#cb8-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-142"><a href="#cb8-142" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb8-143"><a href="#cb8-143" aria-hidden="true" tabindex="-1"></a><span class="in">`set.seed(42)`</span> is set in <span class="in">`R/00_setup.R`</span> and the resampling folds are seeded, so</span>
+<span id="cb8-144"><a href="#cb8-144" aria-hidden="true" tabindex="-1"></a>CV results are reproducible across machines that share the <span class="in">`renv`</span> lockfile.</span>
+<span id="cb8-145"><a href="#cb8-145" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-146"><a href="#cb8-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-147"><a href="#cb8-147" aria-hidden="true" tabindex="-1"></a><span class="fu">## Results summary</span></span>
+<span id="cb8-148"><a href="#cb8-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-149"><a href="#cb8-149" aria-hidden="true" tabindex="-1"></a>The table below compares the six base models on **cross-validated**</span>
+<span id="cb8-150"><a href="#cb8-150" aria-hidden="true" tabindex="-1"></a><span class="in">`accuracy`</span> and <span class="in">`roc_auc`</span> (positive class = <span class="in">`"1"`</span>, survived). These are *honest*</span>
+<span id="cb8-151"><a href="#cb8-151" aria-hidden="true" tabindex="-1"></a>estimates computed on the training data before we ever touch the test set — and</span>
+<span id="cb8-152"><a href="#cb8-152" aria-hidden="true" tabindex="-1"></a>they are read **directly** from each model's saved tuning results</span>
+<span id="cb8-153"><a href="#cb8-153" aria-hidden="true" tabindex="-1"></a>(<span class="in">`models/*_res.rds`</span>), so they update automatically on every render. No copying.</span>
+<span id="cb8-154"><a href="#cb8-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-157"><a href="#cb8-157" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-158"><a href="#cb8-158" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: results-summary</span></span>
+<span id="cb8-159"><a href="#cb8-159" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb8-160"><a href="#cb8-160" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb8-161"><a href="#cb8-161" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
 <span id="cb8-162"><a href="#cb8-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-163"><a href="#cb8-163" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the best (roc_auc-selected) configuration's CV metrics from a saved</span></span>
-<span id="cb8-164"><a href="#cb8-164" aria-hidden="true" tabindex="-1"></a><span class="co"># tune_grid result.</span></span>
-<span id="cb8-165"><a href="#cb8-165" aria-hidden="true" tabindex="-1"></a>cv_metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(path, label, notes) {</span>
-<span id="cb8-166"><a href="#cb8-166" aria-hidden="true" tabindex="-1"></a>  res  <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(path)</span>
-<span id="cb8-167"><a href="#cb8-167" aria-hidden="true" tabindex="-1"></a>  best <span class="ot">&lt;-</span> <span class="fu">select_best</span>(res, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
-<span id="cb8-168"><a href="#cb8-168" aria-hidden="true" tabindex="-1"></a>  m    <span class="ot">&lt;-</span> <span class="fu">collect_metrics</span>(res) <span class="sc">|&gt;</span> <span class="fu">semi_join</span>(best, <span class="at">by =</span> <span class="fu">names</span>(best))</span>
-<span id="cb8-169"><a href="#cb8-169" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb8-170"><a href="#cb8-170" aria-hidden="true" tabindex="-1"></a>    <span class="at">Model         =</span> label,</span>
-<span id="cb8-171"><a href="#cb8-171" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span> <span class="ot">=</span> m<span class="sc">$</span>mean[m<span class="sc">$</span>.metric <span class="sc">==</span> <span class="st">"accuracy"</span>],</span>
-<span id="cb8-172"><a href="#cb8-172" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>  <span class="ot">=</span> m<span class="sc">$</span>mean[m<span class="sc">$</span>.metric <span class="sc">==</span> <span class="st">"roc_auc"</span>],</span>
-<span id="cb8-173"><a href="#cb8-173" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Best num_comp</span><span class="st">`</span> <span class="ot">=</span> best<span class="sc">$</span>num_comp,</span>
-<span id="cb8-174"><a href="#cb8-174" aria-hidden="true" tabindex="-1"></a>    <span class="at">Notes         =</span> notes</span>
-<span id="cb8-175"><a href="#cb8-175" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb8-176"><a href="#cb8-176" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-177"><a href="#cb8-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-178"><a href="#cb8-178" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
-<span id="cb8-179"><a href="#cb8-179" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"xgboost_res.rds"</span>), <span class="st">"XGBoost"</span>,</span>
-<span id="cb8-180"><a href="#cb8-180" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned trees / tree_depth / learn_rate / min_n + num_comp"</span>),</span>
-<span id="cb8-181"><a href="#cb8-181" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"rf_res.rds"</span>), <span class="st">"Random Forest"</span>,</span>
-<span id="cb8-182"><a href="#cb8-182" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned mtry / min_n + num_comp; 1000 trees"</span>),</span>
-<span id="cb8-183"><a href="#cb8-183" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_res.rds"</span>), <span class="st">"Neural Net"</span>,</span>
-<span id="cb8-184"><a href="#cb8-184" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned hidden_units / penalty + num_comp; PCA-normalized"</span>),</span>
-<span id="cb8-185"><a href="#cb8-185" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"logistic_res.rds"</span>), <span class="st">"Logistic Regression"</span>,</span>
-<span id="cb8-186"><a href="#cb8-186" aria-hidden="true" tabindex="-1"></a>             <span class="st">"elastic-net (glmnet): tuned penalty / mixture + num_comp"</span>)</span>
-<span id="cb8-187"><a href="#cb8-187" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb8-188"><a href="#cb8-188" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb8-189"><a href="#cb8-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span>, <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>), \(x) <span class="fu">round</span>(x, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb8-190"><a href="#cb8-190" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="st">"lrrrl"</span>)</span>
-<span id="cb8-191"><a href="#cb8-191" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-192"><a href="#cb8-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-193"><a href="#cb8-193" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">stacked ensemble</span><span class="co">](docs/05-stack.qmd)</span> blends all three; its real test is the</span>
-<span id="cb8-194"><a href="#cb8-194" aria-hidden="true" tabindex="-1"></a>Kaggle leaderboard rather than a single CV number (the stack's weights are shown</span>
-<span id="cb8-195"><a href="#cb8-195" aria-hidden="true" tabindex="-1"></a>on its own page).</span>
-<span id="cb8-196"><a href="#cb8-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-197"><a href="#cb8-197" aria-hidden="true" tabindex="-1"></a><span class="fu">## The submission workflow at a glance</span></span>
-<span id="cb8-198"><a href="#cb8-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-199"><a href="#cb8-199" aria-hidden="true" tabindex="-1"></a>Once a model is fitted and saved (each model doc does this), turning it into a</span>
-<span id="cb8-200"><a href="#cb8-200" aria-hidden="true" tabindex="-1"></a>leaderboard entry is mechanical:</span>
-<span id="cb8-201"><a href="#cb8-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-202"><a href="#cb8-202" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Load the fitted workflow from <span class="in">`models/&lt;model&gt;_fit.rds`</span>.</span>
-<span id="cb8-203"><a href="#cb8-203" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Read <span class="in">`data/raw/test.csv`</span>.</span>
-<span id="cb8-204"><a href="#cb8-204" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span><span class="in">`predict()`</span> the class for each test passenger.</span>
-<span id="cb8-205"><a href="#cb8-205" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Write <span class="in">`models/submission_&lt;model&gt;.csv`</span> with exactly two columns,</span>
-<span id="cb8-206"><a href="#cb8-206" aria-hidden="true" tabindex="-1"></a>   <span class="in">`PassengerId`</span> and <span class="in">`Survived`</span> (0/1 integers).</span>
-<span id="cb8-207"><a href="#cb8-207" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Push it to Kaggle:</span>
-<span id="cb8-208"><a href="#cb8-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-209"><a href="#cb8-209" aria-hidden="true" tabindex="-1"></a>   <span class="in">```bash</span></span>
-<span id="cb8-210"><a href="#cb8-210" aria-hidden="true" tabindex="-1"></a>   <span class="ex">kaggle</span> competitions submit <span class="at">-c</span> titanic <span class="dt">\</span></span>
-<span id="cb8-211"><a href="#cb8-211" aria-hidden="true" tabindex="-1"></a>     <span class="at">-f</span> models/submission_xgboost.csv <span class="dt">\</span></span>
-<span id="cb8-212"><a href="#cb8-212" aria-hidden="true" tabindex="-1"></a>     <span class="at">-m</span> <span class="st">"xgboost via tidymodels"</span></span>
-<span id="cb8-213"><a href="#cb8-213" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
-<span id="cb8-214"><a href="#cb8-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-215"><a href="#cb8-215" aria-hidden="true" tabindex="-1"></a>All of that is wrapped in the **[parameterized submission document](docs/submission.qmd)**,</span>
-<span id="cb8-216"><a href="#cb8-216" aria-hidden="true" tabindex="-1"></a>so you generate any model's CSV with one command:</span>
-<span id="cb8-217"><a href="#cb8-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-218"><a href="#cb8-218" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
-<span id="cb8-219"><a href="#cb8-219" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:xgboost</span>
-<span id="cb8-220"><a href="#cb8-220" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:rf</span>
-<span id="cb8-221"><a href="#cb8-221" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span>
-<span id="cb8-222"><a href="#cb8-222" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-223"><a href="#cb8-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-224"><a href="#cb8-224" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
+<span id="cb8-163"><a href="#cb8-163" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb8-164"><a href="#cb8-164" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb8-165"><a href="#cb8-165" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb8-166"><a href="#cb8-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-167"><a href="#cb8-167" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull the best (roc_auc-selected) configuration's CV metrics from a saved</span></span>
+<span id="cb8-168"><a href="#cb8-168" aria-hidden="true" tabindex="-1"></a><span class="co"># tune_grid result.</span></span>
+<span id="cb8-169"><a href="#cb8-169" aria-hidden="true" tabindex="-1"></a>cv_metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(path, label, notes) {</span>
+<span id="cb8-170"><a href="#cb8-170" aria-hidden="true" tabindex="-1"></a>  res  <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(path)</span>
+<span id="cb8-171"><a href="#cb8-171" aria-hidden="true" tabindex="-1"></a>  best <span class="ot">&lt;-</span> <span class="fu">select_best</span>(res, <span class="at">metric =</span> <span class="st">"roc_auc"</span>)</span>
+<span id="cb8-172"><a href="#cb8-172" aria-hidden="true" tabindex="-1"></a>  m    <span class="ot">&lt;-</span> <span class="fu">collect_metrics</span>(res) <span class="sc">|&gt;</span> <span class="fu">semi_join</span>(best, <span class="at">by =</span> <span class="fu">names</span>(best))</span>
+<span id="cb8-173"><a href="#cb8-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb8-174"><a href="#cb8-174" aria-hidden="true" tabindex="-1"></a>    <span class="at">Model         =</span> label,</span>
+<span id="cb8-175"><a href="#cb8-175" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span> <span class="ot">=</span> m<span class="sc">$</span>mean[m<span class="sc">$</span>.metric <span class="sc">==</span> <span class="st">"accuracy"</span>],</span>
+<span id="cb8-176"><a href="#cb8-176" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>  <span class="ot">=</span> m<span class="sc">$</span>mean[m<span class="sc">$</span>.metric <span class="sc">==</span> <span class="st">"roc_auc"</span>],</span>
+<span id="cb8-177"><a href="#cb8-177" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Best num_comp</span><span class="st">`</span> <span class="ot">=</span> best<span class="sc">$</span>num_comp,</span>
+<span id="cb8-178"><a href="#cb8-178" aria-hidden="true" tabindex="-1"></a>    <span class="at">Notes         =</span> notes</span>
+<span id="cb8-179"><a href="#cb8-179" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-180"><a href="#cb8-180" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-181"><a href="#cb8-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-182"><a href="#cb8-182" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb8-183"><a href="#cb8-183" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"xgboost_res.rds"</span>), <span class="st">"XGBoost"</span>,</span>
+<span id="cb8-184"><a href="#cb8-184" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned trees / tree_depth / learn_rate / min_n + num_comp"</span>),</span>
+<span id="cb8-185"><a href="#cb8-185" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"rf_res.rds"</span>), <span class="st">"Random Forest"</span>,</span>
+<span id="cb8-186"><a href="#cb8-186" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned mtry / min_n + num_comp; 1000 trees"</span>),</span>
+<span id="cb8-187"><a href="#cb8-187" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"nnet_res.rds"</span>), <span class="st">"Neural Net"</span>,</span>
+<span id="cb8-188"><a href="#cb8-188" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tuned hidden_units / penalty + num_comp; PCA-normalized"</span>),</span>
+<span id="cb8-189"><a href="#cb8-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"logistic_res.rds"</span>), <span class="st">"Logistic Regression"</span>,</span>
+<span id="cb8-190"><a href="#cb8-190" aria-hidden="true" tabindex="-1"></a>             <span class="st">"elastic-net (glmnet): tuned penalty / mixture + num_comp"</span>),</span>
+<span id="cb8-191"><a href="#cb8-191" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"svm_res.rds"</span>), <span class="st">"SVM (RBF)"</span>,</span>
+<span id="cb8-192"><a href="#cb8-192" aria-hidden="true" tabindex="-1"></a>             <span class="st">"kernlab: tuned cost / rbf_sigma + num_comp"</span>),</span>
+<span id="cb8-193"><a href="#cb8-193" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cv_metrics</span>(<span class="fu">here</span>(<span class="st">"models"</span>, <span class="st">"mars_res.rds"</span>), <span class="st">"MARS"</span>,</span>
+<span id="cb8-194"><a href="#cb8-194" aria-hidden="true" tabindex="-1"></a>             <span class="st">"earth: tuned num_terms / prod_degree + num_comp"</span>)</span>
+<span id="cb8-195"><a href="#cb8-195" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb8-196"><a href="#cb8-196" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-197"><a href="#cb8-197" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">`</span><span class="at">CV accuracy</span><span class="st">`</span>, <span class="st">`</span><span class="at">CV ROC-AUC</span><span class="st">`</span>), \(x) <span class="fu">round</span>(x, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb8-198"><a href="#cb8-198" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="st">"lrrrl"</span>)</span>
+<span id="cb8-199"><a href="#cb8-199" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-200"><a href="#cb8-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-201"><a href="#cb8-201" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">stacked ensemble</span><span class="co">](docs/05-stack.qmd)</span> blends all three; its real test is the</span>
+<span id="cb8-202"><a href="#cb8-202" aria-hidden="true" tabindex="-1"></a>Kaggle leaderboard rather than a single CV number (the stack's weights are shown</span>
+<span id="cb8-203"><a href="#cb8-203" aria-hidden="true" tabindex="-1"></a>on its own page).</span>
+<span id="cb8-204"><a href="#cb8-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-205"><a href="#cb8-205" aria-hidden="true" tabindex="-1"></a><span class="fu">## The submission workflow at a glance</span></span>
+<span id="cb8-206"><a href="#cb8-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-207"><a href="#cb8-207" aria-hidden="true" tabindex="-1"></a>Once a model is fitted and saved (each model doc does this), turning it into a</span>
+<span id="cb8-208"><a href="#cb8-208" aria-hidden="true" tabindex="-1"></a>leaderboard entry is mechanical:</span>
+<span id="cb8-209"><a href="#cb8-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-210"><a href="#cb8-210" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Load the fitted workflow from <span class="in">`models/&lt;model&gt;_fit.rds`</span>.</span>
+<span id="cb8-211"><a href="#cb8-211" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Read <span class="in">`data/raw/test.csv`</span>.</span>
+<span id="cb8-212"><a href="#cb8-212" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span><span class="in">`predict()`</span> the class for each test passenger.</span>
+<span id="cb8-213"><a href="#cb8-213" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Write <span class="in">`models/submission_&lt;model&gt;.csv`</span> with exactly two columns,</span>
+<span id="cb8-214"><a href="#cb8-214" aria-hidden="true" tabindex="-1"></a>   <span class="in">`PassengerId`</span> and <span class="in">`Survived`</span> (0/1 integers).</span>
+<span id="cb8-215"><a href="#cb8-215" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Push it to Kaggle:</span>
+<span id="cb8-216"><a href="#cb8-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-217"><a href="#cb8-217" aria-hidden="true" tabindex="-1"></a>   <span class="in">```bash</span></span>
+<span id="cb8-218"><a href="#cb8-218" aria-hidden="true" tabindex="-1"></a>   <span class="ex">kaggle</span> competitions submit <span class="at">-c</span> titanic <span class="dt">\</span></span>
+<span id="cb8-219"><a href="#cb8-219" aria-hidden="true" tabindex="-1"></a>     <span class="at">-f</span> models/submission_xgboost.csv <span class="dt">\</span></span>
+<span id="cb8-220"><a href="#cb8-220" aria-hidden="true" tabindex="-1"></a>     <span class="at">-m</span> <span class="st">"xgboost via tidymodels"</span></span>
+<span id="cb8-221"><a href="#cb8-221" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb8-222"><a href="#cb8-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-223"><a href="#cb8-223" aria-hidden="true" tabindex="-1"></a>All of that is wrapped in the **[parameterized submission document](docs/submission.qmd)**,</span>
+<span id="cb8-224"><a href="#cb8-224" aria-hidden="true" tabindex="-1"></a>so you generate any model's CSV with one command:</span>
 <span id="cb8-225"><a href="#cb8-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-226"><a href="#cb8-226" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Start with the **[Exploratory Data Analysis](docs/01-eda.qmd)** to see the</span>
-<span id="cb8-227"><a href="#cb8-227" aria-hidden="true" tabindex="-1"></a>  patterns that drive the features.</span>
-<span id="cb8-228"><a href="#cb8-228" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Then read the model docs in order:</span>
-<span id="cb8-229"><a href="#cb8-229" aria-hidden="true" tabindex="-1"></a>  **[XGBoost](docs/02-xgboost.qmd)** →</span>
-<span id="cb8-230"><a href="#cb8-230" aria-hidden="true" tabindex="-1"></a>  **[Random Forest](docs/03-random-forest.qmd)** →</span>
-<span id="cb8-231"><a href="#cb8-231" aria-hidden="true" tabindex="-1"></a>  **[Neural Net](docs/04-neural-net.qmd)**.</span>
-<span id="cb8-232"><a href="#cb8-232" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a leaderboard CSV with the **[Submission](docs/submission.qmd)** doc.</span>
-<span id="cb8-233"><a href="#cb8-233" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Stuck on authentication? See the **[Kaggle Setup guide](docs/setup-kaggle.md)**.</span>
+<span id="cb8-226"><a href="#cb8-226" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb8-227"><a href="#cb8-227" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:xgboost</span>
+<span id="cb8-228"><a href="#cb8-228" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:rf</span>
+<span id="cb8-229"><a href="#cb8-229" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/submission.qmd <span class="at">-P</span> model:nnet</span>
+<span id="cb8-230"><a href="#cb8-230" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-231"><a href="#cb8-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-232"><a href="#cb8-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps</span></span>
+<span id="cb8-233"><a href="#cb8-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-234"><a href="#cb8-234" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Start with the **[Exploratory Data Analysis](docs/01-eda.qmd)** to see the</span>
+<span id="cb8-235"><a href="#cb8-235" aria-hidden="true" tabindex="-1"></a>  patterns that drive the features.</span>
+<span id="cb8-236"><a href="#cb8-236" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Then read the model docs in order:</span>
+<span id="cb8-237"><a href="#cb8-237" aria-hidden="true" tabindex="-1"></a>  **[XGBoost](docs/02-xgboost.qmd)** →</span>
+<span id="cb8-238"><a href="#cb8-238" aria-hidden="true" tabindex="-1"></a>  **[Random Forest](docs/03-random-forest.qmd)** →</span>
+<span id="cb8-239"><a href="#cb8-239" aria-hidden="true" tabindex="-1"></a>  **[Neural Net](docs/04-neural-net.qmd)**.</span>
+<span id="cb8-240"><a href="#cb8-240" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a leaderboard CSV with the **[Submission](docs/submission.qmd)** doc.</span>
+<span id="cb8-241"><a href="#cb8-241" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Stuck on authentication? See the **[Kaggle Setup guide](docs/setup-kaggle.md)**.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
