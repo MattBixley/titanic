@@ -295,17 +295,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Building submission for model: "</span>, requested_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Building submission for model: nnet</code></pre>
+<pre><code>Building submission for model: logistic</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Loading fitted workflow from: "</span>, fit_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Loading fitted workflow from: /home/runner/work/titanic/titanic/models/nnet_fit.rds</code></pre>
+<pre><code>Loading fitted workflow from: /home/runner/work/titanic/titanic/models/logistic_fit.rds</code></pre>
 </div>
 </div>
-<p>We are building a submission for <strong>nnet</strong>.</p>
+<p>We are building a submission for <strong>logistic</strong>.</p>
 </section>
 <section id="load-the-model-and-the-test-data" class="level2">
 <h2 class="anchored" data-anchor-id="load-the-model-and-the-test-data">Load the model and the test data</h2>
@@ -411,7 +411,7 @@ $ GroupKnown      &lt;chr&gt; "yes", "no", "no", "no", "yes", "yes", "yes", "yes
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Wrote "</span>, <span class="fu">nrow</span>(submission), <span class="st">" predictions to: "</span>, out_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Wrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_nnet.csv</code></pre>
+<pre><code>Wrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_logistic.csv</code></pre>
 </div>
 </div>
 <p>A quick summary of the predicted survival split (a sanity check against the ~38% base rate seen in the <a href="../docs/01-eda.html">EDA</a>):</p>
@@ -425,7 +425,7 @@ $ GroupKnown      &lt;chr&gt; "yes", "no", "no", "no", "yes", "yes", "yes", "yes
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
-{"columns":[{"label":["Survived"],"name":[1],"type":["int"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]},{"label":["prop"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"0","2":"261","3":"0.6244019"},{"1":"1","2":"157","3":"0.3755981"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["Survived"],"name":[1],"type":["int"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]},{"label":["prop"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"0","2":"264","3":"0.6315789"},{"1":"1","2":"154","3":"0.3684211"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -434,7 +434,7 @@ $ GroupKnown      &lt;chr&gt; "yes", "no", "no", "no", "yes", "yes", "yes", "yes
 <section id="submit-to-kaggle" class="level2">
 <h2 class="anchored" data-anchor-id="submit-to-kaggle">Submit to Kaggle</h2>
 <p>Push the CSV to the leaderboard with the Kaggle CLI. The command below is built for the model you rendered:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kaggle</span> competitions submit <span class="at">-c</span> titanic <span class="at">-f</span> models/submission_nnet.csv <span class="at">-m</span> <span class="st">"nnet via tidymodels"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kaggle</span> competitions submit <span class="at">-c</span> titanic <span class="at">-f</span> models/submission_logistic.csv <span class="at">-m</span> <span class="st">"logistic via tidymodels"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -932,7 +932,7 @@ $ GroupKnown      &lt;chr&gt; "yes", "no", "no", "no", "yes", "yes", "yes", "yes
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Building a Kaggle Submission"</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "One parameterized document, three models, leaderboard-ready CSVs"</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="an">params:</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">  model: "nnet"</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">  model: "logistic"</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">  freeze: false   # parameterized: must re-run per -P model:, never serve a cached model</span></span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>

@@ -88,7 +88,7 @@
     "href": "docs/submission.html#resolve-and-validate-the-requested-model",
     "title": "Building a Kaggle Submission",
     "section": "Resolve and validate the requested model",
-    "text": "Resolve and validate the requested model\n\n\nShow code\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost  = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf       = here::here(\"models\", \"rf_fit.rds\"),\n  nnet     = here::here(\"models\", \"nnet_fit.rds\"),\n  logistic = here::here(\"models\", \"logistic_fit.rds\"),\n  stack    = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\n\nBuilding submission for model: nnet\n\n\nShow code\nmessage(\"Loading fitted workflow from: \", fit_path)\n\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/nnet_fit.rds\n\n\nWe are building a submission for nnet."
+    "text": "Resolve and validate the requested model\n\n\nShow code\n# The parameter comes in from the YAML default or the -P flag on the CLI.\nrequested_model &lt;- params$model\n\n# Map each valid model key to its saved fit. This single lookup table is the\n# source of truth for which models are submittable.\nmodel_paths &lt;- c(\n  xgboost  = here::here(\"models\", \"xgboost_fit.rds\"),\n  rf       = here::here(\"models\", \"rf_fit.rds\"),\n  nnet     = here::here(\"models\", \"nnet_fit.rds\"),\n  logistic = here::here(\"models\", \"logistic_fit.rds\"),\n  stack    = here::here(\"models\", \"stack_fit.rds\")\n)\n\n# Fail loudly and helpfully if someone passes an unknown model.\nif (!requested_model %in% names(model_paths)) {\n  stop(\n    \"Unknown model '\", requested_model, \"'. \",\n    \"Choose one of: \", paste(names(model_paths), collapse = \", \"), \". \",\n    \"Example: quarto render docs/submission.qmd -P model:rf\",\n    call. = FALSE\n  )\n}\n\nfit_path &lt;- model_paths[[requested_model]]\n\n# Make sure the fitted workflow actually exists — i.e. the model doc was\n# rendered first.\nif (!file.exists(fit_path)) {\n  stop(\n    \"Fitted model not found at '\", fit_path, \"'. \",\n    \"Render the matching model document first (e.g. quarto render \",\n    \"docs/02-xgboost.qmd) so the .rds is saved.\",\n    call. = FALSE\n  )\n}\n\nmessage(\"Building submission for model: \", requested_model)\n\n\nBuilding submission for model: logistic\n\n\nShow code\nmessage(\"Loading fitted workflow from: \", fit_path)\n\n\nLoading fitted workflow from: /home/runner/work/titanic/titanic/models/logistic_fit.rds\n\n\nWe are building a submission for logistic."
   },
   {
     "objectID": "docs/submission.html#load-the-model-and-the-test-data",
@@ -109,14 +109,14 @@
     "href": "docs/submission.html#write-the-csv",
     "title": "Building a Kaggle Submission",
     "section": "Write the CSV",
-    "text": "Write the CSV\n\n\nShow code\nout_path &lt;- here(\"models\", paste0(\"submission_\", requested_model, \".csv\"))\n\nwrite_csv(submission, out_path)\n\nmessage(\"Wrote \", nrow(submission), \" predictions to: \", out_path)\n\n\nWrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_nnet.csv\n\n\nA quick summary of the predicted survival split (a sanity check against the ~38% base rate seen in the EDA):\n\n\nShow code\nsubmission |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))"
+    "text": "Write the CSV\n\n\nShow code\nout_path &lt;- here(\"models\", paste0(\"submission_\", requested_model, \".csv\"))\n\nwrite_csv(submission, out_path)\n\nmessage(\"Wrote \", nrow(submission), \" predictions to: \", out_path)\n\n\nWrote 418 predictions to: /home/runner/work/titanic/titanic/models/submission_logistic.csv\n\n\nA quick summary of the predicted survival split (a sanity check against the ~38% base rate seen in the EDA):\n\n\nShow code\nsubmission |&gt;\n  count(Survived) |&gt;\n  mutate(prop = n / sum(n))"
   },
   {
     "objectID": "docs/submission.html#submit-to-kaggle",
     "href": "docs/submission.html#submit-to-kaggle",
     "title": "Building a Kaggle Submission",
     "section": "Submit to Kaggle",
-    "text": "Submit to Kaggle\nPush the CSV to the leaderboard with the Kaggle CLI. The command below is built for the model you rendered:\nkaggle competitions submit -c titanic -f models/submission_nnet.csv -m \"nnet via tidymodels\"\n\n\n\n\n\n\nNoteFirst time? Authenticate first\n\n\n\nThe kaggle CLI needs your API token (~/.kaggle/kaggle.json) before any submit or download will work. The Kaggle setup guide walks through creating and installing it.\n\n\n\n\n\n\n\n\nTipDaily submission limit\n\n\n\nKaggle caps Titanic submissions per day (commonly ~10). Submit your best candidate by CV score rather than spraying every experiment at the leaderboard."
+    "text": "Submit to Kaggle\nPush the CSV to the leaderboard with the Kaggle CLI. The command below is built for the model you rendered:\nkaggle competitions submit -c titanic -f models/submission_logistic.csv -m \"logistic via tidymodels\"\n\n\n\n\n\n\nNoteFirst time? Authenticate first\n\n\n\nThe kaggle CLI needs your API token (~/.kaggle/kaggle.json) before any submit or download will work. The Kaggle setup guide walks through creating and installing it.\n\n\n\n\n\n\n\n\nTipDaily submission limit\n\n\n\nKaggle caps Titanic submissions per day (commonly ~10). Submit your best candidate by CV score rather than spraying every experiment at the leaderboard."
   },
   {
     "objectID": "docs/submission.html#next-steps",
@@ -520,56 +520,56 @@
   {
     "objectID": "docs/05-stack.html",
     "href": "docs/05-stack.html",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "",
     "text": "Where we are: The capstone of the Titanic — Tidymodels Tour. The four base-model documents (XGBoost, Random Forest, Neural Net, Logistic Regression) each saved their tuning results (every candidate model and its out-of-fold predictions) to models/&lt;model&gt;_res.rds. Here we feed all of those candidates to stacks, which learns a regularised linear blend over them — usually beating any single model, because the members make different mistakes."
   },
   {
     "objectID": "docs/05-stack.html#why-stack",
     "href": "docs/05-stack.html#why-stack",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Why stack?",
     "text": "Why stack?\nEach model family has a different inductive bias: gradient boosting chases interactions, the random forest averages decorrelated trees, the neural net learns a smooth function of the principal components. A stack fits a meta-learner (penalised logistic regression) on the members’ out-of-fold predictions, keeping only the candidates that pull their weight."
   },
   {
     "objectID": "docs/05-stack.html#setup",
     "href": "docs/05-stack.html#setup",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Setup",
     "text": "Setup\n\n\nShow code\nsource(here::here(\"R\", \"00_setup.R\"))   # tidyverse + tidymodels, seed = 42\n\nlibrary(tidyverse)\nlibrary(tidymodels)\nlibrary(here)\nlibrary(stacks)\n# The member engines must be attached so fit_members() can refit them.\nlibrary(ranger)\nlibrary(xgboost)\nlibrary(nnet)\nlibrary(glmnet)"
   },
   {
     "objectID": "docs/05-stack.html#load-the-tuning-results",
     "href": "docs/05-stack.html#load-the-tuning-results",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Load the tuning results",
     "text": "Load the tuning results\n\n\nShow code\n# Each *_res.rds is a tune_grid result saved with control_grid(save_pred = TRUE,\n# save_workflow = TRUE) — exactly what stacks needs to assemble candidates.\nxgb_res      &lt;- readRDS(here(\"models\", \"xgboost_res.rds\"))\nrf_res       &lt;- readRDS(here(\"models\", \"rf_res.rds\"))\nnnet_res     &lt;- readRDS(here(\"models\", \"nnet_res.rds\"))\nlogistic_res &lt;- readRDS(here(\"models\", \"logistic_res.rds\"))"
   },
   {
     "objectID": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
     "href": "docs/05-stack.html#build-blend-and-fit-the-ensemble",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Build, blend, and fit the ensemble",
-    "text": "Build, blend, and fit the ensemble\n\n\nShow code\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  add_candidates(logistic_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n\n# A tibble: 6 × 3\n  member                               type         weight\n  &lt;chr&gt;                                &lt;chr&gt;         &lt;dbl&gt;\n1 .pred_1_xgb_respre3_mod14_post0      boost_tree    1.31 \n2 .pred_1_rf_respre1_mod05_post0       rand_forest   1.16 \n3 .pred_1_nnet_respre7_mod08_post0     mlp           0.939\n4 .pred_1_nnet_respre5_mod14_post0     mlp           0.842\n5 .pred_1_xgb_respre1_mod10_post0      boost_tree    0.232\n6 .pred_1_logistic_respre5_mod14_post0 logistic_reg  0.181\n\n\n\nWhich members survived the blend?\n\n\nShow code\nautoplot(titanic_stack, type = \"weights\") +\n  scale_colour_manual(values = grDevices::colorRampPalette(kakapo_pal)(10)) +\n  scale_fill_manual(values = grDevices::colorRampPalette(kakapo_pal)(10))\n\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
+    "text": "Build, blend, and fit the ensemble\n\n\nShow code\nset.seed(42)\ntitanic_stack &lt;- stacks() |&gt;\n  add_candidates(xgb_res) |&gt;\n  add_candidates(rf_res) |&gt;\n  add_candidates(nnet_res) |&gt;\n  add_candidates(logistic_res) |&gt;\n  blend_predictions() |&gt;     # LASSO over candidates -&gt; keeps the useful ones\n  fit_members()              # refit the retained members on all training data\n\ntitanic_stack\n\n\n# A tibble: 6 × 3\n  member                               type         weight\n  &lt;chr&gt;                                &lt;chr&gt;         &lt;dbl&gt;\n1 .pred_1_xgb_respre3_mod14_post0      boost_tree    1.32 \n2 .pred_1_rf_respre1_mod05_post0       rand_forest   1.16 \n3 .pred_1_nnet_respre7_mod08_post0     mlp           0.940\n4 .pred_1_nnet_respre5_mod14_post0     mlp           0.843\n5 .pred_1_xgb_respre1_mod10_post0      boost_tree    0.233\n6 .pred_1_logistic_respre5_mod14_post0 logistic_reg  0.181\n\n\n\nWhich members survived the blend?\n\n\nShow code\nautoplot(titanic_stack, type = \"weights\") +\n  scale_colour_manual(values = grDevices::colorRampPalette(kakapo_pal)(10)) +\n  scale_fill_manual(values = grDevices::colorRampPalette(kakapo_pal)(10))\n\n\n\n\n\nBlended stacking coefficients — the members the meta-learner kept.\n\n\n\n\nThe neural net typically earns the largest single weight, with several boosted trees and a random forest rounding out the blend — different biases, combined."
   },
   {
     "objectID": "docs/05-stack.html#save-the-fitted-ensemble",
     "href": "docs/05-stack.html#save-the-fitted-ensemble",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Save the fitted ensemble",
     "text": "Save the fitted ensemble\n\n\nShow code\nsaveRDS(titanic_stack, here(\"models\", \"stack_fit.rds\"))"
   },
   {
     "objectID": "docs/05-stack.html#build-the-kaggle-submission",
     "href": "docs/05-stack.html#build-the-kaggle-submission",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Build the Kaggle submission",
     "text": "Build the Kaggle submission\n\n\nShow code\ntest &lt;- read_csv(here(\"data\", \"processed\", \"test.csv\"), show_col_types = FALSE)\n\nstack_pred &lt;- predict(titanic_stack, new_data = test, type = \"class\")\n\nsubmission &lt;- tibble(\n  PassengerId = test$PassengerId,\n  Survived    = as.integer(as.character(stack_pred$.pred_class))\n)\nwrite_csv(submission, here(\"models\", \"submission_stack.csv\"))\n\nsubmission |&gt; count(Survived) |&gt; mutate(prop = n / sum(n))\n\n\n\n  \n\n\n\nUpload it the same way as any other model:\nkaggle competitions submit -c titanic -f models/submission_stack.csv \\\n  -m \"stacked ensemble (xgb + rf + nnet) via stacks\""
   },
   {
     "objectID": "docs/05-stack.html#next-steps",
     "href": "docs/05-stack.html#next-steps",
-    "title": "Model 4 — Stacked Ensemble",
+    "title": "Model 5 — Stacked Ensemble",
     "section": "Next steps",
     "text": "Next steps\n\nThe parameterized submission doc also accepts -P model:stack.\nCompare the stack’s leaderboard score against the individual models on the master document — does the blend actually win on the held-out Kaggle test set, or only in cross-validation?\nSee the Kaggle setup guide for authentication."
   },
